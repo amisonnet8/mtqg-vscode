@@ -245,6 +245,87 @@ export function renderShell(options: ShellOptions): string {
     .badge-human {
       border-color: var(--vscode-charts-green, var(--vscode-panel-border));
     }
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .post {
+      position: relative;
+      padding: 6px 28px 6px 4px;
+      border-bottom: 1px solid var(--vscode-panel-border);
+    }
+    .post .editable {
+      display: block;
+    }
+    .post.done .editable {
+      text-decoration: line-through;
+      color: var(--vscode-descriptionForeground);
+    }
+    .post-check {
+      margin-right: 4px;
+    }
+    .post-meta {
+      display: block;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 2px;
+    }
+    .post-edited {
+      font-style: italic;
+    }
+    .post-action {
+      display: block;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 2px;
+    }
+    .post button[data-action="delete"] {
+      position: absolute;
+      top: 6px;
+      right: 4px;
+    }
+    .load-earlier {
+      font-family: inherit;
+      font-size: inherit;
+      color: var(--vscode-textLink-foreground);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 0;
+      display: block;
+    }
+    .load-earlier:hover {
+      text-decoration: underline;
+    }
+    .composer {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      border-top: 1px solid var(--vscode-panel-border);
+      padding-top: 8px;
+    }
+    .composer .add-row {
+      flex: 1;
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 6px 10px;
+    }
+    .composer button[data-action="undo"] {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+    .notice {
+      font-size: 0.9em;
+      color: var(--vscode-descriptionForeground);
+      margin: 4px 0;
+    }
   </style>
 </head>
 <body>

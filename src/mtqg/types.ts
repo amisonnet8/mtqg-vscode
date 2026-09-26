@@ -235,3 +235,11 @@ export interface GlossaryListResult {
   entries: number;
   duplicate_words: number;
 }
+
+/** `mtqg undo` (session-scoped: the last line written by this author from
+ * this terminal). `event` is the journal line that was reverted. */
+export interface UndoResult {
+  command: 'undo';
+  event: JournalEvent;
+  record: MtqgRecord;
+}

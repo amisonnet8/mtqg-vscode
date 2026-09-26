@@ -67,7 +67,7 @@ function sortedByCreated<T extends { created: string }>(records: T[]): T[] {
  * edit/delete handling (src/webview/client/main.ts, `closest('[data-id]')`)
  * targets the reply itself, not the item it answers.
  */
-function replyRow(reply: ThreadReply): string {
+export function replyRow(reply: ThreadReply): string {
   const isAi = reply.author.kind === 'ai';
   return `<div class="thread-reply" data-id="${reply.id}">
       ${badge(isAi ? 'AI' : 'human', isAi ? 'badge-ai' : 'badge-human')}

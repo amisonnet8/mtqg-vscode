@@ -101,6 +101,11 @@ declare function acquireVsCodeApi(): {
         return;
       }
       vscode.postMessage({ type: 'addTodo', tab, text: value });
+    } else if (tab === 'memos') {
+      if (value === '') {
+        return;
+      }
+      vscode.postMessage({ type: 'compose', tab, text: value });
     } else if (tab === 'questions' || tab === 'bugs') {
       if (value === '') {
         return;
@@ -136,7 +141,8 @@ declare function acquireVsCodeApi(): {
         return;
       }
       const done = (target as HTMLInputElement).checked;
-      vscode.postMessage({ type: 'setStatus', tab, id, done });
+      const kind = target.dataset.kind;
+      vscode.postMessage(kind ? { type: 'setStatus', tab, id, done, kind } : { type: 'setStatus', tab, id, done });
     } else if (target.matches('[data-action="show-all"]')) {
       const all = (target as HTMLInputElement).checked;
       vscode.postMessage({ type: 'setShowAll', tab, all });
@@ -178,6 +184,24 @@ declare function acquireVsCodeApi(): {
         const expanded = expandButton.getAttribute('aria-expanded') !== 'true';
         vscode.postMessage({ type: 'toggleExpand', tab, id, expanded });
       }
+      return;
+    }
+
+    const loadEarlierButton = target.closest<HTMLElement>('[data-action="load-earlier"]');
+    if (loadEarlierButton) {
+      const tab = tabOf(loadEarlierButton);
+      if (tab) {
+        vscode.postMessage({ type: 'loadEarlier', tab });
+      }
+      return;
+    }
+
+    const undoButton = target.closest<HTMLElement>('[data-action="undo"]');
+    if (undoButton) {
+      const tab = tabOf(undoButton);
+      if (tab) {
+        vscode.postMessage({ type: 'undo', tab });
+      }
     }
   });
 
@@ -189,6 +213,11 @@ declare function acquireVsCodeApi(): {
     const panel = document.getElementById(`panel-${message.tab}`);
     if (panel) {
       panel.innerHTML = message.html ?? '';
+      // Memo screen only (todo `01ee2706ce`): scroll the composer (at the
+      // timeline's newest end) into view, unless this render is a "Load
+      // earlier" (the host omits the attribute then, so the just-prepended
+      // older posts are not immediately scrolled away).
+      panel.querySelector<HTMLElement>('[data-autoscroll]')?.scrollIntoView({ block: 'end' });
     }
   });
 

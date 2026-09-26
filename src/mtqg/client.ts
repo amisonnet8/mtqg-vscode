@@ -21,6 +21,7 @@ import type {
   StatefulListResult,
   StatusResult,
   TodoRecord,
+  UndoResult,
   VersionResult,
   AddResult,
 } from './types';
@@ -105,6 +106,7 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
     },
     show: (id: string) => run(['show', id]) as Promise<Result<ShowResult>>,
     search: (text: string) => run(['search', TEXT_SEPARATOR, text]) as Promise<Result<SearchResult>>,
+    undo: () => run(['undo']) as Promise<Result<UndoResult>>,
     // Unlike `add`, `edit` never reads an argument after the ID as an option
     // (verified against the real binary: `edit <id> --at ...` and even
     // `edit <id> -- ...` both store the words literally) -- so `--` is not

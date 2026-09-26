@@ -22,11 +22,21 @@ export type WebviewMessage =
   | { type: 'deleteRecord'; tab: TabId; id: string }
   // Kind-independent, mirroring editRecord/deleteRecord above: QA/Bugs
   // (todo `8b7b600827`/`13570d152b`) reuse this for their own done/reopen.
-  | { type: 'setStatus'; tab: TabId; id: string; done: boolean }
+  // `kind` is only sent by the Memo screen (todo `01ee2706ce`), whose single
+  // tab mixes todo/question/bug posts -- the controller looks the done/reopen
+  // pair up by `kind` when present, by `tab` (the existing per-screen
+  // lookup) otherwise.
+  | { type: 'setStatus'; tab: TabId; id: string; done: boolean; kind?: 'todo' | 'question' | 'bug' }
   | { type: 'setShowAll'; tab: TabId; all: boolean }
   // Display-only state (todo `8b7b600827`): which question's reply thread
   // is open. Not a record, so it never reaches mtqg.
-  | { type: 'toggleExpand'; tab: TabId; id: string; expanded: boolean };
+  | { type: 'toggleExpand'; tab: TabId; id: string; expanded: boolean }
+  // The Memo screen's one input field (todo `01ee2706ce`); the host parses
+  // any slash command (screens/composer.ts) -- the Webview forwards the raw
+  // text as-is (q&a `0736e37fd7`).
+  | { type: 'compose'; tab: TabId; text: string }
+  | { type: 'loadEarlier'; tab: TabId }
+  | { type: 'undo'; tab: TabId };
 
 /** Sent by the host (src/webview/controller.ts) to the Webview. */
 export interface HostMessage {
@@ -48,7 +58,7 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
   if (typeof value !== 'object' || value === null) {
     return undefined;
   }
-  const { type, tab, id, word, text, done, all, expanded } = value as Record<string, unknown>;
+  const { type, tab, id, word, text, done, all, expanded, kind } = value as Record<string, unknown>;
   if (!isTabId(tab)) {
     return undefined;
   }
@@ -84,13 +94,25 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
     return { type, tab, id };
   }
   if (type === 'setStatus' && typeof id === 'string' && typeof done === 'boolean') {
-    return { type, tab, id, done };
+    if (kind === undefined) {
+      return { type, tab, id, done };
+    }
+    if (kind === 'todo' || kind === 'question' || kind === 'bug') {
+      return { type, tab, id, done, kind };
+    }
+    return undefined;
   }
   if (type === 'setShowAll' && typeof all === 'boolean') {
     return { type, tab, all };
   }
   if (type === 'toggleExpand' && typeof id === 'string' && typeof expanded === 'boolean') {
     return { type, tab, id, expanded };
+  }
+  if (type === 'compose' && typeof text === 'string') {
+    return { type, tab, text };
+  }
+  if (type === 'loadEarlier' || type === 'undo') {
+    return { type, tab };
   }
   return undefined;
 }

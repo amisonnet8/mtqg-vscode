@@ -1,6 +1,6 @@
 # ディレクトリ構成
 
-`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）で作ったもの。それ以外は、後続のtodoで足す予定のもの。
+`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）で作ったもの。6画面すべて揃った。それ以外は、後続のtodoで足す予定のもの。
 
 ```
 mtqg-vscode/
@@ -36,7 +36,9 @@ mtqg-vscode/
 *│       │   ├── todos.ts    （renderTodos：Keep風カードのグリッド、Done見出しでの下段まとめ）
 *│       │   ├── thread.ts   （renderThread：QA/Bugs共通の実装。1件＝見出し行＋詳細行（返信スレッド、常時の返信欄）、AI/humanバッジ。文言はThreadLabelsで注入）
 *│       │   ├── questions.ts（renderQuestions：renderThreadにQA用のThreadLabelsを渡す薄い包み）
-*│       │   └── bugs.ts     （renderBugs：renderThreadにBugs用のThreadLabelsを渡す薄い包み）
+*│       │   ├── bugs.ts     （renderBugs：renderThreadにBugs用のThreadLabelsを渡す薄い包み）
+*│       │   ├── composer.ts （parseComposer：Memo画面の入力欄のスラッシュコマンド解釈。純粋関数、vscode非依存）
+*│       │   └── memos.ts    （renderMemos：`log --events`をタイムラインに描画。answer/replyはthread.tsのreplyRowを再利用してスレッド化、edited判定・Load earlier・Undo通知を持つ）
 *│       ├── shared/          （6画面共通、vscode非依存。node:testで確認できる）
 *│       │   ├── html.ts     （renderShell：CSP・タブバー・タブパネルの外枠）
 *│       │   ├── tabs.ts     （6画面のID・ラベル・既定タブ）
@@ -71,7 +73,9 @@ mtqg-vscode/
 - **「どの行が展開されているか」も表示状態としてcontroller.tsが持つ（`Map<TabId, Set<string>>`、todo`8b7b600827`）。** `showAll`と同じ理由（mtqgの記録ではない）。`qa list`/`bug list`は各質問・バグに`replies`を既に含めて返す（実機で確認済み）ため、展開時に`show`を呼び直す必要はなく、`toggleExpand`は表示状態を更新して再描画するだけ
 - **既存レコードのidに新しい子レコードをぶら下げて追加するUI（QAの回答、Bugsの返信）は、`editRecord`と区別できるマーカーを持たせる。** `renderThread`の返信入力欄は`.add-row`（idを持たない扱い）に`data-parent-id`を持たせ、`main.ts`側で「id有り→編集」より先に「`.add-row`かつ`data-parent-id`有り→新規追加（`addAnswer`/`addBugReply`をタブで出し分け）」を判定する
 - **QAとBugsのように構造が完全に同じ画面は、実装を1つに切り出し、文言だけ注入する。** `screens/thread.ts`の`renderThread(records, labels, view)`がその形（`ThreadLabels`）。**文言はnaming.mdの用語対応表（question/answer、bug/reply）どおりに書き分ける。** QA実装時に一度、回答欄にBugs用の語「Reply」を誤って使っていた（`b add 48b5d29d54a3`）。同じ構造を再利用するときほど、隣の画面の言葉が紛れ込みやすいので注意する
-- **`setStatus`のようなタブ横断の種別非依存メッセージは、タブが増えるほどネストした三項演算子ではなく`Partial<Record<TabId, {...}>>`のようなルックアップに寄せる。** `controller.ts`の`statusActions`（todo`13570d152b`）
+- **`setStatus`のようなタブ横断の種別非依存メッセージは、タブが増えるほどネストした三項演算子ではなく`Partial<Record<TabId, {...}>>`のようなルックアップに寄せる。** `controller.ts`の`statusActions`（todo`13570d152b`）。**1つのタブに複数の記録の種類が混在する画面（Memo、todo`01ee2706ce`）では、タブだけでは振り分けられない。** `setStatus`に任意の`kind`を足し、`kind`があればそちらを優先してルックアップする（`statusActionsByKind`）。タブ由来の`statusActions`はこのルックアップの別名として組み直し、二重管理にしない
+- **読み取り側の再フェッチも、書き込み側（`runWrite`）と同じ「mtqgから毎回取り直す、DOMを推測で直さない」方針に揃える。** Memo画面（todo`01ee2706ce`）はページングに`log --before`ではなく`log --limit`を伸ばす方式を選んだ——`--before`でページを継ぎ足すと、既に読み込んだページの記録が後から編集・削除されても、そのページを再取得しない限り古いまま残ってしまうため（`docs/design/01-vscode-extension.md`「Memo画面の実装」）。表示件数（`memoLimit`）は`showAll`/`expanded`と同じくcontroller.tsが持つ表示状態で、mtqgの記録ではない
+- **`log --json --events`の`op:"edit"`の有無で「編集済み」を判定する。** `updated`はdone/reopen等でも進むため、`created !== updated`だけでは編集と状態変更を区別できない
 - **`vscode`を触るのは`src/webview/panel.ts`だけ。** `controller.ts`・`screens.ts`・`shared/`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）
 - **Webview内で実際に動くスクリプト（`src/webview/client/`）は別tsconfig。** ホスト側はCommonJS（`vscode`の型）、Webview側はDOM型・ブラウザ向けESM出力で、1つのtsconfigでは両立しない（バンドラを使わない方針、`.claude/rules/dependencies.md`）。ルートの`tsconfig.json`は`src/webview/client`を`exclude`する
 - **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く

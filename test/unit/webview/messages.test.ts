@@ -187,3 +187,35 @@ test('parseWebviewMessage rejects addBugReply missing id or text', () => {
   assert.equal(parseWebviewMessage({ type: 'addBugReply', tab: 'bugs', text: 'reproduced' }), undefined);
   assert.equal(parseWebviewMessage({ type: 'addBugReply', tab: 'bugs', id: 'abc123' }), undefined);
 });
+
+test('parseWebviewMessage accepts a well-formed compose message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'compose', tab: 'memos', text: '/todo write tests' }), {
+    type: 'compose',
+    tab: 'memos',
+    text: '/todo write tests',
+  });
+});
+
+test('parseWebviewMessage rejects compose without text, or with a non-string text', () => {
+  assert.equal(parseWebviewMessage({ type: 'compose', tab: 'memos' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'compose', tab: 'memos', text: 1 }), undefined);
+});
+
+test('parseWebviewMessage accepts well-formed loadEarlier and undo messages', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'loadEarlier', tab: 'memos' }), { type: 'loadEarlier', tab: 'memos' });
+  assert.deepEqual(parseWebviewMessage({ type: 'undo', tab: 'memos' }), { type: 'undo', tab: 'memos' });
+});
+
+test('parseWebviewMessage accepts setStatus with a valid kind', () => {
+  assert.deepEqual(
+    parseWebviewMessage({ type: 'setStatus', tab: 'memos', id: 'abc123', done: true, kind: 'question' }),
+    { type: 'setStatus', tab: 'memos', id: 'abc123', done: true, kind: 'question' },
+  );
+});
+
+test('parseWebviewMessage rejects setStatus with an unknown kind', () => {
+  assert.equal(
+    parseWebviewMessage({ type: 'setStatus', tab: 'memos', id: 'abc123', done: true, kind: 'memo' }),
+    undefined,
+  );
+});

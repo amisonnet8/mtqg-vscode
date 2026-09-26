@@ -1,4 +1,5 @@
 import type { MtqgClient } from '../mtqg/client';
+import { parseComposer } from './screens/composer';
 import { renderError, renderScreen, type ScreenView } from './screens';
 import { type HostMessage, parseWebviewMessage, type WebviewMessage } from './shared/messages';
 import { DEFAULT_TAB, type TabId } from './shared/tabs';
@@ -38,19 +39,54 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
   // Which question threads are expanded (todo `8b7b600827`), same reasoning
   // as showAll: a display state, not something mtqg records.
   const expanded = new Map<TabId, Set<string>>();
+  // Memo screen only (todo `01ee2706ce`): how many of the newest `log`
+  // records to fetch, and the one-line result of the last compose error or
+  // undo (q&a `ae6550d6f3c2`). Growing `memoLimit` rather than paging with
+  // `--before` means a re-render always re-fetches everything currently
+  // shown fresh from mtqg -- an edit/done/delete to an already-loaded post
+  // can never go stale behind a page boundary (`runWrite`'s own reasoning,
+  // applied to the read side too).
+  let memoLimit = 50;
+  let memoNotice: string | undefined;
 
-  function viewFor(tab: TabId): ScreenView {
-    return { all: showAll.has(tab), expanded: expanded.get(tab) };
+  function viewFor(tab: TabId, autoscroll = true): ScreenView {
+    return {
+      all: showAll.has(tab),
+      expanded: expanded.get(tab),
+      memoLimit,
+      notice: tab === 'memos' ? memoNotice : undefined,
+      autoscroll,
+    };
   }
 
-  /** Which mtqg calls `setStatus` maps to, per tab (todo `13570d152b`: a
-   * plain lookup scales better than a growing ternary as more tabs gain a
-   * done/reopen pair). */
-  const statusActions: Partial<Record<TabId, { done: (id: string) => Promise<unknown>; reopen: (id: string) => Promise<unknown> }>> = {
-    todos: { done: client.todoDone, reopen: client.todoReopen },
-    questions: { done: client.qaDone, reopen: client.qaReopen },
-    bugs: { done: client.bugDone, reopen: client.bugReopen },
+  type StatusActions = { done: (id: string) => Promise<unknown>; reopen: (id: string) => Promise<unknown> };
+
+  /** Which mtqg calls a done/reopen pair maps to, by record kind. The Memo
+   * screen (todo `01ee2706ce`) sends this `kind` directly since its one tab
+   * mixes todo/question/bug posts; every other screen is still looked up by
+   * `tab` below (todo `13570d152b`: a plain lookup scales better than a
+   * growing ternary as more tabs gain a done/reopen pair). */
+  const statusActionsByKind: Record<'todo' | 'question' | 'bug', StatusActions> = {
+    todo: { done: client.todoDone, reopen: client.todoReopen },
+    question: { done: client.qaDone, reopen: client.qaReopen },
+    bug: { done: client.bugDone, reopen: client.bugReopen },
   };
+  const statusActions: Partial<Record<TabId, StatusActions>> = {
+    todos: statusActionsByKind.todo,
+    questions: statusActionsByKind.question,
+    bugs: statusActionsByKind.bug,
+  };
+
+  /** Describes what `mtqg undo` just reverted, for the Memo screen's notice
+   * line (q&a `ae6550d6f3c2`). mtqg's own event `op` names the kind of
+   * change; the record's own text is truncated so one long post cannot blow
+   * up the notice line. */
+  function describeUndo(event: { op: string }, record: { text?: string; word?: string }): string {
+    const label = record.word ?? record.text ?? '';
+    const truncated = label.length > 40 ? `${label.slice(0, 40)}…` : label;
+    const opName = { create: 'post', edit: 'edit', status: 'status change', delete: 'delete' }[event.op] ?? event.op;
+    return `Undid ${opName} of "${truncated}"`;
+  }
 
   /** Runs `supplier`, then posts its HTML to `tab` unless a later render has since started. */
   function renderWith(tab: TabId, supplier: () => Promise<string>): void {
@@ -66,8 +102,8 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
     });
   }
 
-  function render(tab: TabId): void {
-    renderWith(tab, () => renderScreen(tab, client, viewFor(tab)));
+  function render(tab: TabId, autoscroll = true): void {
+    renderWith(tab, () => renderScreen(tab, client, viewFor(tab, autoscroll)));
   }
 
   /**
@@ -119,13 +155,59 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
         runWrite(message.tab, () => client.delete(message.id));
         return;
       case 'setStatus': {
-        const actions = statusActions[message.tab];
+        const actions = message.kind ? statusActionsByKind[message.kind] : statusActions[message.tab];
         if (!actions) {
           return;
         }
         runWrite(message.tab, () => (message.done ? actions.done(message.id) : actions.reopen(message.id)));
         return;
       }
+      case 'compose': {
+        const parsed = parseComposer(message.text);
+        if ('error' in parsed) {
+          memoNotice = parsed.error;
+          render(message.tab);
+          return;
+        }
+        memoNotice = undefined;
+        switch (parsed.kind) {
+          case 'memo':
+            runWrite(message.tab, () => client.memoAdd(parsed.text));
+            return;
+          case 'todo':
+            runWrite(message.tab, () => client.todoAdd(parsed.text));
+            return;
+          case 'qa':
+            runWrite(message.tab, () => client.qaAsk(parsed.text));
+            return;
+          case 'bug':
+            runWrite(message.tab, () => client.bugReport(parsed.text));
+            return;
+          case 'rule':
+            runWrite(message.tab, () => client.ruleAdd(parsed.text));
+            return;
+          case 'glossary':
+            runWrite(message.tab, () => client.glossaryAdd(parsed.word, parsed.text));
+            return;
+        }
+      }
+      case 'loadEarlier':
+        memoLimit += 50;
+        render(message.tab, false);
+        return;
+      case 'undo':
+        renderWith(message.tab, () =>
+          client
+            .undo()
+            .then((result) => {
+              memoNotice = describeUndo(result.data.event, result.data.record);
+            })
+            .catch((err) => {
+              memoNotice = err instanceof Error ? err.message : String(err);
+            })
+            .then(() => renderScreen(message.tab, client, viewFor(message.tab, false))),
+        );
+        return;
       case 'setShowAll':
         if (message.all) {
           showAll.add(message.tab);

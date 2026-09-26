@@ -27,11 +27,10 @@ test('ready renders the requested tab once', async () => {
     const { posts, post } = collector();
     const controller = createPanelController({ client, post });
 
-    controller.handleMessage({ type: 'ready', tab: 'memos' });
+    controller.handleMessage({ type: 'ready', tab: 'rules' });
     await waitUntil(() => posts.length === 1);
 
-    assert.equal(posts[0].tab, 'memos');
-    assert.match(posts[0].html, /coming soon/);
+    assert.equal(posts[0].tab, 'rules');
     controller.dispose();
   } finally {
     await repo.cleanup();
@@ -58,14 +57,14 @@ test('a burst of journal changes calls mtqg only once, not once per change', asy
   const repo = await createTempRepo();
   try {
     const realClient = createMtqgClient(repo.root);
-    let statusCalls = 0;
+    let logCalls = 0;
     // A generation guard alone would also make a debounce-free
     // implementation *post* only once here (each stale render's result is
     // discarded on arrival), hiding a missing debounce. Counting the
     // underlying mtqg invocations, not the posts, is what actually catches
     // that (found by mutation-testing this test against a debounce-free
     // controller, todo b9caf0b88c).
-    const client = { ...realClient, status: () => (statusCalls++, realClient.status()) };
+    const client = { ...realClient, log: (opts?: Parameters<typeof realClient.log>[0]) => (logCalls++, realClient.log(opts)) };
     const { posts, post } = collector();
     const controller = createPanelController({ client, post, debounceMs: 20 });
 
@@ -78,7 +77,7 @@ test('a burst of journal changes calls mtqg only once, not once per change', asy
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     // One call from selectTab, plus exactly one coalesced from the burst.
-    assert.equal(statusCalls, 2);
+    assert.equal(logCalls, 2);
     assert.equal(posts.length, 2);
     assert.equal(posts[1].tab, 'memos');
     controller.dispose();
@@ -433,6 +432,153 @@ test('a write to an unknown id renders mtqg\'s own error instead of crashing the
     await waitUntil(() => posts.length === 1);
 
     assert.match(posts[0].html, /class="error"/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('compose without a slash posts a memo', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'compose', tab: 'memos', text: 'just a note' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /just a note/);
+    const list = await client.memoList();
+    assert.equal(list.data.count, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('compose with /todo posts a todo, and /glossary posts a term and definition', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'compose', tab: 'memos', text: '/todo write more tests' });
+    await waitUntil(() => posts.length === 1);
+    assert.equal((await client.todoList()).data.open, 1);
+
+    controller.handleMessage({ type: 'compose', tab: 'memos', text: '/glossary token a lexical unit' });
+    await waitUntil(() => posts.length === 2);
+    const glossary = await client.glossaryList();
+    assert.equal(glossary.data.records[0]?.word, 'token');
+    assert.equal(glossary.data.records[0]?.text, 'a lexical unit');
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('compose with an unknown command shows a notice and never calls mtqg', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'compose', tab: 'memos', text: '/qz something' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /Unknown command: \/qz/);
+    const list = await client.log();
+    assert.equal(list.data.total, 0);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('loadEarlier increases how many records are fetched', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    for (let i = 0; i < 55; i++) {
+      await client.memoAdd(`memo ${i}`);
+    }
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'ready', tab: 'memos' });
+    await waitUntil(() => posts.length === 1);
+    // All 55 memos share the same second, so `log`'s tie-break for *which*
+    // 50 it returns is unspecified (same finding as `todo list`/`qa
+    // list`'s ordering, `.claude/rules/mtqg-cli.md`) -- count posts rather
+    // than asserting a particular one is (not) present.
+    assert.equal((posts[0].html.match(/<article/g) ?? []).length, 50);
+    assert.match(posts[0].html, /Load earlier/);
+
+    controller.handleMessage({ type: 'loadEarlier', tab: 'memos' });
+    await waitUntil(() => posts.length === 2);
+    assert.equal((posts[1].html.match(/<article/g) ?? []).length, 55);
+    assert.doesNotMatch(posts[1].html, /Load earlier/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('undo reverts the last write and shows a notice describing it', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'compose', tab: 'memos', text: 'oops' });
+    await waitUntil(() => posts.length === 1);
+
+    controller.handleMessage({ type: 'undo', tab: 'memos' });
+    await waitUntil(() => posts.length === 2);
+
+    assert.match(posts[1].html, /Undid post of &quot;oops&quot;/);
+    assert.equal((await client.log()).data.total, 0);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('undo with nothing to undo shows mtqg\'s own message, not a screen-wide error', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'undo', tab: 'memos' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.doesNotMatch(posts[0].html, /class="error"/);
+    assert.match(posts[0].html, /Nothing to undo/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('setStatus with a kind marks a question answered from the Memo screen', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'setStatus', tab: 'memos', id: asked.data.record.id, done: true, kind: 'question' });
+    await waitUntil(() => posts.length === 1);
+
+    const list = await client.qaList({ all: true });
+    assert.equal(list.data.records[0].status, 'done');
     controller.dispose();
   } finally {
     await repo.cleanup();
