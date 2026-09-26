@@ -2,17 +2,17 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { TAB_IDS, TAB_LABELS, DEFAULT_TAB, isTabId } from '../../../src/webview/shared/tabs';
 
-test('the six screens are in Memo/Todo/QA/Bugs/Rules/Glossary order (decision, q&a 70787501f3f3)', () => {
+test('the six screens are in Memo/Todo/QA/Bug/Rule/Glossary order (decision, q&a 70787501f3f3)', () => {
   assert.deepEqual(TAB_IDS, ['memos', 'todos', 'questions', 'bugs', 'rules', 'glossary']);
 });
 
-test('tab labels are Memo/Todo/QA/Bugs/Rules/Glossary', () => {
+test('tab labels are Memo/Todo/QA/Bug/Rule/Glossary (singular, decision q&a a1daf7a25153)', () => {
   assert.deepEqual(TAB_LABELS, {
     memos: 'Memo',
     todos: 'Todo',
     questions: 'QA',
-    bugs: 'Bugs',
-    rules: 'Rules',
+    bugs: 'Bug',
+    rules: 'Rule',
     glossary: 'Glossary',
   });
 });

@@ -2,7 +2,10 @@
  * The six screens (ui.md), and nothing beyond them (ui.md "機能は足さない").
  * Order and labels changed from ui.md's original table/naming.md's plural
  * forms to Memo/Todo/QA/Bugs/Rules/Glossary at the human's request (decision,
- * 2026-09-26, q&a `70787501f3f3` -- supersedes q&a `25f60225e5`).
+ * 2026-09-26, q&a `70787501f3f3` -- supersedes q&a `25f60225e5`), then to
+ * singular Bug/Rule (decision, 2026-09-26, q&a `a1daf7a25153`) so all six
+ * labels read as category names rather than item counts (QA and Glossary
+ * were already singular/uncountable).
  */
 export const TAB_IDS = ['memos', 'todos', 'questions', 'bugs', 'rules', 'glossary'] as const;
 
@@ -12,8 +15,8 @@ export const TAB_LABELS: Record<TabId, string> = {
   memos: 'Memo',
   todos: 'Todo',
   questions: 'QA',
-  bugs: 'Bugs',
-  rules: 'Rules',
+  bugs: 'Bug',
+  rules: 'Rule',
   glossary: 'Glossary',
 };
 

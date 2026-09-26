@@ -14,7 +14,7 @@ export interface ComposerError {
   error: string;
 }
 
-// Ordered to match the tab bar (Memo/Todo/QA/Bugs/Rules/Glossary, q&a
+// Ordered to match the tab bar (Memo/Todo/QA/Bug/Rule/Glossary, q&a
 // `70787501f3f3`) rather than the earlier, undocumented ordering -- the
 // human asked whether that order had a real reason behind it; it did not
 // (inherited verbatim from mtqg's own pre-Bugs/Rules design doc, q&a

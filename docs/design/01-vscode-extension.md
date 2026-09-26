@@ -119,7 +119,7 @@
 - glossaryは「Defined a term」という投稿として流れる
 - ruleは「Adopted a rule」という投稿として流れる
 
-入力欄は、普段はmemoとして投稿し、`/todo`、`/qa`、`/bug`、`/rule`、`/glossary`のようなスラッシュコマンドで種類を書き分ける。新しい操作を足さず、見慣れた作法で書き分けられるようにする。**この並びはタブバーの順（Memo/Todo/QA/Bugs/Rules/Glossary）に合わせている**（決定、2026-09-26、q&a`112863a3fc43`）。元の並び（`/todo`・`/qa`・`/bug`・`/glossary`・`/rule`）はmtqg本体の旧設計文書（bug・rule追加前）の一文をそのまま引き写したもので、タブの並びを決めた際（q&a`70787501f3f3`）に見直されておらず根拠が無かったため直した。
+入力欄は、普段はmemoとして投稿し、`/todo`、`/qa`、`/bug`、`/rule`、`/glossary`のようなスラッシュコマンドで種類を書き分ける。新しい操作を足さず、見慣れた作法で書き分けられるようにする。**この並びはタブバーの順（Memo/Todo/QA/Bug/Rule/Glossary）に合わせている**（決定、2026-09-26、q&a`112863a3fc43`）。元の並び（`/todo`・`/qa`・`/bug`・`/glossary`・`/rule`）はmtqg本体の旧設計文書（bug・rule追加前）の一文をそのまま引き写したもので、タブの並びを決めた際（q&a`70787501f3f3`）に見直されておらず根拠が無かったため直した。
 
 **Undoの置き場所**（決定、2026-09-26、q&a`e11514c49f`）。`mtqg undo`は「このセッションが最後に書いた1行を戻す」という単発の仕組みで、記録の種類やタブに紐づかない。この拡張はmtqgをパイプ経由で呼ぶため`tty`が付かず、どのタブから操作しても書き込みは1つの対象を共有する（`docs/reference/cli.md`「undo」）。したがってUndoをタブごとに置くと別タブの操作を戻してしまい得るため、全種類を横断して見るMemoタイムラインだけに置く。MVPの着手順（Rules/Glossary→ToDo→QA→Bugs→Memo）はこのために変えない。Memo画面ができるまでUIからのUndoは無く、それは許容する。**実装時（todo`01ee2706ce`、下記）に、当初考えていた「一番新しい投稿にだけ結び付ける」形から、「入力欄の横に常設し結果を一行表示する」形に変えた**（人間へのAskUserQuestionでの確認、推奨案どおり）。同じタブに1つだけ、という制約は変わらないので別タブの操作を戻してしまう懸念は解消されたままで、特定の投稿要素に結び付けない分実装が単純になる。
 
@@ -146,7 +146,7 @@
 - 対象はまずVSCode系のエディタ（Cursor等を含む）に絞る。他のエディタは必要になってから考える
 - **別リポジトリにする**（TypeScript/Node.jsをmtqg本体に持ち込まない。このリポジトリがそれにあたる）
 - **MVPは画面ごとに完成させる**（決定、2026-09-26、q&a`f5587ff34d`）。表示と操作をそろえてから次の画面に進む。順番はRules/Glossary→ToDo→QA→Bugs→Memo（詳細は`mtqg show acd71a3a7b`）
-- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**（決定、2026-09-26、q&a`0736e37fd7`）。バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める。タブの並びは`Memo・Todo・QA・Bugs・Rules・Glossary`（決定、2026-09-26、q&a`70787501f3f3`。人間の指示でMemoを先頭に、ラベルも単数形・QAに変更——`.claude/rules/naming.md`の用語対応表の複数形を使うとした当初の決定、q&a`25f60225e5`を上書きした）
+- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**（決定、2026-09-26、q&a`0736e37fd7`）。バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める。タブの並びは`Memo・Todo・QA・Bug・Rule・Glossary`（決定、2026-09-26、q&a`70787501f3f3`・`a1daf7a25153`。人間の指示でMemoを先頭に、ラベルもすべて単数形・QAに変更——`.claude/rules/naming.md`の用語対応表の複数形を使うとした当初の決定、q&a`25f60225e5`を上書きした。最初はBugs/Rulesだけ複数形のままだったが、単数形で統一したい旨の人間の相談に応じてBug/Ruleに揃えた）
 - Webviewの土台（タブ・CSP・メッセージ・`FileSystemWatcher`）はtodo`b9caf0b88c`で作った。設計・配置の詳細は`.claude/rules/directory-structure.md`・`.claude/rules/testing.md`
 - **タブバーはスクロールしても画面上端に固定表示する**（人間の指示、2026-09-26、q&a`70787501f3f3`）。`[role="tablist"]`に`position: sticky; top: 0`を付け、下に重なるコンテンツが透けないよう背景色も明示した（`src/webview/shared/html.ts`）
 
