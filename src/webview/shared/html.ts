@@ -84,6 +84,55 @@ export function renderShell(options: ShellOptions): string {
     [role="tabpanel"] {
       padding: 12px;
     }
+    .error {
+      color: var(--vscode-errorForeground);
+    }
+    .mtqg-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .mtqg-table th {
+      text-align: left;
+      border-bottom: 1px solid var(--vscode-panel-border);
+      padding: 4px 8px;
+    }
+    .mtqg-table td {
+      border-bottom: 1px solid var(--vscode-panel-border);
+      padding: 4px 8px;
+      vertical-align: top;
+    }
+    .mtqg-table .add-row {
+      color: var(--vscode-descriptionForeground);
+    }
+    .mtqg-table td.editable {
+      cursor: text;
+    }
+    .mtqg-table td.editable:empty::before {
+      content: attr(aria-label);
+      opacity: 0.6;
+    }
+    .mtqg-table td.editable:focus {
+      outline: 1px solid var(--vscode-focusBorder);
+      color: var(--vscode-foreground);
+    }
+    .mtqg-table tr[data-id] td.duplicate {
+      background-color: var(--vscode-inputValidation-warningBackground);
+    }
+    .mtqg-table .dup-badge {
+      font-size: 0.85em;
+      opacity: 0.85;
+    }
+    .mtqg-table button[data-action="delete"] {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    .mtqg-table button[data-action="delete"]:hover {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>

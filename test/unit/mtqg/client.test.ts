@@ -136,6 +136,30 @@ test('text starting with "-" is recorded literally, not parsed as an option', as
   }
 });
 
+test('edit does not prepend a stray "--" to the new text (unlike add, edit needs no separator)', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.memoAdd('original');
+    const edited = await client.edit(added.data.record.id, 'hello world');
+    assert.equal(edited.data.record.text, 'hello world');
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('edit records dash-prefixed text literally too', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.memoAdd('original');
+    const edited = await client.edit(added.data.record.id, '-1 is not a valid index');
+    assert.equal(edited.data.record.text, '-1 is not a valid index');
+  } finally {
+    await repo.cleanup();
+  }
+});
+
 test('empty or blank text is rejected without invoking mtqg', async () => {
   const repo = await createTempRepo();
   try {

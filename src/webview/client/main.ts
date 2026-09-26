@@ -45,6 +45,84 @@ declare function acquireVsCodeApi(): {
     vscode.postMessage({ type: 'selectTab', tab });
   });
 
+  // Generic table interactions (Rules/Glossary, and any future screen that
+  // follows the same data-field/data-action convention -- this script does
+  // not otherwise know what a screen looks like, q&a `0736e37fd7`).
+
+  function tabOf(element: HTMLElement): string | undefined {
+    return element.closest<HTMLElement>('[role="tabpanel"]')?.dataset.tab;
+  }
+
+  document.addEventListener('focusout', (event) => {
+    const cell = (event.target as HTMLElement).closest<HTMLElement>('[data-field]');
+    if (!cell) {
+      return;
+    }
+    const tab = tabOf(cell);
+    const row = cell.closest<HTMLElement>('tr');
+    if (!tab || !row) {
+      return;
+    }
+    const value = (cell.textContent ?? '').trim();
+    const id = row.dataset.id;
+
+    if (id) {
+      // Editing an existing record's text (mtqg `edit`, kind-independent).
+      const original = cell.dataset.original ?? '';
+      if (value === '') {
+        cell.textContent = original;
+        return;
+      }
+      if (value === original) {
+        return;
+      }
+      vscode.postMessage({ type: 'editRecord', tab, id, text: value });
+      return;
+    }
+
+    // The always-present "add" row (no id yet).
+    if (tab === 'rules') {
+      if (value === '') {
+        return;
+      }
+      vscode.postMessage({ type: 'addRule', tab, text: value });
+    } else if (tab === 'glossary') {
+      const word = row.querySelector<HTMLElement>('[data-field="word"]')?.textContent?.trim() ?? '';
+      const text = row.querySelector<HTMLElement>('[data-field="text"]')?.textContent?.trim() ?? '';
+      if (!word || !text) {
+        return; // wait until both cells of the new entry are filled
+      }
+      vscode.postMessage({ type: 'addGlossary', tab, word, text });
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    const cell = (event.target as HTMLElement).closest<HTMLElement>('[data-field]');
+    if (!cell) {
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault(); // contenteditable's default is a line break
+      cell.blur();
+    } else if (event.key === 'Escape') {
+      cell.textContent = cell.dataset.original ?? '';
+      cell.blur();
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action="delete"]');
+    if (!button) {
+      return;
+    }
+    const tab = tabOf(button);
+    const id = button.closest<HTMLElement>('tr')?.dataset.id;
+    if (!tab || !id) {
+      return;
+    }
+    vscode.postMessage({ type: 'deleteRecord', tab, id });
+  });
+
   window.addEventListener('message', (event) => {
     const message = event.data as { type?: string; tab?: string; html?: string };
     if (message?.type !== 'render' || !message.tab) {

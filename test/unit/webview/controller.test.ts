@@ -106,6 +106,104 @@ test('an invalid message is ignored', async () => {
   }
 });
 
+test('addRule writes through mtqg and re-renders the rules tab', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'addRule', tab: 'rules', text: 'Write records in English' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.equal(posts[0].tab, 'rules');
+    assert.match(posts[0].html, /Write records in English/);
+    const list = await client.ruleList();
+    assert.equal(list.data.count, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('addGlossary writes through mtqg and re-renders the glossary tab', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'addGlossary', tab: 'glossary', word: 'token', text: 'a lexical unit' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /a lexical unit/);
+    const list = await client.glossaryList();
+    assert.equal(list.data.entries, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('editRecord changes an existing record\'s text', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.ruleAdd('original text');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'editRecord', tab: 'rules', id: added.data.record.id, text: 'edited text' });
+    await waitUntil(() => posts.length === 1);
+
+    // Exact match, not just a substring: catches a stray separator getting
+    // prepended to the saved text (bug found via todo daf43fc83d's manual
+    // check -- src/mtqg/client.ts `edit` used to add "-- " in front).
+    assert.match(posts[0].html, /data-original="edited text"/);
+    assert.doesNotMatch(posts[0].html, /original text/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('deleteRecord hides the record from the re-rendered tab', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.ruleAdd('to be deleted');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'deleteRecord', tab: 'rules', id: added.data.record.id });
+    await waitUntil(() => posts.length === 1);
+
+    assert.doesNotMatch(posts[0].html, /to be deleted/);
+    const list = await client.ruleList();
+    assert.equal(list.data.count, 0);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('a write to an unknown id renders mtqg\'s own error instead of crashing the controller', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'editRecord', tab: 'rules', id: 'zzzzzzzz', text: 'anything' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /class="error"/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
 test('outside an initialized repository, the rendered tab shows mtqg\'s own error message', async () => {
   const repo = await createTempGitRepo();
   try {

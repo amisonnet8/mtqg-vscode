@@ -1,6 +1,6 @@
 # ディレクトリ構成
 
-`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）で作ったもの。それ以外は、後続のtodoで足す予定のもの。
+`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）で作ったもの。それ以外は、後続のtodoで足す予定のもの。
 
 ```
 mtqg-vscode/
@@ -27,7 +27,12 @@ mtqg-vscode/
 *│   └── webview/
 *│       ├── panel.ts        （WebviewPanelを1つ開く／revealする。vscodeを触るのはここだけ）
 *│       ├── controller.ts   （vscode非依存。Webviewからのメッセージ→mtqg呼び出し→render送信の一連。node:testで本物のmtqgを使って確認）
-*│       ├── screens.ts      （タブごとのHTML断片を組む。今は全タブ共通のプレースホルダ、各画面のtodoがここに足す）
+*│       ├── screens.ts      （renderScreenがタブIDで各画面の描画関数へ振り分ける。renderErrorもここ）
+*│       ├── screens/         （画面ごとの描画。vscode非依存、node:testで確認）
+*│       │   ├── format.ts   （日付の表示整形）
+*│       │   ├── table.ts    （Rules/Glossary共通の表セル部品：編集可能セル・削除ボタン等）
+*│       │   ├── rules.ts    （renderRules）
+*│       │   └── glossary.ts （renderGlossary：重複語のバッジ付け）
 *│       ├── shared/          （6画面共通、vscode非依存。node:testで確認できる）
 *│       │   ├── html.ts     （renderShell：CSP・タブバー・タブパネルの外枠）
 *│       │   ├── tabs.ts     （6画面のID・ラベル・既定タブ）
@@ -40,6 +45,7 @@ mtqg-vscode/
 *│   ├── unit/                （node:test。VSCode APIを使わないテスト）
 *│   │   ├── mtqg/
 *│   │   └── webview/
+*│   │       └── screens/
 *│   ├── helpers/tempRepo.ts  （git init＋mtqg initした一時リポジトリ）
 *│   └── vscode/              （@vscode/test-electronで拡張開発ホストを起動するテスト。.claude/rules/testing.md）
 *│       ├── runTest.ts      （一時mtqgリポジトリをワークスペースとして開く）
@@ -54,7 +60,8 @@ mtqg-vscode/
 
 - **mtqgを呼ぶコードは`src/mtqg/`に集める。** 呼び出し（`child_process.execFile`、引数の組み立て、`--json`の結果の型付け）をここ以外に散らさない（`.claude/rules/mtqg-cli.md`「入口ごとに状態の組み立てを重複させない」）
 - **HTMLはホスト側（Node）で組む。Webview側は組み立てない。**（q&a`0736e37fd7`）。バンドラ無し・実行時依存0の制約下で、ロジックをすべて`node:test`で試せるようにするため。拡張ホストが`src/webview/screens.ts`でタブごとのHTML文字列を組み、`src/webview/controller.ts`が`render`メッセージとしてWebviewへ送る。Webview側の`src/webview/client/main.ts`は、受け取った断片を`innerHTML`に差し込み、クリックを`selectTab`としてホストへ伝えるだけの小さな固定スクリプト（インラインのイベントハンドラは使わずイベント委譲＋`data-tab`属性で、CSPの`script-src`を緩めない）
-- **画面ごとの中身は`src/webview/screens.ts`の`renderScreen(tab, client)`に足す。** タブという横串の構造（`shared/tabs.ts`）と、画面ごとのレイアウトを分けている
+- **画面ごとの中身は`src/webview/screens/`に1ファイルずつ足し、`screens.ts`の`renderScreen`から振り分ける。** タブという横串の構造（`shared/tabs.ts`）と、画面ごとのレイアウトを分けている。複数の画面にまたがる部品（編集可能セル・削除ボタンなど）は`screens/table.ts`のように共通化する
+- **編集・削除は種別非依存のメッセージ（`editRecord`・`deleteRecord`）にする。** mtqgの`edit`/`delete`自体が記録の種類を問わないのに合わせ、今後の画面（ToDo/QA/Bugs）もこの2つをそのまま使う。追加はコマンドの引数が種類ごとに違う（`ruleAdd(text)`・`glossaryAdd(word, text)`等）ため`addRule`・`addGlossary`のように種類ごとのメッセージにする
 - **`vscode`を触るのは`src/webview/panel.ts`だけ。** `controller.ts`・`screens.ts`・`shared/`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）
 - **Webview内で実際に動くスクリプト（`src/webview/client/`）は別tsconfig。** ホスト側はCommonJS（`vscode`の型）、Webview側はDOM型・ブラウザ向けESM出力で、1つのtsconfigでは両立しない（バンドラを使わない方針、`.claude/rules/dependencies.md`）。ルートの`tsconfig.json`は`src/webview/client`を`exclude`する
 - **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く

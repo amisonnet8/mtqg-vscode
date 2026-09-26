@@ -105,8 +105,14 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
     },
     show: (id: string) => run(['show', id]) as Promise<Result<ShowResult>>,
     search: (text: string) => run(['search', TEXT_SEPARATOR, text]) as Promise<Result<SearchResult>>,
+    // Unlike `add`, `edit` never reads an argument after the ID as an option
+    // (verified against the real binary: `edit <id> --at ...` and even
+    // `edit <id> -- ...` both store the words literally) -- so `--` is not
+    // a separator here, only ordinary text. Passing it anyway would corrupt
+    // every edit with a literal leading "-- " (bug, found via todo
+    // `daf43fc83d`'s manual check, no `--` marker for `edit`).
     edit: (id: string, text: string) =>
-      requireText(text).then(() => run(['edit', id, TEXT_SEPARATOR, text])) as Promise<Result<EditResult>>,
+      requireText(text).then(() => run(['edit', id, text])) as Promise<Result<EditResult>>,
     delete: (id: string) => run(['delete', id]) as Promise<Result<DeleteResult>>,
 
     memoAdd: (text: string, at?: AtInfo) =>

@@ -34,8 +34,8 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
   2. ダウンロード済みのVS Code本体（`.vscode-test/vscode-linux-x64-*/code`）を`DISPLAY=:N`・`--extensionDevelopmentPath=<このリポジトリ>`・`--disable-gpu --disable-workspace-trust --no-sandbox --skip-welcome --skip-release-notes`・一時mtqgリポジトリのパス（ワークスペースとして開く）・`--remote-debugging-port=<port>`で起動（`--disable-extensions`は付けない。拡張自体も無効化されてしまう）
   3. コマンドパレット経由の操作はキー入力の自動化ツール（`xdotool`等）が無いため、`http://localhost:<port>/json`でCDPのターゲット一覧を取り、ページのWebSocketへ`Runtime.evaluate`でコマンドパレット相当の操作を直接実行する（例：オンボーディングダイアログのボタンをテキストで探してクリック）
   4. `import -window root -display :N <path>.png`（ImageMagick）でスクリーンショットを撮り、Readツールで見る
-  5. **Webviewの中身（`vscode-webview://...`のiframe）はさらに`srcdoc`の入れ子フレームで、外側のCDPターゲットからは`document.querySelector`で直接触れない。** タブ切り替えなどWebview内の操作まで自動化したい場合は`Page.createIsolatedWorld`等でフレームの実行コンテキストを取る必要があり、コストが見合わなければ「スクリーンショットで見た目を確認する」だけに留めてよい（初回描画はこれで十分に確認できた）
-  6. 確認後は起動したプロセス（`code`・`Xvfb`）を`kill`し、一時ディレクトリを削除する
+  5. **Webviewの中身は、CDPターゲット一覧の`type: "iframe"`（`vscode-webview://...`、外側のラッパー）に接続し、そこから`document.querySelector('iframe').contentDocument`でもう一段入るとタブの中身に触れる**（同一オリジンなので、これで直接アクセスできる。訂正：todo`b9caf0b88c`時点では`srcdoc`で隔離されクロスオリジン扱いだろうと考えていたが、実際は同一オリジンで、単に一段ネストしているだけだった。VS Codeの外側ワークベンチ（`type: "page"`）から直接`document.querySelector('iframe')`しても見つからない＝そちらではなく`iframe`ターゲット側から辿ること）。クリックだけでなく、`contenteditable`な要素の`textContent`を書き換えてから`element.dispatchEvent(new Event('focusout', {bubbles:true}))`のように合成イベントを飛ばせば、実際にフォーカスを移動させなくても入力→確定の一連を再現できる。同じ`Runtime.evaluate`呼び出しを繰り返すと`const`の再宣言でエラーになるので、実行するスクリプトは`(() => { ... })()`のIIFEで包む
+  6. 確認後は起動したプロセス（`code`・`Xvfb`）を`kill`し、一時ディレクトリを削除する（`pkill`はこの環境のサンドボックスで通らないことがある。`ps aux`で対象のPIDを見つけ、`kill -9 <pid...>`で個別に殺す方が安定する）
 - この手順は6画面それぞれのtodoで繰り返す見込み。同じ手順を素の状態から毎回組み立てるのはコストなので、繰り返す段階でSkill化を検討する（提案済み、todo`b9caf0b88c`）
 
 ## CI（予定）
