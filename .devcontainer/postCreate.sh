@@ -29,12 +29,14 @@ sudo apt-get install -y gh
 
 # qsoku: build/check/test entry points, once the extension's own qsokufile
 # exists (mtqg's .claude/rules/testing.md, docs/design/history.md 2026-09-23).
-# Pinned so a qsoku regression cannot break this container unnoticed.
-go install github.com/amisonnet8/qsoku/cmd/qsoku@v0.1.1
+# @latest, not pinned, while qsoku itself is still moving fast (decision,
+# 2026-09-26, mirrors mtqg's own devcontainer/CI). Re-pin to a specific
+# release once mtqg's own development settles down.
+go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 
 # mtqg: the process record for this repository (.claude/rules/mtqg-usage.md).
-# A pinned, known-good version, installed the same way mtqg's own devcontainer
-# installs it -- a broken build must not be able to corrupt its own records.
+# A pinned, known-good release of a separate, external project -- a broken
+# build there must not be able to corrupt this repository's own records.
 go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.2.0
 
 # Wire up qsoku's shell integration (working-directory carry-back and
@@ -43,6 +45,11 @@ go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.2.0
 # are intentional -- the line is meant to land in the rc file unexpanded.
 # shellcheck disable=SC2016
 grep -qF 'qsoku .shell bash' ~/.bashrc 2>/dev/null || echo 'eval "$(qsoku .shell bash)"' >>~/.bashrc
+
+# mtqg's own bash completion, for interactive use in this container (mtqg
+# completion <shell>, mtqg's docs/reference/cli.md).
+mkdir -p ~/.local/share/bash-completion/completions
+mtqg completion bash >~/.local/share/bash-completion/completions/mtqg
 
 # npm dependencies for the extension itself, once package.json exists.
 if [ -f package.json ]; then

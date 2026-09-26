@@ -4,7 +4,7 @@
 
 ## mtqg-vscodeとは
 
-mtqg（**(m)emo・(t)odo・(q)a & bugs・(g)lossary** を`.mtqg/journal.jsonl`に追記するCLIツール、`github.com/amisonnet8/mtqg`）を、人間が作業の流れの中で使うためのVSCode拡張。**記録作成のアシストと、状態・過程の表示に絞る**（mtqg設計§11.4）。
+mtqg（**(m)emo & rules・(t)odo・(q)a & bugs・(g)lossary** を`.mtqg/journal.jsonl`に追記するCLIツール、`github.com/amisonnet8/mtqg`）を、人間が作業の流れの中で使うためのVSCode拡張。**記録作成のアシストと、状態・過程の表示に絞る**（mtqg設計§11.4）。
 
 mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmtqg本体のCLIに任せ、この拡張は`--json`で呼び出す入口の1つに徹する（`.claude/rules/mtqg-cli.md`）。TypeScript・Node.jsのコードはこのリポジトリだけに置き、mtqg本体には持ち込まない。
 
@@ -13,7 +13,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 - **`docs/design/`** — 設計判断と理由の記録（日本語）。`01-vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）。**このリポジトリに`PLAN.md`は無い。`mtqg context`が現状・今後を知るための一次情報**
 - **`.claude/rules/mtqg-cli.md`** — mtqg本体とのつながり方（子プロセス起動、`--json`、エラーの扱い）
-- **`.claude/rules/ui.md`** — UIの方針（英語・文字に頼らない、4画面、機能を足さない原則、レイアウト詳細は未定）
+- **`.claude/rules/ui.md`** — UIの方針（英語・文字に頼らない、6画面、機能を足さない原則、レイアウト詳細は未定）
 - **`.claude/rules/dependencies.md`** — npm依存の線引き
 - **`.claude/rules/directory-structure.md`** — ディレクトリ構成と配置の判断基準
 - **`.claude/rules/testing.md`** — テスト方針
