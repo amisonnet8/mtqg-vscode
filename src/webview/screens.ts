@@ -1,14 +1,17 @@
 import type { MtqgClient } from '../mtqg/client';
 import { renderGlossary } from './screens/glossary';
+import { renderQuestions } from './screens/questions';
 import { renderRules } from './screens/rules';
 import { renderTodos } from './screens/todos';
 import { escapeHtml } from './shared/escape';
 import { TAB_LABELS, type TabId } from './shared/tabs';
 
 /** Per-tab display options that are not part of the record data itself
- * (e.g. the "Show done" toggle) -- kept by the controller, not mtqg. */
+ * (e.g. the "Show done"/"Show answered" toggle, which question threads are
+ * expanded) -- kept by the controller, not mtqg. */
 export interface ScreenView {
   all?: boolean;
+  expanded?: Set<string>;
 }
 
 /**
@@ -36,6 +39,11 @@ export async function renderScreen(tab: TabId, client: MtqgClient, view: ScreenV
         return renderGlossary((await client.glossaryList()).data.records);
       case 'todos':
         return renderTodos((await client.todoList({ all: true })).data.records, { all: view.all });
+      case 'questions':
+        return renderQuestions((await client.qaList({ all: true })).data.records, {
+          all: view.all,
+          expanded: view.expanded,
+        });
       default:
         await client.status();
         return `<p class="placeholder">${escapeHtml(TAB_LABELS[tab])}: coming soon.</p>`;

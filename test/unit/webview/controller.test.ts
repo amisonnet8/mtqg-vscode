@@ -216,6 +216,105 @@ test('setShowAll reveals done todos, and the toggle survives a later journalChan
   }
 });
 
+test('addQuestion writes through mtqg and re-renders the questions tab', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'addQuestion', tab: 'questions', text: 'Should we cache this?' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /Should we cache this\?/);
+    const list = await client.qaList();
+    assert.equal(list.data.open, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('addAnswer adds a reply to the question, visible once expanded', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'toggleExpand', tab: 'questions', id: asked.data.record.id, expanded: true });
+    await waitUntil(() => posts.length === 1);
+
+    controller.handleMessage({ type: 'addAnswer', tab: 'questions', id: asked.data.record.id, text: 'Yes, in v2' });
+    await waitUntil(() => posts.length === 2);
+
+    assert.match(posts[1].html, /Yes, in v2/);
+    const list = await client.qaList();
+    assert.equal(list.data.records[0].replies?.[0]?.text, 'Yes, in v2');
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('setStatus on the questions tab marks a question answered, and reopens it', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'setStatus', tab: 'questions', id: asked.data.record.id, done: true });
+    await waitUntil(() => posts.length === 1);
+    let list = await client.qaList({ all: true });
+    assert.equal(list.data.records[0].status, 'done');
+
+    controller.handleMessage({ type: 'setStatus', tab: 'questions', id: asked.data.record.id, done: false });
+    await waitUntil(() => posts.length === 2);
+    list = await client.qaList({ all: true });
+    assert.equal(list.data.records[0].status, 'open');
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('toggleExpand shows the reply thread, and the state survives a later journalChanged re-render', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    await client.qaAnswer(asked.data.record.id, 'Yes, in v2');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'ready', tab: 'questions' });
+    await waitUntil(() => posts.length === 1);
+    // The reply is in the markup either way (it's a `hidden` <tr>, not
+    // omitted) -- collapsed is checked via the detail row's `hidden`
+    // attribute and the toggle button's `aria-expanded`, not by the
+    // reply's absence.
+    assert.match(posts[0].html, /class="qa-detail"[^>]* hidden>/);
+    assert.match(posts[0].html, /aria-expanded="false"/);
+
+    controller.handleMessage({ type: 'toggleExpand', tab: 'questions', id: asked.data.record.id, expanded: true });
+    await waitUntil(() => posts.length === 2);
+    assert.doesNotMatch(posts[1].html, /class="qa-detail"[^>]* hidden>/);
+    assert.match(posts[1].html, /aria-expanded="true"/);
+    assert.match(posts[1].html, /Yes, in v2/);
+
+    controller.journalChanged();
+    await waitUntil(() => posts.length === 3, 2000);
+    assert.doesNotMatch(posts[2].html, /class="qa-detail"[^>]* hidden>/);
+    assert.match(posts[2].html, /Yes, in v2/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
 test('editRecord changes an existing record\'s text', async () => {
   const repo = await createTempRepo();
   try {

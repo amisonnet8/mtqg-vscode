@@ -35,9 +35,12 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
   // in mtqg, since it is a display preference, not a record (ui.md「機能は
   // 足さない」) -- resets to the default when the panel is reopened.
   const showAll = new Set<TabId>();
+  // Which question threads are expanded (todo `8b7b600827`), same reasoning
+  // as showAll: a display state, not something mtqg records.
+  const expanded = new Map<TabId, Set<string>>();
 
   function viewFor(tab: TabId): ScreenView {
-    return { all: showAll.has(tab) };
+    return { all: showAll.has(tab), expanded: expanded.get(tab) };
   }
 
   /** Runs `supplier`, then posts its HTML to `tab` unless a later render has since started. */
@@ -88,15 +91,23 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
       case 'addTodo':
         runWrite(message.tab, () => client.todoAdd(message.text));
         return;
+      case 'addQuestion':
+        runWrite(message.tab, () => client.qaAsk(message.text));
+        return;
+      case 'addAnswer':
+        runWrite(message.tab, () => client.qaAnswer(message.id, message.text));
+        return;
       case 'editRecord':
         runWrite(message.tab, () => client.edit(message.id, message.text));
         return;
       case 'deleteRecord':
         runWrite(message.tab, () => client.delete(message.id));
         return;
-      case 'setStatus':
-        runWrite(message.tab, () => (message.done ? client.todoDone(message.id) : client.todoReopen(message.id)));
+      case 'setStatus': {
+        const [done, reopen] = message.tab === 'questions' ? [client.qaDone, client.qaReopen] : [client.todoDone, client.todoReopen];
+        runWrite(message.tab, () => (message.done ? done(message.id) : reopen(message.id)));
         return;
+      }
       case 'setShowAll':
         if (message.all) {
           showAll.add(message.tab);
@@ -105,6 +116,17 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
         }
         render(message.tab);
         return;
+      case 'toggleExpand': {
+        const tabExpanded = expanded.get(message.tab) ?? new Set<string>();
+        if (message.expanded) {
+          tabExpanded.add(message.id);
+        } else {
+          tabExpanded.delete(message.id);
+        }
+        expanded.set(message.tab, tabExpanded);
+        render(message.tab);
+        return;
+      }
     }
   }
 

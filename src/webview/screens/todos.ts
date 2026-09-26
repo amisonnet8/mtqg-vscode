@@ -57,7 +57,7 @@ export function renderTodos(records: TodoRecord[], view: TodosView = {}): string
     ? `<h3 class="done-heading">Done (${done.length})</h3><div class="mtqg-cards">${done.map(card).join('')}</div>`
     : '';
 
-  return `<div class="todos-toolbar">
+  return `<div class="screen-toolbar">
   <div class="add-row">${editableElement('div', 'text', '', 'New todo…')}</div>
   <label><input type="checkbox" data-action="show-all"${all ? ' checked' : ''}> Show done (${done.length})</label>
 </div>

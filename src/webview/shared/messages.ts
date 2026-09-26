@@ -14,12 +14,17 @@ export type WebviewMessage =
   | { type: 'addRule'; tab: TabId; text: string }
   | { type: 'addGlossary'; tab: TabId; word: string; text: string }
   | { type: 'addTodo'; tab: TabId; text: string }
+  | { type: 'addQuestion'; tab: TabId; text: string }
+  | { type: 'addAnswer'; tab: TabId; id: string; text: string }
   | { type: 'editRecord'; tab: TabId; id: string; text: string }
   | { type: 'deleteRecord'; tab: TabId; id: string }
   // Kind-independent, mirroring editRecord/deleteRecord above: QA/Bugs
   // (todo `8b7b600827`/`13570d152b`) reuse this for their own done/reopen.
   | { type: 'setStatus'; tab: TabId; id: string; done: boolean }
-  | { type: 'setShowAll'; tab: TabId; all: boolean };
+  | { type: 'setShowAll'; tab: TabId; all: boolean }
+  // Display-only state (todo `8b7b600827`): which question's reply thread
+  // is open. Not a record, so it never reaches mtqg.
+  | { type: 'toggleExpand'; tab: TabId; id: string; expanded: boolean };
 
 /** Sent by the host (src/webview/controller.ts) to the Webview. */
 export interface HostMessage {
@@ -41,7 +46,7 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
   if (typeof value !== 'object' || value === null) {
     return undefined;
   }
-  const { type, tab, id, word, text, done, all } = value as Record<string, unknown>;
+  const { type, tab, id, word, text, done, all, expanded } = value as Record<string, unknown>;
   if (!isTabId(tab)) {
     return undefined;
   }
@@ -58,6 +63,12 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
   if (type === 'addTodo' && typeof text === 'string') {
     return { type, tab, text };
   }
+  if (type === 'addQuestion' && typeof text === 'string') {
+    return { type, tab, text };
+  }
+  if (type === 'addAnswer' && typeof id === 'string' && typeof text === 'string') {
+    return { type, tab, id, text };
+  }
   if (type === 'editRecord' && typeof id === 'string' && typeof text === 'string') {
     return { type, tab, id, text };
   }
@@ -69,6 +80,9 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
   }
   if (type === 'setShowAll' && typeof all === 'boolean') {
     return { type, tab, all };
+  }
+  if (type === 'toggleExpand' && typeof id === 'string' && typeof expanded === 'boolean') {
+    return { type, tab, id, expanded };
   }
   return undefined;
 }

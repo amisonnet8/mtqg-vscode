@@ -36,6 +36,17 @@ export function authorCell(author: Author): string {
   return plainCell(authorText(author));
 }
 
+/**
+ * A small text badge, never colour alone (ui.md「色だけで意味を伝えない」).
+ * Used for the AI/human distinction on a QA answer (ui.md「AIが推測で書いた
+ * 回答」「人間が確定させた回答」, todo `8b7b600827`) the same way Glossary's
+ * `dup-badge` flags a duplicate word.
+ */
+export function badge(text: string, extraClass?: string): string {
+  const cls = extraClass ? `badge ${extraClass}` : 'badge';
+  return `<span class="${cls}">${escapeHtml(text)}</span>`;
+}
+
 export function dateText(iso: string): string {
   return formatDate(iso);
 }

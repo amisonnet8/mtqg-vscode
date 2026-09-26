@@ -133,20 +133,20 @@ export function renderShell(options: ShellOptions): string {
     button[data-action="delete"]:hover {
       opacity: 1;
     }
-    .todos-toolbar {
+    .screen-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
       margin-bottom: 12px;
     }
-    .todos-toolbar .add-row {
+    .screen-toolbar .add-row {
       flex: 1;
       border: 1px solid var(--vscode-panel-border);
       border-radius: 4px;
       padding: 6px 10px;
     }
-    .todos-toolbar label {
+    .screen-toolbar label {
       white-space: nowrap;
     }
     .done-heading {
@@ -190,6 +190,55 @@ export function renderShell(options: ShellOptions): string {
     }
     .card button[data-action="delete"] {
       align-self: flex-end;
+    }
+    button[data-action="toggle-expand"] {
+      font-family: inherit;
+      color: inherit;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .mtqg-table tr.section-heading td {
+      color: var(--vscode-descriptionForeground);
+      font-size: 0.9em;
+      border-bottom: none;
+      padding-top: 16px;
+    }
+    .qa-detail td {
+      background-color: var(--vscode-textCodeBlock-background);
+    }
+    .qa-thread {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .qa-reply {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .qa-reply .editable {
+      flex: 1;
+    }
+    .qa-reply-meta {
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+      white-space: nowrap;
+    }
+    .badge {
+      font-size: 0.75em;
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 3px;
+      padding: 0 4px;
+      white-space: nowrap;
+    }
+    .badge-ai {
+      border-color: var(--vscode-charts-purple, var(--vscode-panel-border));
+    }
+    .badge-human {
+      border-color: var(--vscode-charts-green, var(--vscode-panel-border));
     }
   </style>
 </head>

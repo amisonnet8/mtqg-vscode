@@ -38,6 +38,7 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
   4. `import -window root -display :N <path>.png`（ImageMagick）でスクリーンショットを撮り、Readツールで見る
   5. **Webviewの中身は、CDPターゲット一覧の`type: "iframe"`（`vscode-webview://...`、外側のラッパー）に接続し、そこから`document.querySelector('iframe').contentDocument`でもう一段入るとタブの中身に触れる**（同一オリジンなので、これで直接アクセスできる。訂正：todo`b9caf0b88c`時点では`srcdoc`で隔離されクロスオリジン扱いだろうと考えていたが、実際は同一オリジンで、単に一段ネストしているだけだった。VS Codeの外側ワークベンチ（`type: "page"`）から直接`document.querySelector('iframe')`しても見つからない＝そちらではなく`iframe`ターゲット側から辿ること）。クリックだけでなく、`contenteditable`な要素の`textContent`を書き換えてから`element.dispatchEvent(new Event('focusout', {bubbles:true}))`のように合成イベントを飛ばせば、実際にフォーカスを移動させなくても入力→確定の一連を再現できる。同じ`Runtime.evaluate`呼び出しを繰り返すと`const`の再宣言でエラーになるので、実行するスクリプトは`(() => { ... })()`のIIFEで包む
   6. 確認後は起動したプロセス（`code`・`Xvfb`）を`kill`し、一時ディレクトリを削除する（`pkill`はこの環境のサンドボックスで通らないことがある。`ps aux`で対象のPIDを見つけ、`kill -9 <pid...>`で個別に殺す方が安定する）
+  7. **他のタブの`hidden`な内容も同じDOMに残っている。** `render`はそのタブの`panel-<id>`だけを書き換え、他のタブは`hidden`属性がつくだけで中身は消えない（起動直後の`ready`で最初に描画されたタブぶんも含む）。そのため`data-action="toggle-status"`のような共通セレクタを`document`全体に対して`querySelector`すると、見えている画面ではなく別の（隠れた）タブの要素を誤って掴むことがある（todo`8b7b600827`で発見：QA画面のチェックボックスのつもりがToDo画面の要素を操作していた）。CDPからの操作は必ず`#panel-<tab-id>`配下に絞る（例：`querySelector('#panel-questions [data-action="toggle-status"]')`）
 - この手順は6画面それぞれのtodoで繰り返す見込み。同じ手順を素の状態から毎回組み立てるのはコストなので、繰り返す段階でSkill化を検討する（提案済み、todo`b9caf0b88c`）
 
 ## CI（予定）

@@ -101,6 +101,21 @@ declare function acquireVsCodeApi(): {
         return;
       }
       vscode.postMessage({ type: 'addTodo', tab, text: value });
+    } else if (tab === 'questions') {
+      if (value === '') {
+        return;
+      }
+      // A per-question reply field (`.add-row` nested inside that
+      // question's detail row, todo `8b7b600827`) carries the question's
+      // id via `data-question-id` -- distinct from `data-id`, which would
+      // otherwise route this into the "editing an existing record" branch
+      // above instead of adding a new reply.
+      const questionId = row.dataset.questionId;
+      if (questionId) {
+        vscode.postMessage({ type: 'addAnswer', tab, id: questionId, text: value });
+      } else {
+        vscode.postMessage({ type: 'addQuestion', tab, text: value });
+      }
     }
   });
 
@@ -138,16 +153,27 @@ declare function acquireVsCodeApi(): {
   });
 
   document.addEventListener('click', (event) => {
-    const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action="delete"]');
-    if (!button) {
+    const target = event.target as HTMLElement;
+
+    const deleteButton = target.closest<HTMLElement>('[data-action="delete"]');
+    if (deleteButton) {
+      const tab = tabOf(deleteButton);
+      const id = deleteButton.closest<HTMLElement>('[data-id]')?.dataset.id;
+      if (tab && id) {
+        vscode.postMessage({ type: 'deleteRecord', tab, id });
+      }
       return;
     }
-    const tab = tabOf(button);
-    const id = button.closest<HTMLElement>('[data-id]')?.dataset.id;
-    if (!tab || !id) {
-      return;
+
+    const expandButton = target.closest<HTMLElement>('[data-action="toggle-expand"]');
+    if (expandButton) {
+      const tab = tabOf(expandButton);
+      const id = expandButton.closest<HTMLElement>('[data-id]')?.dataset.id;
+      if (tab && id) {
+        const expanded = expandButton.getAttribute('aria-expanded') !== 'true';
+        vscode.postMessage({ type: 'toggleExpand', tab, id, expanded });
+      }
     }
-    vscode.postMessage({ type: 'deleteRecord', tab, id });
   });
 
   window.addEventListener('message', (event) => {

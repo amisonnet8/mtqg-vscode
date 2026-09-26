@@ -119,3 +119,44 @@ test('parseWebviewMessage rejects setShowAll with a non-boolean all', () => {
   assert.equal(parseWebviewMessage({ type: 'setShowAll', tab: 'todos', all: 'yes' }), undefined);
   assert.equal(parseWebviewMessage({ type: 'setShowAll', tab: 'todos' }), undefined);
 });
+
+test('parseWebviewMessage accepts a well-formed addQuestion message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'addQuestion', tab: 'questions', text: 'why?' }), {
+    type: 'addQuestion',
+    tab: 'questions',
+    text: 'why?',
+  });
+});
+
+test('parseWebviewMessage rejects addQuestion without text, or with a non-string text', () => {
+  assert.equal(parseWebviewMessage({ type: 'addQuestion', tab: 'questions' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'addQuestion', tab: 'questions', text: 1 }), undefined);
+});
+
+test('parseWebviewMessage accepts a well-formed addAnswer message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'addAnswer', tab: 'questions', id: 'abc123', text: 'because' }), {
+    type: 'addAnswer',
+    tab: 'questions',
+    id: 'abc123',
+    text: 'because',
+  });
+});
+
+test('parseWebviewMessage rejects addAnswer missing id or text', () => {
+  assert.equal(parseWebviewMessage({ type: 'addAnswer', tab: 'questions', text: 'because' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'addAnswer', tab: 'questions', id: 'abc123' }), undefined);
+});
+
+test('parseWebviewMessage accepts a well-formed toggleExpand message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'toggleExpand', tab: 'questions', id: 'abc123', expanded: true }), {
+    type: 'toggleExpand',
+    tab: 'questions',
+    id: 'abc123',
+    expanded: true,
+  });
+});
+
+test('parseWebviewMessage rejects toggleExpand missing id or with a non-boolean expanded', () => {
+  assert.equal(parseWebviewMessage({ type: 'toggleExpand', tab: 'questions', expanded: true }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'toggleExpand', tab: 'questions', id: 'abc123', expanded: 'yes' }), undefined);
+});
