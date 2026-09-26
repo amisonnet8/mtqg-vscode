@@ -1,0 +1,58 @@
+{
+  "env": {
+    "MTQG_AUTHOR_KIND": "ai",
+    "MTQG_AUTHOR_NAME": "claude-code"
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/build.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "mtqg hook claude-code session-start",
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "mtqg hook claude-code stop",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "ask": [
+      "Bash(git reset --hard*)",
+      "Bash(git clean*)",
+      "Bash(curl*)",
+      "Bash(wget*)",
+      "Bash(*sudo*)",
+      "Bash(gh pr create*)",
+      "Bash(npm install*)",
+      "Bash(npm i *)",
+      "Bash(npm add*)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(gh pr merge*)",
+      "Bash(gh release create*)",
+      "Bash(*vsce publish*)"
+    ]
+  }
+}
