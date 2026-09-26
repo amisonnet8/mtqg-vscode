@@ -40,6 +40,10 @@ test('qa: ask, answer, done', async () => {
 
     const answer = await client.qaAnswer(question.data.record.id, 'Not in v1');
     assert.equal(answer.data.record.re, question.data.record.id);
+    // Exact equality: catches a stray separator prepended to the answer
+    // (same class of bug as glossaryAdd's -- qaAnswer put "--" between the
+    // question ID and the answer, which mtqg does not strip there).
+    assert.equal(answer.data.record.text, 'Not in v1');
 
     const done = await client.qaDone(question.data.record.id);
     assert.equal(done.data.record.status, 'done');
@@ -59,6 +63,8 @@ test('bug: report, reply, done', async () => {
     const bug = await client.bugReport('crashes on empty input');
     const reply = await client.bugReply(bug.data.record.id, 'reproduced on macOS too');
     assert.equal(reply.data.record.re, bug.data.record.id);
+    // Exact equality, same reasoning as qaAnswer's above.
+    assert.equal(reply.data.record.text, 'reproduced on macOS too');
 
     const list = await client.bugList();
     assert.equal(list.data.open, 1);
@@ -76,7 +82,14 @@ test('glossary: add, list, duplicate words are counted', async () => {
   try {
     const client = createMtqgClient(repo.root);
 
-    await client.glossaryAdd('token', 'The smallest unit produced by lexing');
+    const added = await client.glossaryAdd('token', 'The smallest unit produced by lexing');
+    // Exact equality, not a substring check: catches a stray separator
+    // getting prepended to the definition (bug found via todo
+    // `daf43fc83d`'s manual check -- glossaryAdd used to put "--" between
+    // word and definition, which mtqg does not strip there).
+    assert.equal(added.data.record.word, 'token');
+    assert.equal(added.data.record.text, 'The smallest unit produced by lexing');
+
     const once = await client.glossaryList();
     assert.equal(once.data.duplicate_words, 0);
 
@@ -84,6 +97,18 @@ test('glossary: add, list, duplicate words are counted', async () => {
     const twice = await client.glossaryList();
     assert.equal(twice.data.entries, 2);
     assert.equal(twice.data.duplicate_words, 1);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('glossary: a word starting with "-" is recorded literally', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.glossaryAdd('-x', 'a flag some tool uses');
+    assert.equal(added.data.record.word, '-x');
+    assert.equal(added.data.record.text, 'a flag some tool uses');
   } finally {
     await repo.cleanup();
   }
@@ -155,6 +180,30 @@ test('edit records dash-prefixed text literally too', async () => {
     const added = await client.memoAdd('original');
     const edited = await client.edit(added.data.record.id, '-1 is not a valid index');
     assert.equal(edited.data.record.text, '-1 is not a valid index');
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('qaAnswer records dash-prefixed text literally too', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const question = await client.qaAsk('what should this return?');
+    const answer = await client.qaAnswer(question.data.record.id, '-1 on failure');
+    assert.equal(answer.data.record.text, '-1 on failure');
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('bugReply records dash-prefixed text literally too', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const bug = await client.bugReport('crashes sometimes');
+    const reply = await client.bugReply(bug.data.record.id, '-1 reproduces it every time');
+    assert.equal(reply.data.record.text, '-1 reproduces it every time');
   } finally {
     await repo.cleanup();
   }

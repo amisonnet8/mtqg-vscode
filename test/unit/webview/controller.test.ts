@@ -136,7 +136,10 @@ test('addGlossary writes through mtqg and re-renders the glossary tab', async ()
     controller.handleMessage({ type: 'addGlossary', tab: 'glossary', word: 'token', text: 'a lexical unit' });
     await waitUntil(() => posts.length === 1);
 
-    assert.match(posts[0].html, /a lexical unit/);
+    // The exact editable-cell value, not just a substring: catches a stray
+    // separator getting prepended (client.ts `glossaryAdd` bug found via
+    // this todo's manual check).
+    assert.match(posts[0].html, /data-original="a lexical unit"/);
     const list = await client.glossaryList();
     assert.equal(list.data.entries, 1);
     controller.dispose();

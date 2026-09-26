@@ -25,10 +25,12 @@
 ## 壊して確かめる、という考え方
 
 mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちるかを見る）と同じ考え方を持ち込む：**通るだけのテストは、効いているとは限らない。** 今は実装が薄いので専用のSkillは作らず、区切りごとに手で確かめる。同じ手順を繰り返すようになったら、mtqgのSkillに倣って専用のスクリプトを作ることを検討する
+- **記録の本文を確かめるテストは、部分一致（`assert.match`で含むかだけ見る）ではなく完全一致（`assert.equal`）にする。** `client.ts`の`edit`・`glossaryAdd`・`qaAnswer`・`bugReply`が本文の前に余計な`--`を混入させる不具合（`.claude/rules/mtqg-cli.md`）を、まさに部分一致のテストがすり抜けさせていた（`"-- foo"`は`/foo/`にマッチしてしまう）。todo`daf43fc83d`で、人間が実際にUIを操作して初めて発覚した
 
 ## 動かして確かめる
 
 - ロジック上正しそうに見えても、拡張開発ホストで実際に動かして初めて見つかる不具合はある。作業の区切りでは、テストに加えて実際に画面を開いて確かめる
+- **人間がこのdevcontainerに接続したデスクトップ版VS Codeで`F5`（デバッグ実行）すると、拡張機能ホストが起動直後に固まることがある**（`--inspect-brk`でデバッガの接続を待つ状態のまま、リモート経由だと接続が来ず、コマンドが一つも登録されない＝「not found」になる。todo`daf43fc83d`で人間が遭遇）。**`Ctrl+F5`（Run Without Debugging）を使えば、デバッガの接続を待たずに起動できる。** F5を繰り返すと固まったプロセス（`ps aux | grep inspect-brk.*extensionHost`）が溜まるので、必要なら`kill -9`で片付ける
 - **Webviewの見た目は、`node:test`では確認できない**（CSPがスクリプトを止めていないか、`asWebviewUri`のパスが正しいか、実際にテーマ色が反映されるか、など）。この環境（Xvfb）でスクリーンショットを取って確かめる手順（todo`b9caf0b88c`で確立）：
   1. `Xvfb :N -screen 0 1280x800x24 &`（`env -u ELECTRON_RUN_AS_NODE`付き）
   2. ダウンロード済みのVS Code本体（`.vscode-test/vscode-linux-x64-*/code`）を`DISPLAY=:N`・`--extensionDevelopmentPath=<このリポジトリ>`・`--disable-gpu --disable-workspace-trust --no-sandbox --skip-welcome --skip-release-notes`・一時mtqgリポジトリのパス（ワークスペースとして開く）・`--remote-debugging-port=<port>`で起動（`--disable-extensions`は付けない。拡張自体も無効化されてしまう）

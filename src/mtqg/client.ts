@@ -134,9 +134,13 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
       requireText(question).then(() => run(['qa', 'add', ...atArgs(at), TEXT_SEPARATOR, question])) as Promise<
         Result<AddResult<QuestionRecord>>
       >,
+    // `--` goes before the question ID, not between the ID and the answer
+    // (same class of bug as glossaryAdd's, found the same way -- verified
+    // against the real binary: mtqg only scans for options up to the ID's
+    // position, so a `--` placed after it is not stripped).
     qaAnswer: (questionId: string, answer: string, at?: AtInfo) =>
       requireText(answer).then(() =>
-        run(['qa', 'add', ...atArgs(at), questionId, TEXT_SEPARATOR, answer]),
+        run(['qa', 'add', ...atArgs(at), TEXT_SEPARATOR, questionId, answer]),
       ) as Promise<Result<AddResult<AnswerRecord>>>,
     qaList: (opts?: ListOptions) =>
       run(['qa', 'list', ...(opts?.all ? ['--all'] : [])]) as Promise<Result<StatefulListResult<QuestionRecord>>>,
@@ -147,19 +151,25 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
       requireText(text).then(() => run(['bug', 'add', ...atArgs(at), TEXT_SEPARATOR, text])) as Promise<
         Result<AddResult<BugRecord>>
       >,
+    // `--` before the bug ID, not after it -- same reasoning as qaAnswer above.
     bugReply: (bugId: string, text: string, at?: AtInfo) =>
       requireText(text).then(() =>
-        run(['bug', 'add', ...atArgs(at), bugId, TEXT_SEPARATOR, text]),
+        run(['bug', 'add', ...atArgs(at), TEXT_SEPARATOR, bugId, text]),
       ) as Promise<Result<AddResult<ReplyRecord>>>,
     bugList: (opts?: ListOptions) =>
       run(['bug', 'list', ...(opts?.all ? ['--all'] : [])]) as Promise<Result<StatefulListResult<BugRecord>>>,
     bugDone: (id: string) => run(['bug', 'done', id]) as Promise<Result<ChangedResult<BugRecord>>>,
     bugReopen: (id: string) => run(['bug', 'reopen', id]) as Promise<Result<ChangedResult<BugRecord>>>,
 
+    // `--` goes before the word, not between word and definition: like
+    // `edit`, mtqg only scans for options up to the word's position, so a
+    // `--` placed after it is not stripped and becomes literal text
+    // (verified against the real binary -- same class of bug as `edit`'s,
+    // found via todo `daf43fc83d`'s manual check).
     glossaryAdd: (word: string, definition: string, at?: AtInfo) =>
       requireText(word)
         .then(() => requireText(definition))
-        .then(() => run(['glossary', 'add', ...atArgs(at), word, TEXT_SEPARATOR, definition])) as Promise<
+        .then(() => run(['glossary', 'add', ...atArgs(at), TEXT_SEPARATOR, word, definition])) as Promise<
         Result<AddResult<GlossaryRecord>>
       >,
     glossaryList: () => run(['glossary', 'list']) as Promise<Result<GlossaryListResult>>,

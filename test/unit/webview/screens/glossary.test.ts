@@ -55,6 +55,11 @@ test('a real glossary entry added through mtqg renders with its word and definit
   try {
     const client = createMtqgClient(repo.root);
     const added = await client.glossaryAdd('token', 'The smallest unit produced by lexing');
+    // Exact equality on the record itself (not just a substring match on
+    // the rendered HTML): catches a stray separator prepended to the
+    // definition (the client.ts `glossaryAdd` bug found via this todo's
+    // manual check -- a substring match here would not have caught it).
+    assert.equal(added.data.record.text, 'The smallest unit produced by lexing');
     const html = renderGlossary([added.data.record]);
     assert.match(html, /token/);
     assert.match(html, /The smallest unit produced by lexing/);
