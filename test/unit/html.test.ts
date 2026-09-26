@@ -28,6 +28,14 @@ test('renderShell references the client script with the given nonce', () => {
   assert.match(html, /<script nonce="n" src="https:\/\/example\/main\.js"><\/script>/);
 });
 
+test('renderShell keeps the tab bar pinned to the top while the panel scrolls (human\'s request, q&a 70787501f3f3)', () => {
+  const html = render();
+  const styleBlock = html.match(/<style[^>]*>([\s\S]*?)<\/style>/)?.[1] ?? '';
+  const tablistRule = styleBlock.match(/\[role="tablist"\]\s*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(tablistRule, /position:\s*sticky/);
+  assert.match(tablistRule, /top:\s*0/);
+});
+
 test('renderShell renders one tab and one tabpanel per screen, in ui.md\'s order', () => {
   const html = render();
   for (const id of TAB_IDS) {

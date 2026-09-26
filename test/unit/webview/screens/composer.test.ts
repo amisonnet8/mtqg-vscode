@@ -17,6 +17,18 @@ test('parseComposer recognizes /todo, /qa, /bug, /rule', () => {
   assert.deepEqual(parseComposer('/rule write records in English'), { kind: 'rule', text: 'write records in English' });
 });
 
+test('parseComposer recognizes the one-letter aliases /t, /q, /b, /r, /g', () => {
+  assert.deepEqual(parseComposer('/t write more tests'), { kind: 'todo', text: 'write more tests' });
+  assert.deepEqual(parseComposer('/q should we cache this?'), { kind: 'qa', text: 'should we cache this?' });
+  assert.deepEqual(parseComposer('/b crashes on empty input'), { kind: 'bug', text: 'crashes on empty input' });
+  assert.deepEqual(parseComposer('/r write records in English'), { kind: 'rule', text: 'write records in English' });
+  assert.deepEqual(parseComposer('/g token The smallest unit produced by lexing'), {
+    kind: 'glossary',
+    word: 'token',
+    text: 'The smallest unit produced by lexing',
+  });
+});
+
 test('parseComposer splits /glossary on the first space', () => {
   assert.deepEqual(parseComposer('/glossary token The smallest unit produced by lexing'), {
     kind: 'glossary',

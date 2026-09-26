@@ -128,7 +128,7 @@
 - **入力欄は画面下部、投稿は古い→新しい順（新しい投稿が下）。** 上端に「Load earlier」ボタンを置く（AskUserQuestionで確認、推奨案どおり）
 - **さかのぼり読み込みは、下の「mtqg本体への依頼」2.で追加してもらった`log --before`ではなく、`log --limit`を伸ばして毎回取り直す方式にした。** 理由：この拡張は「書き込み後・journal変更時にmtqgから取り直して描画する、DOMを推測で直さない」という方針（`controller.ts`の`runWrite`）を読み取りにも広げている。`--before`でページを継ぎ足すと、古いページに含まれる記録が後から編集・完了・削除されても、そのページを再度取りに行かない限り古い表示のまま残ってしまう。`--limit`を伸ばして毎回全体を取り直せば、この不整合が起きない。`--before`自体はCLIの機能として残っており無駄にはならない（他の用途や将来の消費者のために残る）
 - **削除の跡は今回は出さない。** `log`は`--events`を付けても削除された記録を一切返さないため（実機で確認、`01ee2706ce`）、ui.mdが想定する「消すと跡が残る」はMemo画面では今のCLIでは実現できない。他の5画面と同じく、削除されたら見えなくなる形で進める。跡を残す機能が要るなら、mtqg本体への別の要望として改めて扱う
-- **スラッシュコマンドは先頭の語の完全一致。** `/todo`・`/qa`・`/bug`・`/rule`は本文だけ、`/glossary`は本文を最初の空白で用語と定義に分ける（AskUserQuestionで確認、推奨案どおり）。未知の`/foo …`はmemoとして投稿せず、エラーをその場に表示する（打ち間違いを埋もれさせない）
+- **スラッシュコマンドは先頭の語の完全一致。** `/todo`・`/qa`・`/bug`・`/rule`は本文だけ、`/glossary`は本文を最初の空白で用語と定義に分ける（AskUserQuestionで確認、推奨案どおり）。未知の`/foo …`はmemoとして投稿せず、エラーをその場に表示する（打ち間違いを埋もれさせない）。**`/t`・`/q`・`/b`・`/r`・`/g`の1文字の短縮形も同じ意味で使える**（人間の指示、q&a`70787501f3f3`、`COMMAND_KINDS`に別名として追加しただけで判定ロジックは変えていない）
 - **`(edited)`の判定は`updated`ではなく`log --json --events`の`op:"edit"`の有無を見る。** `updated`はdone/reopenでも進むため、編集の有無を区別できない
 - 質問・バグの回答／返信は、同じ読み込み範囲に親がある限り`thread.ts`の部品でスレッド表示する。親が範囲外なら「Answered a question」「Replied to a bug」と添えて単独表示する
 - todo・question・bugの完了操作は既存の`setStatus`メッセージに`kind`を足して振り分ける（1つのタイムラインに複数の種類が混在するため、タブだけでは判別できない）
@@ -146,8 +146,9 @@
 - 対象はまずVSCode系のエディタ（Cursor等を含む）に絞る。他のエディタは必要になってから考える
 - **別リポジトリにする**（TypeScript/Node.jsをmtqg本体に持ち込まない。このリポジトリがそれにあたる）
 - **MVPは画面ごとに完成させる**（決定、2026-09-26、q&a`f5587ff34d`）。表示と操作をそろえてから次の画面に進む。順番はRules/Glossary→ToDo→QA→Bugs→Memo（詳細は`mtqg show acd71a3a7b`）
-- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**（決定、2026-09-26、q&a`0736e37fd7`）。バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める。タブの並びは`Todos・Questions・Bugs・Rules・Glossary・Memos`（決定、2026-09-26、q&a`25f60225e5`。上の表の並び、`.claude/rules/naming.md`の用語対応表の複数形）
+- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**（決定、2026-09-26、q&a`0736e37fd7`）。バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める。タブの並びは`Memo・Todo・QA・Bugs・Rules・Glossary`（決定、2026-09-26、q&a`70787501f3f3`。人間の指示でMemoを先頭に、ラベルも単数形・QAに変更——`.claude/rules/naming.md`の用語対応表の複数形を使うとした当初の決定、q&a`25f60225e5`を上書きした）
 - Webviewの土台（タブ・CSP・メッセージ・`FileSystemWatcher`）はtodo`b9caf0b88c`で作った。設計・配置の詳細は`.claude/rules/directory-structure.md`・`.claude/rules/testing.md`
+- **タブバーはスクロールしても画面上端に固定表示する**（人間の指示、2026-09-26、q&a`70787501f3f3`）。`[role="tablist"]`に`position: sticky; top: 0`を付け、下に重なるコンテンツが透けないよう背景色も明示した（`src/webview/shared/html.ts`）
 
 採らない、または後で判断するもの：
 

@@ -2,14 +2,19 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { TAB_IDS, TAB_LABELS, DEFAULT_TAB, isTabId } from '../../../src/webview/shared/tabs';
 
-test('the six screens are in ui.md\'s table order', () => {
-  assert.deepEqual(TAB_IDS, ['todos', 'questions', 'bugs', 'rules', 'glossary', 'memos']);
+test('the six screens are in Memo/Todo/QA/Bugs/Rules/Glossary order (decision, q&a 70787501f3f3)', () => {
+  assert.deepEqual(TAB_IDS, ['memos', 'todos', 'questions', 'bugs', 'rules', 'glossary']);
 });
 
-test('every tab has an English label from naming.md\'s term list', () => {
-  for (const id of TAB_IDS) {
-    assert.ok(TAB_LABELS[id]);
-  }
+test('tab labels are Memo/Todo/QA/Bugs/Rules/Glossary', () => {
+  assert.deepEqual(TAB_LABELS, {
+    memos: 'Memo',
+    todos: 'Todo',
+    questions: 'QA',
+    bugs: 'Bugs',
+    rules: 'Rules',
+    glossary: 'Glossary',
+  });
 });
 
 test('the default tab is the first one', () => {

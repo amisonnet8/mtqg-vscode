@@ -61,6 +61,10 @@ export function renderShell(options: ShellOptions): string {
     [role="tablist"] {
       display: flex;
       border-bottom: 1px solid var(--vscode-panel-border);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: var(--vscode-editor-background);
     }
     [role="tab"] {
       font-family: inherit;

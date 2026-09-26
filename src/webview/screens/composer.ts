@@ -14,12 +14,20 @@ export interface ComposerError {
   error: string;
 }
 
+// One-letter aliases (human's request, q&a `70787501f3f3`) alongside the
+// full command names -- both map to the same kind, so parseComposer below
+// never needs to know an alias was used.
 const COMMAND_KINDS: Record<string, 'todo' | 'qa' | 'bug' | 'rule' | 'glossary'> = {
   '/todo': 'todo',
+  '/t': 'todo',
   '/qa': 'qa',
+  '/q': 'qa',
   '/bug': 'bug',
+  '/b': 'bug',
   '/rule': 'rule',
+  '/r': 'rule',
   '/glossary': 'glossary',
+  '/g': 'glossary',
 };
 
 /**
