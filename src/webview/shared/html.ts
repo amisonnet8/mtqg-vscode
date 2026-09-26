@@ -104,14 +104,14 @@ export function renderShell(options: ShellOptions): string {
     .mtqg-table .add-row {
       color: var(--vscode-descriptionForeground);
     }
-    .mtqg-table td.editable {
+    .editable {
       cursor: text;
     }
-    .mtqg-table td.editable:empty::before {
+    .editable:empty::before {
       content: attr(aria-label);
       opacity: 0.6;
     }
-    .mtqg-table td.editable:focus {
+    .editable:focus {
       outline: 1px solid var(--vscode-focusBorder);
       color: var(--vscode-foreground);
     }
@@ -122,7 +122,7 @@ export function renderShell(options: ShellOptions): string {
       font-size: 0.85em;
       opacity: 0.85;
     }
-    .mtqg-table button[data-action="delete"] {
+    button[data-action="delete"] {
       font-family: inherit;
       color: inherit;
       background: none;
@@ -130,8 +130,66 @@ export function renderShell(options: ShellOptions): string {
       cursor: pointer;
       opacity: 0.6;
     }
-    .mtqg-table button[data-action="delete"]:hover {
+    button[data-action="delete"]:hover {
       opacity: 1;
+    }
+    .todos-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .todos-toolbar .add-row {
+      flex: 1;
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 6px 10px;
+    }
+    .todos-toolbar label {
+      white-space: nowrap;
+    }
+    .done-heading {
+      color: var(--vscode-descriptionForeground);
+      font-size: 0.9em;
+      font-weight: normal;
+      margin: 16px 0 8px;
+    }
+    .mtqg-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .card {
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+    .card .editable {
+      min-height: 1.2em;
+      padding-right: 22px;
+    }
+    .card.done .editable {
+      text-decoration: line-through;
+      color: var(--vscode-descriptionForeground);
+    }
+    .card-check {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85em;
+      color: var(--vscode-descriptionForeground);
+    }
+    .card button[data-action="delete"] {
+      align-self: flex-end;
     }
   </style>
 </head>

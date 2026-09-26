@@ -27,10 +27,10 @@ test('ready renders the requested tab once', async () => {
     const { posts, post } = collector();
     const controller = createPanelController({ client, post });
 
-    controller.handleMessage({ type: 'ready', tab: 'todos' });
+    controller.handleMessage({ type: 'ready', tab: 'memos' });
     await waitUntil(() => posts.length === 1);
 
-    assert.equal(posts[0].tab, 'todos');
+    assert.equal(posts[0].tab, 'memos');
     assert.match(posts[0].html, /coming soon/);
     controller.dispose();
   } finally {
@@ -142,6 +142,74 @@ test('addGlossary writes through mtqg and re-renders the glossary tab', async ()
     assert.match(posts[0].html, /data-original="a lexical unit"/);
     const list = await client.glossaryList();
     assert.equal(list.data.entries, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('addTodo writes through mtqg and re-renders the todos tab', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'addTodo', tab: 'todos', text: 'write more tests' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /write more tests/);
+    const list = await client.todoList();
+    assert.equal(list.data.open, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('setStatus with done:true marks the todo done, and done:false reopens it', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.todoAdd('write more tests');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'setStatus', tab: 'todos', id: added.data.record.id, done: true });
+    await waitUntil(() => posts.length === 1);
+    let list = await client.todoList({ all: true });
+    assert.equal(list.data.records.find((r) => r.id === added.data.record.id)?.status, 'done');
+
+    controller.handleMessage({ type: 'setStatus', tab: 'todos', id: added.data.record.id, done: false });
+    await waitUntil(() => posts.length === 2);
+    list = await client.todoList({ all: true });
+    assert.equal(list.data.records.find((r) => r.id === added.data.record.id)?.status, 'open');
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('setShowAll reveals done todos, and the toggle survives a later journalChanged re-render', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.todoAdd('finish this');
+    await client.todoDone(added.data.record.id);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'ready', tab: 'todos' });
+    await waitUntil(() => posts.length === 1);
+    assert.doesNotMatch(posts[0].html, new RegExp(added.data.record.id));
+
+    controller.handleMessage({ type: 'setShowAll', tab: 'todos', all: true });
+    await waitUntil(() => posts.length === 2);
+    assert.match(posts[1].html, new RegExp(added.data.record.id));
+
+    controller.journalChanged();
+    await waitUntil(() => posts.length === 3, 2000);
+    assert.match(posts[2].html, new RegExp(added.data.record.id));
     controller.dispose();
   } finally {
     await repo.cleanup();

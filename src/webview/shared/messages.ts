@@ -13,8 +13,13 @@ export type WebviewMessage =
   | { type: 'selectTab'; tab: TabId }
   | { type: 'addRule'; tab: TabId; text: string }
   | { type: 'addGlossary'; tab: TabId; word: string; text: string }
+  | { type: 'addTodo'; tab: TabId; text: string }
   | { type: 'editRecord'; tab: TabId; id: string; text: string }
-  | { type: 'deleteRecord'; tab: TabId; id: string };
+  | { type: 'deleteRecord'; tab: TabId; id: string }
+  // Kind-independent, mirroring editRecord/deleteRecord above: QA/Bugs
+  // (todo `8b7b600827`/`13570d152b`) reuse this for their own done/reopen.
+  | { type: 'setStatus'; tab: TabId; id: string; done: boolean }
+  | { type: 'setShowAll'; tab: TabId; all: boolean };
 
 /** Sent by the host (src/webview/controller.ts) to the Webview. */
 export interface HostMessage {
@@ -36,7 +41,7 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
   if (typeof value !== 'object' || value === null) {
     return undefined;
   }
-  const { type, tab, id, word, text } = value as Record<string, unknown>;
+  const { type, tab, id, word, text, done, all } = value as Record<string, unknown>;
   if (!isTabId(tab)) {
     return undefined;
   }
@@ -50,11 +55,20 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
   if (type === 'addGlossary' && typeof word === 'string' && typeof text === 'string') {
     return { type, tab, word, text };
   }
+  if (type === 'addTodo' && typeof text === 'string') {
+    return { type, tab, text };
+  }
   if (type === 'editRecord' && typeof id === 'string' && typeof text === 'string') {
     return { type, tab, id, text };
   }
   if (type === 'deleteRecord' && typeof id === 'string') {
     return { type, tab, id };
+  }
+  if (type === 'setStatus' && typeof id === 'string' && typeof done === 'boolean') {
+    return { type, tab, id, done };
+  }
+  if (type === 'setShowAll' && typeof all === 'boolean') {
+    return { type, tab, all };
   }
   return undefined;
 }

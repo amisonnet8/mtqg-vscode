@@ -1,8 +1,15 @@
 import type { MtqgClient } from '../mtqg/client';
 import { renderGlossary } from './screens/glossary';
 import { renderRules } from './screens/rules';
+import { renderTodos } from './screens/todos';
 import { escapeHtml } from './shared/escape';
 import { TAB_LABELS, type TabId } from './shared/tabs';
+
+/** Per-tab display options that are not part of the record data itself
+ * (e.g. the "Show done" toggle) -- kept by the controller, not mtqg. */
+export interface ScreenView {
+  all?: boolean;
+}
 
 /**
  * An mtqg error shown verbatim (.claude/rules/mtqg-cli.md
@@ -20,13 +27,15 @@ export function renderError(message: string): string {
  * todo `9985245ed8`). Rules and Glossary are built (todo `daf43fc83d`); the
  * rest still show a placeholder that only proves mtqg is reachable.
  */
-export async function renderScreen(tab: TabId, client: MtqgClient): Promise<string> {
+export async function renderScreen(tab: TabId, client: MtqgClient, view: ScreenView = {}): Promise<string> {
   try {
     switch (tab) {
       case 'rules':
         return renderRules((await client.ruleList()).data.records);
       case 'glossary':
         return renderGlossary((await client.glossaryList()).data.records);
+      case 'todos':
+        return renderTodos((await client.todoList({ all: true })).data.records, { all: view.all });
       default:
         await client.status();
         return `<p class="placeholder">${escapeHtml(TAB_LABELS[tab])}: coming soon.</p>`;

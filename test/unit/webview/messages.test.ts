@@ -79,3 +79,43 @@ test('parseWebviewMessage accepts a well-formed deleteRecord message', () => {
 test('parseWebviewMessage rejects deleteRecord without an id', () => {
   assert.equal(parseWebviewMessage({ type: 'deleteRecord', tab: 'glossary' }), undefined);
 });
+
+test('parseWebviewMessage accepts a well-formed addTodo message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'addTodo', tab: 'todos', text: 'write tests' }), {
+    type: 'addTodo',
+    tab: 'todos',
+    text: 'write tests',
+  });
+});
+
+test('parseWebviewMessage rejects addTodo without text, or with a non-string text', () => {
+  assert.equal(parseWebviewMessage({ type: 'addTodo', tab: 'todos' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'addTodo', tab: 'todos', text: 1 }), undefined);
+});
+
+test('parseWebviewMessage accepts a well-formed setStatus message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'setStatus', tab: 'todos', id: 'abc123', done: true }), {
+    type: 'setStatus',
+    tab: 'todos',
+    id: 'abc123',
+    done: true,
+  });
+});
+
+test('parseWebviewMessage rejects setStatus missing id or with a non-boolean done', () => {
+  assert.equal(parseWebviewMessage({ type: 'setStatus', tab: 'todos', done: true }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'setStatus', tab: 'todos', id: 'abc123', done: 'yes' }), undefined);
+});
+
+test('parseWebviewMessage accepts a well-formed setShowAll message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'setShowAll', tab: 'todos', all: true }), {
+    type: 'setShowAll',
+    tab: 'todos',
+    all: true,
+  });
+});
+
+test('parseWebviewMessage rejects setShowAll with a non-boolean all', () => {
+  assert.equal(parseWebviewMessage({ type: 'setShowAll', tab: 'todos', all: 'yes' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'setShowAll', tab: 'todos' }), undefined);
+});

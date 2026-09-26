@@ -1,5 +1,5 @@
 import type { MtqgClient } from '../mtqg/client';
-import { renderError, renderScreen } from './screens';
+import { renderError, renderScreen, type ScreenView } from './screens';
 import { type HostMessage, parseWebviewMessage, type WebviewMessage } from './shared/messages';
 import { DEFAULT_TAB, type TabId } from './shared/tabs';
 
@@ -31,6 +31,14 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
   let activeTab: TabId = DEFAULT_TAB;
   let generation = 0;
   let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+  // "Show done"-style toggles (ui.md: default is open-only). Kept here, not
+  // in mtqg, since it is a display preference, not a record (ui.md「機能は
+  // 足さない」) -- resets to the default when the panel is reopened.
+  const showAll = new Set<TabId>();
+
+  function viewFor(tab: TabId): ScreenView {
+    return { all: showAll.has(tab) };
+  }
 
   /** Runs `supplier`, then posts its HTML to `tab` unless a later render has since started. */
   function renderWith(tab: TabId, supplier: () => Promise<string>): void {
@@ -47,7 +55,7 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
   }
 
   function render(tab: TabId): void {
-    renderWith(tab, () => renderScreen(tab, client));
+    renderWith(tab, () => renderScreen(tab, client, viewFor(tab)));
   }
 
   /**
@@ -59,7 +67,7 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
   function runWrite(tab: TabId, action: () => Promise<unknown>): void {
     renderWith(tab, () =>
       action()
-        .then(() => renderScreen(tab, client))
+        .then(() => renderScreen(tab, client, viewFor(tab)))
         .catch((err) => renderError(err instanceof Error ? err.message : String(err))),
     );
   }
@@ -77,11 +85,25 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
       case 'addGlossary':
         runWrite(message.tab, () => client.glossaryAdd(message.word, message.text));
         return;
+      case 'addTodo':
+        runWrite(message.tab, () => client.todoAdd(message.text));
+        return;
       case 'editRecord':
         runWrite(message.tab, () => client.edit(message.id, message.text));
         return;
       case 'deleteRecord':
         runWrite(message.tab, () => client.delete(message.id));
+        return;
+      case 'setStatus':
+        runWrite(message.tab, () => (message.done ? client.todoDone(message.id) : client.todoReopen(message.id)));
+        return;
+      case 'setShowAll':
+        if (message.all) {
+          showAll.add(message.tab);
+        } else {
+          showAll.delete(message.tab);
+        }
+        render(message.tab);
         return;
     }
   }

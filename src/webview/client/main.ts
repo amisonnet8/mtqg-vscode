@@ -45,9 +45,10 @@ declare function acquireVsCodeApi(): {
     vscode.postMessage({ type: 'selectTab', tab });
   });
 
-  // Generic table interactions (Rules/Glossary, and any future screen that
-  // follows the same data-field/data-action convention -- this script does
-  // not otherwise know what a screen looks like, q&a `0736e37fd7`).
+  // Generic table/card interactions (Rules/Glossary/ToDo, and any future
+  // screen that follows the same data-field/data-id/data-action
+  // convention -- this script does not otherwise know what a screen looks
+  // like, q&a `0736e37fd7`).
 
   function tabOf(element: HTMLElement): string | undefined {
     return element.closest<HTMLElement>('[role="tabpanel"]')?.dataset.tab;
@@ -59,7 +60,9 @@ declare function acquireVsCodeApi(): {
       return;
     }
     const tab = tabOf(cell);
-    const row = cell.closest<HTMLElement>('tr');
+    // A table row (Rules/Glossary) or a card (ToDo) for an existing
+    // record, or the always-present add row/field (no id yet) for either.
+    const row = cell.closest<HTMLElement>('[data-id], .add-row');
     if (!tab || !row) {
       return;
     }
@@ -93,6 +96,30 @@ declare function acquireVsCodeApi(): {
         return; // wait until both cells of the new entry are filled
       }
       vscode.postMessage({ type: 'addGlossary', tab, word, text });
+    } else if (tab === 'todos') {
+      if (value === '') {
+        return;
+      }
+      vscode.postMessage({ type: 'addTodo', tab, text: value });
+    }
+  });
+
+  document.addEventListener('change', (event) => {
+    const target = event.target as HTMLElement;
+    const tab = tabOf(target);
+    if (!tab) {
+      return;
+    }
+    if (target.matches('[data-action="toggle-status"]')) {
+      const id = target.closest<HTMLElement>('[data-id]')?.dataset.id;
+      if (!id) {
+        return;
+      }
+      const done = (target as HTMLInputElement).checked;
+      vscode.postMessage({ type: 'setStatus', tab, id, done });
+    } else if (target.matches('[data-action="show-all"]')) {
+      const all = (target as HTMLInputElement).checked;
+      vscode.postMessage({ type: 'setShowAll', tab, all });
     }
   });
 
@@ -116,7 +143,7 @@ declare function acquireVsCodeApi(): {
       return;
     }
     const tab = tabOf(button);
-    const id = button.closest<HTMLElement>('tr')?.dataset.id;
+    const id = button.closest<HTMLElement>('[data-id]')?.dataset.id;
     if (!tab || !id) {
       return;
     }
