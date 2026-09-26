@@ -10,7 +10,9 @@
     "vscode": {
       "extensions": [
         "github.vscode-github-actions",
-        "timonwong.shellcheck"
+        "timonwong.shellcheck",
+        "amodio.tsl-problem-matcher",
+        "ms-vscode.extension-test-runner"
       ],
       "settings": {
         "editor.formatOnSave": true
