@@ -191,13 +191,18 @@ export function renderShell(options: ShellOptions): string {
     .card button[data-action="delete"] {
       align-self: flex-end;
     }
-    button[data-action="toggle-expand"] {
+    .toggle-expand {
       font-family: inherit;
-      color: inherit;
+      font-size: inherit;
+      color: var(--vscode-textLink-foreground);
       background: none;
       border: none;
       cursor: pointer;
-      padding: 0 4px;
+      padding: 2px 6px;
+      white-space: nowrap;
+    }
+    .toggle-expand:hover {
+      text-decoration: underline;
     }
     .mtqg-table tr.section-heading td {
       color: var(--vscode-descriptionForeground);

@@ -87,17 +87,23 @@ test('a question\'s detail row is hidden unless its id is in the expanded set', 
   assert.doesNotMatch(expanded, / hidden/);
 });
 
-test('the toggle button reflects expanded state via aria-expanded and its arrow', () => {
-  const collapsed = headRow(renderQuestions([question('a', 'q', '2026-01-01T00:00:00Z')]), 'a');
+test('the toggle button reflects expanded state via aria-expanded and its arrow, with a visible reply count', () => {
+  const collapsed = headRow(
+    renderQuestions([question('a', 'q', '2026-01-01T00:00:00Z', { replies: [reply('r1', 'x', '2026-01-02T00:00:00Z')] })]),
+    'a',
+  );
   assert.match(collapsed, /aria-expanded="false"/);
-  assert.match(collapsed, />▸</);
+  assert.match(collapsed, />▸ Replies \(1\)</);
 
   const expanded = headRow(
-    renderQuestions([question('a', 'q', '2026-01-01T00:00:00Z')], { expanded: new Set(['a']) }),
+    renderQuestions(
+      [question('a', 'q', '2026-01-01T00:00:00Z', { replies: [reply('r1', 'x', '2026-01-02T00:00:00Z')] })],
+      { expanded: new Set(['a']) },
+    ),
     'a',
   );
   assert.match(expanded, /aria-expanded="true"/);
-  assert.match(expanded, />▾</);
+  assert.match(expanded, />▾ Replies \(1\)</);
 });
 
 test('a done question is checked; an open one is not', () => {

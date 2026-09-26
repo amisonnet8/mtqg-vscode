@@ -43,8 +43,12 @@ function questionRows(record: QuestionRecord, expanded: boolean): string {
   const done = record.status === 'done';
   const replies = [...(record.replies ?? [])].sort((a, b) => a.created.localeCompare(b.created));
 
+  // A visible "Replies (n)" label, not just the ▸/▾ glyph: a human tester
+  // found the icon-only button too subtle to notice (todo `8b7b600827`,
+  // q&a `3d439aabe9e3`) -- the count also tells you there is something to
+  // open before you click.
   const headRow = `<tr data-id="${record.id}">
-    <td><button type="button" data-action="toggle-expand" aria-label="${expanded ? 'Collapse' : 'Expand'}" aria-expanded="${expanded}">${expanded ? '▾' : '▸'}</button></td>
+    <td><button type="button" class="toggle-expand" data-action="toggle-expand" aria-expanded="${expanded}">${expanded ? '▾' : '▸'} Replies (${replies.length})</button></td>
     <td><input type="checkbox" data-action="toggle-status" aria-label="${done ? 'Reopen' : 'Mark answered'}"${done ? ' checked' : ''}></td>
     ${editableCell('text', record.text)}
     ${authorCell(record.author)}
