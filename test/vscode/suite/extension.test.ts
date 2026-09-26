@@ -16,10 +16,17 @@ test('mtqg.open is registered', async () => {
   assert.ok(commands.includes('mtqg.open'));
 });
 
+test('a workspace folder with .mtqg/ is open (runTest.ts opens a temp mtqg repo)', () => {
+  assert.equal(vscode.workspace.workspaceFolders?.length, 1);
+});
+
 test('mtqg.open opens exactly one Webview tab, even when run twice', async () => {
   const tabCountBefore = countMtqgTabs();
 
   try {
+    // With a workspace folder open, this also exercises the
+    // FileSystemWatcher/controller wiring in src/webview/panel.ts (todo
+    // b9caf0b88c) -- a throw there would fail this await.
     await vscode.commands.executeCommand('mtqg.open');
     // tabGroups.all reflects a newly opened tab only after a round trip to
     // the renderer, not synchronously when executeCommand resolves.

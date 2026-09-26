@@ -1,6 +1,10 @@
 # Entry points for building and checking mtqg-vscode (.claude/rules/testing.md).
 
-build: (cd //; npx tsc -p .)
+# Two separate tsc runs: the extension host (CommonJS, `vscode`'s types) and
+# the Webview's own client script (ES modules, DOM types, no bundler --
+# .claude/rules/dependencies.md). Kept as two tsconfig.json rather than one,
+# since a single Node process can't be both CommonJS and browser-ESM.
+build: (cd //; npx tsc -p . && npx tsc -p src/webview/client)
 
 unit: (cd //; node --test 'out/test/unit/**/*.test.js')
 

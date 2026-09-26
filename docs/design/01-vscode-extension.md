@@ -109,6 +109,8 @@
 - 対象はまずVSCode系のエディタ（Cursor等を含む）に絞る。他のエディタは必要になってから考える
 - **別リポジトリにする**（TypeScript/Node.jsをmtqg本体に持ち込まない。このリポジトリがそれにあたる）
 - **MVPは画面ごとに完成させる**（決定、2026-09-26、q&a`f5587ff34d`）。表示と操作をそろえてから次の画面に進む。順番はRules/Glossary→ToDo→QA→Bugs→Memo（詳細は`mtqg show acd71a3a7b`）
+- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**（決定、2026-09-26、q&a`0736e37fd7`）。バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める。タブの並びは`Todos・Questions・Bugs・Rules・Glossary・Memos`（決定、2026-09-26、q&a`25f60225e5`。上の表の並び、`.claude/rules/naming.md`の用語対応表の複数形）
+- Webviewの土台（タブ・CSP・メッセージ・`FileSystemWatcher`）はtodo`b9caf0b88c`で作った。設計・配置の詳細は`.claude/rules/directory-structure.md`・`.claude/rules/testing.md`
 
 採らない、または後で判断するもの：
 

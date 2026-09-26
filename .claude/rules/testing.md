@@ -13,7 +13,9 @@
   - `run()`には`isolation: 'none'`を渡す。既定（`'process'`）は各テストファイルを子プロセスで実行するが、子プロセスには拡張開発ホストが注入する`vscode`モジュールが無い
   - **`isolation: 'none'`にすると、テストの完了を`stream`の`finished`イベントで検知できない。** 拡張開発ホストのような常駐プロセスは常に何かのバックグラウンド処理を抱えていて「何もしていない」状態にならないため、node:testが使う待機（アイドル検知）が成立せず、`test:complete`は個々のテストごとに発火するのに`test:summary`・`test:plan`は発火しない（不具合、todo`97779f964e`で発見・記録）。代わりに、`test:complete`が一定時間（1秒）止んだら「そのファイルは完了した」とみなす方式にする（`test/vscode/suite/index.ts`）
 - mtqgとのつながり（`.claude/rules/mtqg-cli.md`）は、実際に`mtqg`のバイナリを子プロセスで起動して確かめる（mtqgのe2eが本物のバイナリと本物のgitを使うのと同じ考え方。モックで済ませない）
-- UIの見た目（Webview）は、DOM操作のロジックをVSCode APIから切り離してテストできる形にする（画面を持たないテストで確かめられる部分を増やす）。`src/webview/shared/html.ts`の`renderShell`はこの形で、`test/unit/`から呼べる
+- UIの見た目（Webview）は、DOM操作のロジックをVSCode APIから切り離してテストできる形にする（画面を持たないテストで確かめられる部分を増やす）。`src/webview/shared/html.ts`の`renderShell`・`src/webview/controller.ts`はこの形で、`test/unit/`から本物のmtqgバイナリを使って呼べる（`test/unit/webview/controller.test.ts`）
+- **`src/webview/client/`（Webview内で実際に動くスクリプト）は`node:test`の対象外。** DOM APIが無いNodeでは実行できない。ロジックはできる限り`controller.ts`・`shared/`側（ホスト、vscode非依存）に寄せて、そちらをテストする。`client/main.ts`自体は「動かして確かめる」で見る
+- **`test/vscode/runTest.ts`は、`.mtqg/`を初期化した一時リポジトリをワークスペースとして開く**（`--disable-workspace-trust`と併用。信頼ダイアログがヘッドレス実行を止めないため）。ワークスペースが無いと`vscode.workspace.workspaceFolders`が空になり、`openPanel`（`src/webview/panel.ts`）の`FileSystemWatcher`・`controller`を作る分岐がテストで一度も通らない（todo`b9caf0b88c`で発見。それまでの`test/vscode/`はワークスペース無しで動いていた）
 
 ## この開発環境（devcontainer）固有の落とし穴
 
@@ -27,6 +29,14 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
 ## 動かして確かめる
 
 - ロジック上正しそうに見えても、拡張開発ホストで実際に動かして初めて見つかる不具合はある。作業の区切りでは、テストに加えて実際に画面を開いて確かめる
+- **Webviewの見た目は、`node:test`では確認できない**（CSPがスクリプトを止めていないか、`asWebviewUri`のパスが正しいか、実際にテーマ色が反映されるか、など）。この環境（Xvfb）でスクリーンショットを取って確かめる手順（todo`b9caf0b88c`で確立）：
+  1. `Xvfb :N -screen 0 1280x800x24 &`（`env -u ELECTRON_RUN_AS_NODE`付き）
+  2. ダウンロード済みのVS Code本体（`.vscode-test/vscode-linux-x64-*/code`）を`DISPLAY=:N`・`--extensionDevelopmentPath=<このリポジトリ>`・`--disable-gpu --disable-workspace-trust --no-sandbox --skip-welcome --skip-release-notes`・一時mtqgリポジトリのパス（ワークスペースとして開く）・`--remote-debugging-port=<port>`で起動（`--disable-extensions`は付けない。拡張自体も無効化されてしまう）
+  3. コマンドパレット経由の操作はキー入力の自動化ツール（`xdotool`等）が無いため、`http://localhost:<port>/json`でCDPのターゲット一覧を取り、ページのWebSocketへ`Runtime.evaluate`でコマンドパレット相当の操作を直接実行する（例：オンボーディングダイアログのボタンをテキストで探してクリック）
+  4. `import -window root -display :N <path>.png`（ImageMagick）でスクリーンショットを撮り、Readツールで見る
+  5. **Webviewの中身（`vscode-webview://...`のiframe）はさらに`srcdoc`の入れ子フレームで、外側のCDPターゲットからは`document.querySelector`で直接触れない。** タブ切り替えなどWebview内の操作まで自動化したい場合は`Page.createIsolatedWorld`等でフレームの実行コンテキストを取る必要があり、コストが見合わなければ「スクリーンショットで見た目を確認する」だけに留めてよい（初回描画はこれで十分に確認できた）
+  6. 確認後は起動したプロセス（`code`・`Xvfb`）を`kill`し、一時ディレクトリを削除する
+- この手順は6画面それぞれのtodoで繰り返す見込み。同じ手順を素の状態から毎回組み立てるのはコストなので、繰り返す段階でSkill化を検討する（提案済み、todo`b9caf0b88c`）
 
 ## CI（予定）
 
