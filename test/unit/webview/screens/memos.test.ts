@@ -89,6 +89,11 @@ test('renderMemos shows the notice line exactly once when set', () => {
   assert.match(html, /Undid post of &quot;oops&quot;/);
 });
 
+test('renderMemos lists the slash commands in the same order as the tab bar (q&a 112863a3fc43)', () => {
+  const html = renderMemos([]);
+  assert.match(html, /\(\/todo \/qa \/bug \/rule \/glossary\)/);
+});
+
 test('renderMemos labels a glossary post "Defined a term" and a rule post "Adopted a rule"', async () => {
   const repo = await createTempRepo();
   try {

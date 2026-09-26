@@ -191,7 +191,7 @@ export function renderMemos(records: MemoRecord[], view: MemosView = {}): string
 <div class="timeline">${posts}</div>
 ${noticeLine}
 <div class="composer"${autoscrollAttr}>
-  <div class="add-row">${editableElement('div', 'text', '', 'Write a memo… (/todo /qa /bug /glossary /rule)')}</div>
+  <div class="add-row">${editableElement('div', 'text', '', 'Write a memo… (/todo /qa /bug /rule /glossary)')}</div>
   <button type="button" data-action="undo">Undo</button>
 </div>`;
 }

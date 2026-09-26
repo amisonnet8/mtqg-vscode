@@ -1,6 +1,6 @@
 /**
  * Parses the Memo screen's one input field into a record to create (ui.md
- * "入力欄は普段はmemoとして投稿し、/todo・/qa・/bug・/glossary・/ruleのようなスラッシュ
+ * "入力欄は普段はmemoとして投稿し、/todo・/qa・/bug・/rule・/glossaryのようなスラッシュ
  * コマンドで種類を書き分ける"). Pure and host-side (q&a `0736e37fd7`) so the
  * Webview's fixed script only ever forwards the raw text
  * (src/webview/client/main.ts) -- this is the one place that decides what a
@@ -14,9 +14,13 @@ export interface ComposerError {
   error: string;
 }
 
-// One-letter aliases (human's request, q&a `70787501f3f3`) alongside the
-// full command names -- both map to the same kind, so parseComposer below
-// never needs to know an alias was used.
+// Ordered to match the tab bar (Memo/Todo/QA/Bugs/Rules/Glossary, q&a
+// `70787501f3f3`) rather than the earlier, undocumented ordering -- the
+// human asked whether that order had a real reason behind it; it did not
+// (inherited verbatim from mtqg's own pre-Bugs/Rules design doc, q&a
+// `112863a3fc43`), so this list follows the one order that does. One-letter
+// aliases sit next to their full command; both map to the same kind, so
+// parseComposer below never needs to know an alias was used.
 const COMMAND_KINDS: Record<string, 'todo' | 'qa' | 'bug' | 'rule' | 'glossary'> = {
   '/todo': 'todo',
   '/t': 'todo',
