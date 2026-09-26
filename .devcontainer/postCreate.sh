@@ -37,7 +37,10 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 # mtqg: the process record for this repository (.claude/rules/mtqg-usage.md).
 # A pinned, known-good release of a separate, external project -- a broken
 # build there must not be able to corrupt this repository's own records.
-go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.2.0
+# v0.3.0: adds --at, `log --before` and `log --json --events` (only additive
+# fields/flags, verified against this repository before bumping the pin,
+# .claude/rules/mtqg-cli.md "版"; todo 57713a45f4).
+go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.3.0
 
 # Wire up qsoku's shell integration (working-directory carry-back and
 # completion) for bash. Idempotent: skipped if already present, so
