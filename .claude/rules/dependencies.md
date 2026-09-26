@@ -12,8 +12,8 @@ mtqg本体の「標準ライブラリと`golang.org/x/`だけ」（mtqgの`CLAUD
 - `typescript`（コンパイラ）
 - `@types/vscode`・`@types/node`（型定義、Microsoft/DefinitelyTyped）
 - `@vscode/vsce`（パッケージング・公開ツール、Microsoft公式）
-- `@vscode/test-cli`・`@vscode/test-electron`（拡張のテスト、Microsoft公式）
-- テストランナーはNode.js組み込みの`node:test`を使う（追加のテストフレームワークを入れない）
+- `@vscode/test-electron`（拡張開発ホストを起動するテスト、Microsoft公式）
+- テストランナーはNode.js組み込みの`node:test`を使う（追加のテストフレームワークを入れない）。**`@vscode/test-cli`は入れない**——内部でmochaを使うため、上の方針と矛盾する（決定、2026-09-26、todo`97779f964e`。q&a`61f131ff46`）。VSCode APIを使うテストは、`@vscode/test-electron`で拡張開発ホストを起動し、その中で`node:test`の`run()`を呼ぶ（`test/vscode/`、`.claude/rules/testing.md`）
 
 ## それ以外を足すとき
 

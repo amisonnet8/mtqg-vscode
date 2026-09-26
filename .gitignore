@@ -1,1 +1,9 @@
 /.claude/settings.local.json
+
+# npm / TypeScript build output (.claude/rules/dependencies.md, todo 97779f964e)
+node_modules/
+out/
+*.vsix
+
+# @vscode/test-electron downloads and profiles a VS Code instance here
+.vscode-test/

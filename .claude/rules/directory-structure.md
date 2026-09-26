@@ -1,13 +1,13 @@
 # ディレクトリ構成
 
-`*`は初期構成（2026-09-26）で作ったもの。それ以外は、拡張の雛形を作るときに足す予定のもの。
+`*`は初期構成（2026-09-26）または拡張の雛形（todo`97779f964e`、2026-09-26）で作ったもの。それ以外は、後続のtodoで足す予定のもの。
 
 ```
 mtqg-vscode/
 *├── CLAUDE.md
 *├── LICENSE
 *├── .gitattributes
-*├── .gitignore              （settings.local.jsonのみ。npm系は雛形と一緒に足す）
+*├── .gitignore
 *├── trivy.yaml
 *├── .mtqg/
 *├── .mcp.json
@@ -19,15 +19,24 @@ mtqg-vscode/
 *│   ├── rules/
 *│   ├── hooks/
 *│   └── settings.json
- ├── qsokufile               （予定：build・check・test・trivy・shellcheck・package）
- ├── package.json / package-lock.json / tsconfig.json / .vscodeignore
- ├── src/
- │   ├── extension.ts        （拡張のエントリポイント）
- │   ├── mtqg/                （mtqgを子プロセスで呼ぶコードをここに集める。.claude/rules/mtqg-cli.md）
- │   └── webview/              （6画面のUI：todo・qa・bug・rule・glossary・memo。.claude/rules/ui.md）
- ├── test/                    （node:test）
- ├── .vscode/                 （launch.json。F5での拡張開発ホスト起動。拡張開発の慣習として、雛形を作るときに判断する）
- └── .github/workflows/
+*├── qsokufile                （build・unit・check・test・trivy・shellcheck・package）
+*├── package.json / package-lock.json / tsconfig.json / .vscodeignore
+*├── src/
+*│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録のみ）
+ │   ├── mtqg/                （予定：mtqgを子プロセスで呼ぶコードをここに集める。.claude/rules/mtqg-cli.md、todo`cd0d242c55`）
+*│   └── webview/
+*│       ├── panel.ts        （WebviewPanelを1つ開く／revealする）
+ │       └── shared/          （予定：6画面共通のスタイル・ユーティリティ、todo`b9caf0b88c`）
+*│           └── html.ts     （renderShell：CSP付きの外枠。VSCode APIから独立、node:testで確認できる）
+*├── test/
+*│   ├── unit/                （node:test。VSCode APIを使わないテスト）
+*│   └── vscode/              （@vscode/test-electronで拡張開発ホストを起動するテスト。.claude/rules/testing.md）
+*│       ├── runTest.ts
+*│       └── suite/
+*├── .vscode/
+*│   ├── launch.json          （F5で拡張開発ホストを起動）
+*│   └── tasks.json           （tsc -wのバックグラウンドタスク）
+ └── .github/workflows/       （予定：CI、todo`53cbaa3265`）
 ```
 
 ## 配置の判断基準

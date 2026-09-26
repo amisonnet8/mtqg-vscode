@@ -7,8 +7,13 @@ set -euo pipefail
 # ShellCheck:     Static analysis of tracked *.sh files (.claude/rules/testing.md).
 #                 Comment lines must not start with the lowercase directive word,
 #                 or ShellCheck parses them as directives (SC1072/SC1073).
+# xvfb + the rest: running the real VS Code that @vscode/test-electron
+#                 downloads, headless (qsoku test, test/vscode/,
+#                 .claude/rules/testing.md, todo 97779f964e). This container
+#                 has no display otherwise.
 sudo apt-get update
-sudo apt-get install -y wget gnupg lsb-release jq shellcheck
+sudo apt-get install -y wget gnupg lsb-release jq shellcheck \
+  xvfb libnss3 libgtk-3-0 libasound2 libgbm1 libxkbfile1 libsecret-1-0 libxss1
 
 # Trivy: known vulnerabilities (CVE) and license compatibility of the npm
 # dependencies (qsoku trivy, .claude/rules/testing.md). Installed from the
