@@ -1,4 +1,5 @@
 import type { MtqgClient } from '../mtqg/client';
+import { renderBugs } from './screens/bugs';
 import { renderGlossary } from './screens/glossary';
 import { renderQuestions } from './screens/questions';
 import { renderRules } from './screens/rules';
@@ -41,6 +42,11 @@ export async function renderScreen(tab: TabId, client: MtqgClient, view: ScreenV
         return renderTodos((await client.todoList({ all: true })).data.records, { all: view.all });
       case 'questions':
         return renderQuestions((await client.qaList({ all: true })).data.records, {
+          all: view.all,
+          expanded: view.expanded,
+        });
+      case 'bugs':
+        return renderBugs((await client.bugList({ all: true })).data.records, {
           all: view.all,
           expanded: view.expanded,
         });

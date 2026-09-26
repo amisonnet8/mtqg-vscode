@@ -16,6 +16,8 @@ export type WebviewMessage =
   | { type: 'addTodo'; tab: TabId; text: string }
   | { type: 'addQuestion'; tab: TabId; text: string }
   | { type: 'addAnswer'; tab: TabId; id: string; text: string }
+  | { type: 'addBug'; tab: TabId; text: string }
+  | { type: 'addBugReply'; tab: TabId; id: string; text: string }
   | { type: 'editRecord'; tab: TabId; id: string; text: string }
   | { type: 'deleteRecord'; tab: TabId; id: string }
   // Kind-independent, mirroring editRecord/deleteRecord above: QA/Bugs
@@ -67,6 +69,12 @@ export function parseWebviewMessage(value: unknown): WebviewMessage | undefined 
     return { type, tab, text };
   }
   if (type === 'addAnswer' && typeof id === 'string' && typeof text === 'string') {
+    return { type, tab, id, text };
+  }
+  if (type === 'addBug' && typeof text === 'string') {
+    return { type, tab, text };
+  }
+  if (type === 'addBugReply' && typeof id === 'string' && typeof text === 'string') {
     return { type, tab, id, text };
   }
   if (type === 'editRecord' && typeof id === 'string' && typeof text === 'string') {

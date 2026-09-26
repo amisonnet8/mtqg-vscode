@@ -101,20 +101,25 @@ declare function acquireVsCodeApi(): {
         return;
       }
       vscode.postMessage({ type: 'addTodo', tab, text: value });
-    } else if (tab === 'questions') {
+    } else if (tab === 'questions' || tab === 'bugs') {
       if (value === '') {
         return;
       }
-      // A per-question reply field (`.add-row` nested inside that
-      // question's detail row, todo `8b7b600827`) carries the question's
-      // id via `data-question-id` -- distinct from `data-id`, which would
-      // otherwise route this into the "editing an existing record" branch
-      // above instead of adding a new reply.
-      const questionId = row.dataset.questionId;
-      if (questionId) {
-        vscode.postMessage({ type: 'addAnswer', tab, id: questionId, text: value });
+      // A per-item reply field (`.add-row` nested inside that item's detail
+      // row, todo `8b7b600827`/`13570d152b`, shared by QA and Bugs via
+      // screens/thread.ts) carries the parent's id via `data-parent-id` --
+      // distinct from `data-id`, which would otherwise route this into the
+      // "editing an existing record" branch above instead of adding a new
+      // reply.
+      const parentId = row.dataset.parentId;
+      if (parentId) {
+        vscode.postMessage(
+          tab === 'questions'
+            ? { type: 'addAnswer', tab, id: parentId, text: value }
+            : { type: 'addBugReply', tab, id: parentId, text: value },
+        );
       } else {
-        vscode.postMessage({ type: 'addQuestion', tab, text: value });
+        vscode.postMessage(tab === 'questions' ? { type: 'addQuestion', tab, text: value } : { type: 'addBug', tab, text: value });
       }
     }
   });

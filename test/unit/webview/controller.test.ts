@@ -296,19 +296,84 @@ test('toggleExpand shows the reply thread, and the state survives a later journa
     // omitted) -- collapsed is checked via the detail row's `hidden`
     // attribute and the toggle button's `aria-expanded`, not by the
     // reply's absence.
-    assert.match(posts[0].html, /class="qa-detail"[^>]* hidden>/);
+    assert.match(posts[0].html, /class="thread-detail"[^>]* hidden>/);
     assert.match(posts[0].html, /aria-expanded="false"/);
 
     controller.handleMessage({ type: 'toggleExpand', tab: 'questions', id: asked.data.record.id, expanded: true });
     await waitUntil(() => posts.length === 2);
-    assert.doesNotMatch(posts[1].html, /class="qa-detail"[^>]* hidden>/);
+    assert.doesNotMatch(posts[1].html, /class="thread-detail"[^>]* hidden>/);
     assert.match(posts[1].html, /aria-expanded="true"/);
     assert.match(posts[1].html, /Yes, in v2/);
 
     controller.journalChanged();
     await waitUntil(() => posts.length === 3, 2000);
-    assert.doesNotMatch(posts[2].html, /class="qa-detail"[^>]* hidden>/);
+    assert.doesNotMatch(posts[2].html, /class="thread-detail"[^>]* hidden>/);
     assert.match(posts[2].html, /Yes, in v2/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('addBug writes through mtqg and re-renders the bugs tab', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'addBug', tab: 'bugs', text: 'crashes on empty input' });
+    await waitUntil(() => posts.length === 1);
+
+    assert.match(posts[0].html, /crashes on empty input/);
+    const list = await client.bugList();
+    assert.equal(list.data.open, 1);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('addBugReply adds a reply to the bug, visible once expanded', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const bug = await client.bugReport('crashes on empty input');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'toggleExpand', tab: 'bugs', id: bug.data.record.id, expanded: true });
+    await waitUntil(() => posts.length === 1);
+
+    controller.handleMessage({ type: 'addBugReply', tab: 'bugs', id: bug.data.record.id, text: 'reproduced on macOS too' });
+    await waitUntil(() => posts.length === 2);
+
+    assert.match(posts[1].html, /reproduced on macOS too/);
+    const list = await client.bugList();
+    assert.equal(list.data.records[0].replies?.[0]?.text, 'reproduced on macOS too');
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('setStatus on the bugs tab marks a bug closed, and reopens it', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const bug = await client.bugReport('crashes on empty input');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'setStatus', tab: 'bugs', id: bug.data.record.id, done: true });
+    await waitUntil(() => posts.length === 1);
+    let list = await client.bugList({ all: true });
+    assert.equal(list.data.records[0].status, 'done');
+
+    controller.handleMessage({ type: 'setStatus', tab: 'bugs', id: bug.data.record.id, done: false });
+    await waitUntil(() => posts.length === 2);
+    list = await client.bugList({ all: true });
+    assert.equal(list.data.records[0].status, 'open');
     controller.dispose();
   } finally {
     await repo.cleanup();

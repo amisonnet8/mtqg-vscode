@@ -160,3 +160,30 @@ test('parseWebviewMessage rejects toggleExpand missing id or with a non-boolean 
   assert.equal(parseWebviewMessage({ type: 'toggleExpand', tab: 'questions', expanded: true }), undefined);
   assert.equal(parseWebviewMessage({ type: 'toggleExpand', tab: 'questions', id: 'abc123', expanded: 'yes' }), undefined);
 });
+
+test('parseWebviewMessage accepts a well-formed addBug message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'addBug', tab: 'bugs', text: 'crashes on empty input' }), {
+    type: 'addBug',
+    tab: 'bugs',
+    text: 'crashes on empty input',
+  });
+});
+
+test('parseWebviewMessage rejects addBug without text, or with a non-string text', () => {
+  assert.equal(parseWebviewMessage({ type: 'addBug', tab: 'bugs' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'addBug', tab: 'bugs', text: 1 }), undefined);
+});
+
+test('parseWebviewMessage accepts a well-formed addBugReply message', () => {
+  assert.deepEqual(parseWebviewMessage({ type: 'addBugReply', tab: 'bugs', id: 'abc123', text: 'reproduced' }), {
+    type: 'addBugReply',
+    tab: 'bugs',
+    id: 'abc123',
+    text: 'reproduced',
+  });
+});
+
+test('parseWebviewMessage rejects addBugReply missing id or text', () => {
+  assert.equal(parseWebviewMessage({ type: 'addBugReply', tab: 'bugs', text: 'reproduced' }), undefined);
+  assert.equal(parseWebviewMessage({ type: 'addBugReply', tab: 'bugs', id: 'abc123' }), undefined);
+});

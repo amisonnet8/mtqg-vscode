@@ -43,6 +43,15 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
     return { all: showAll.has(tab), expanded: expanded.get(tab) };
   }
 
+  /** Which mtqg calls `setStatus` maps to, per tab (todo `13570d152b`: a
+   * plain lookup scales better than a growing ternary as more tabs gain a
+   * done/reopen pair). */
+  const statusActions: Partial<Record<TabId, { done: (id: string) => Promise<unknown>; reopen: (id: string) => Promise<unknown> }>> = {
+    todos: { done: client.todoDone, reopen: client.todoReopen },
+    questions: { done: client.qaDone, reopen: client.qaReopen },
+    bugs: { done: client.bugDone, reopen: client.bugReopen },
+  };
+
   /** Runs `supplier`, then posts its HTML to `tab` unless a later render has since started. */
   function renderWith(tab: TabId, supplier: () => Promise<string>): void {
     const thisGeneration = ++generation;
@@ -97,6 +106,12 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
       case 'addAnswer':
         runWrite(message.tab, () => client.qaAnswer(message.id, message.text));
         return;
+      case 'addBug':
+        runWrite(message.tab, () => client.bugReport(message.text));
+        return;
+      case 'addBugReply':
+        runWrite(message.tab, () => client.bugReply(message.id, message.text));
+        return;
       case 'editRecord':
         runWrite(message.tab, () => client.edit(message.id, message.text));
         return;
@@ -104,8 +119,11 @@ export function createPanelController(options: PanelControllerOptions): PanelCon
         runWrite(message.tab, () => client.delete(message.id));
         return;
       case 'setStatus': {
-        const [done, reopen] = message.tab === 'questions' ? [client.qaDone, client.qaReopen] : [client.todoDone, client.todoReopen];
-        runWrite(message.tab, () => (message.done ? done(message.id) : reopen(message.id)));
+        const actions = statusActions[message.tab];
+        if (!actions) {
+          return;
+        }
+        runWrite(message.tab, () => (message.done ? actions.done(message.id) : actions.reopen(message.id)));
         return;
       }
       case 'setShowAll':

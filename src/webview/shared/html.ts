@@ -210,24 +210,24 @@ export function renderShell(options: ShellOptions): string {
       border-bottom: none;
       padding-top: 16px;
     }
-    .qa-detail td {
+    .thread-detail td {
       background-color: var(--vscode-textCodeBlock-background);
     }
-    .qa-thread {
+    .thread-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
       margin-bottom: 6px;
     }
-    .qa-reply {
+    .thread-reply {
       display: flex;
       align-items: baseline;
       gap: 8px;
     }
-    .qa-reply .editable {
+    .thread-reply .editable {
       flex: 1;
     }
-    .qa-reply-meta {
+    .thread-reply-meta {
       font-size: 0.85em;
       color: var(--vscode-descriptionForeground);
       white-space: nowrap;
