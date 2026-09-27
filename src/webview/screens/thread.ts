@@ -7,7 +7,7 @@ import {
   copyIdButton,
   copyIdButtonCell,
   dateCell,
-  dateText,
+  dateSpan,
   deleteButton,
   deleteButtonCell,
   editableCell,
@@ -84,7 +84,7 @@ export function replyRow(reply: ThreadReply): string {
   return `<div class="thread-reply" data-id="${reply.id}">
       ${badge(isAi ? 'AI' : 'human', isAi ? 'badge-ai' : 'badge-human')}
       ${editableElement('span', 'text', reply.text)}
-      <span class="thread-reply-meta">${escapeHtml(authorText(reply.author))} · ${escapeHtml(dateText(reply.created))}</span>
+      <span class="thread-reply-meta">${escapeHtml(authorText(reply.author))} · ${dateSpan(reply.created)}</span>
       ${copyIdButton()}
       ${deleteButton()}
     </div>`;

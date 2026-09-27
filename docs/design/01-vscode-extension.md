@@ -208,6 +208,16 @@ ui.md「機能は足さない」原則には触れないと判断した——mtq
 
 **アイコンの選び直し**：当初⧉（U+29C9、Miscellaneous Mathematical Symbols-B）を選んだが、実機確認（Xvfb+CDP、この開発環境のフォント＝DejaVuのみ）で字形が無く豆腐表示になることが判明。📋（クリップボード絵文字）に変更した。ただし📋自体もこの環境には絵文字フォントが一切無いため確認はできておらず（豆腐表示のまま）、実際のデスクトップ（Windows/mac/多くのLinux、Noto Color Emoji等が標準で入っている）での見た目は人間が確認する前提。クリック動作自体（`navigator.clipboard.writeText`→32桁IDがそのままコピーされること）は実機で確認済み（本物のマウスイベント`Input.dispatchMouseEvent`が必要——合成`element.click()`はクリップボードAPIが要求するユーザー操作として認識されない）。
 
+## 日時表示のタイムゾーン（修正、2026-09-27、bug`062ae1c25e`）
+
+各画面の日時（`created`/`updated`）は、mtqgが記録するISO 8601 UTC文字列の`T`/`Z`を取り除くだけ（`src/webview/screens/format.ts`の`formatDate`）で、常にUTC（標準時間）のまま表示していた——ローカルタイムゾーンへの変換を一切していなかった。人間から「時間が設定しているものではなく標準時間で表示される」という指摘で発覚。
+
+直し方は2案あった：①Webview（クライアント、ブラウザ環境）側でISO文字列を実際にビューアが見ている画面のローカルタイムゾーンに変換する、②拡張ホスト（Node）側で`Intl.DateTimeFormat`を使いホストプロセスのタイムゾーンで変換する。②は既存方針（「HTMLはホスト側で組む」）を保てるが、devcontainer/remote環境ではホストと実際に見ている画面のタイムゾーンが一致しない場合があり、今回の指摘もこのケースだった可能性が高い（このリポジトリのdevcontainer自体はJST設定だったが、`formatDate`はそもそも変換をしていなかったため、コンテナのタイムゾーン設定と無関係に常にUTCの数字がそのまま出ていた）。人間に確認（AskUserQuestion）した結果、①Webview側での変換を採用（bug`062ae1c25e`の返信）。
+
+実装：`table.ts`の`dateText`（プレーンテキストを返す関数）を廃止し、`dateSpan(iso)`（`<span class="date" data-iso="${iso}">${formatDate(iso)}</span>`というマークアップを返す関数）に置き換えた。`formatDate`が返すUTC表記はJS実行前のフォールバック表示に位置づけが変わり、`data-iso`に生のISO文字列を保持する。Webviewの固定スクリプト（`src/webview/client/main.ts`）に`localizeDates(root)`を追加し、`render`メッセージで各タブのHTMLを差し込むたびに、`[data-iso]`要素をすべて`new Date(iso)`のローカルgetter（`getFullYear`等）から組み立てた「YYYY-MM-DD HH:MM」というテキストに置き換える——`toLocaleString`のような言語依存の表記ではなく、フォールバックと同じ数値の並びのまま、変換元だけをローカルタイムゾーンに変える。`dateSpan`を直接使わずテキストとして`escapeHtml`に渡していた3箇所（`thread.ts`の返信メタ行、`memos.ts`の投稿メタ行、`todos.ts`のカード）は、マークアップをそのまま埋め込む形に直した。
+
+実機確認（Xvfb+CDP、一時mtqgリポジトリ）：このdevcontainerの実際のタイムゾーンJST（UTC+9、`timedatectl`で確認）で、6画面すべて（Memo・Todo・QA（質問＋回答）・Bug・Rule・Glossary）について、`mtqg`が記録したUTC時刻（例：`13:50:08Z`）が画面上でJST（`22:50`）として表示されることを確認した。
+
 ## mtqg本体への依頼（CLIの不足）— 対応済み
 
 計画時（2026-09-26、todo`acd71a3a7b`）に`mtqg --json`（v0.2.0）を確かめて見つかった、この拡張の設計に対する不足。**洗い出して本体に依頼し、依存する画面・機能は実装待ちにする**（決定、q&a`c9386d8ed3`）。依頼はtodo`57713a45f4`で追跡し、mtqg本体v0.3.0で3件とも対応された（回答、2026-09-26、`/home/node/mtqg-cli-response.md`、動作確認済み、memo`b1853df160`）。本体側の設計判断は本体の`.mtqg/`（`8d245a8b2c`・`5b7fd793b8`・`473949da3e`）に記録されている。

@@ -47,12 +47,21 @@ export function badge(text: string, extraClass?: string): string {
   return `<span class="${cls}">${escapeHtml(text)}</span>`;
 }
 
-export function dateText(iso: string): string {
-  return formatDate(iso);
+/**
+ * A timestamp element. The text shown here (UTC, `formatDate`) is only the
+ * fallback until the Webview's fixed script (`client/main.ts`) runs and
+ * replaces it with the viewer's own local time, read back out of `data-iso`
+ * (bug `062ae1c25e`: the extension host's own timezone is not necessarily
+ * the viewer's). Callers that need this inline (not already inside a `<td>`,
+ * e.g. `thread.ts`'s reply meta line) use this directly instead of wrapping
+ * plain text in `escapeHtml` -- this returns markup, not text.
+ */
+export function dateSpan(iso: string): string {
+  return `<span class="date" data-iso="${escapeHtml(iso)}">${escapeHtml(formatDate(iso))}</span>`;
 }
 
 export function dateCell(iso: string): string {
-  return plainCell(dateText(iso));
+  return `<td>${dateSpan(iso)}</td>`;
 }
 
 /** `mtqg delete` (q&a `e07736f680`: no confirmation dialog -- deletes are never truly lost). */

@@ -1,6 +1,6 @@
 import type { TodoRecord } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
-import { authorText, copyIdButton, dateText, deleteButton, editableElement } from './table';
+import { authorText, copyIdButton, dateSpan, deleteButton, editableElement } from './table';
 
 export interface TodosView {
   /** "Show done" checkbox state (ui.md: default is open-only). */
@@ -24,7 +24,7 @@ function card(record: TodoRecord): string {
     ${editableElement('div', 'text', record.text)}
     <div class="card-meta">
       <span>${escapeHtml(authorText(record.author))}</span>
-      <span>${escapeHtml(dateText(record.created))}</span>
+      ${dateSpan(record.created)}
     </div>
     <div class="card-actions">${copyIdButton()}${deleteButton()}</div>
   </article>`;

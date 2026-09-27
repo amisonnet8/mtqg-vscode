@@ -25,6 +25,32 @@ declare function acquireVsCodeApi(): {
       : undefined;
   }
 
+  /**
+   * Replaces a rendered date element's UTC fallback text (`table.ts`'s
+   * `dateSpan`, `data-iso`) with the viewer's own local time -- the actual
+   * point of doing this here rather than on the host (bug `062ae1c25e`: the
+   * extension host's own timezone is not necessarily this window's).
+   * Deliberately the same numeric "YYYY-MM-DD HH:MM" shape as the fallback,
+   * not a locale-formatted string, so the display stays consistent
+   * regardless of the viewer's OS locale.
+   */
+  function localizeDates(root: ParentNode): void {
+    for (const element of root.querySelectorAll<HTMLElement>('[data-iso]')) {
+      const iso = element.dataset.iso;
+      if (!iso) {
+        continue;
+      }
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) {
+        continue;
+      }
+      const pad = (n: number) => String(n).padStart(2, '0');
+      element.textContent = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+        date.getHours(),
+      )}:${pad(date.getMinutes())}`;
+    }
+  }
+
   function selectTab(tab: string): void {
     for (const tabButton of document.querySelectorAll<HTMLElement>('[role="tab"]')) {
       tabButton.setAttribute('aria-selected', String(tabButton.dataset.tab === tab));
@@ -234,6 +260,7 @@ declare function acquireVsCodeApi(): {
     const panel = document.getElementById(`panel-${message.tab}`);
     if (panel) {
       panel.innerHTML = message.html ?? '';
+      localizeDates(panel);
       // Memo screen only (todo `01ee2706ce`): scroll the composer (at the
       // timeline's newest end) into view, unless this render is a "Load
       // earlier" (the host omits the attribute then, so the just-prepended
