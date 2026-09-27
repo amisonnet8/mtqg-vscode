@@ -13,12 +13,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ubuntu-latest固定（このdevcontainerと同じLinuxのみ）。Windows/macOSへの
-  # 拡張は、qsoku本体のWindows/PowerShell対応が済んでから（人間の指示、
-  # 2026-09-27）。対応が済んだら、mtqg本体のci.yml（check jobの3 OS matrix）
-  # に倣ってmatrixへ拡張する。
+  # 3 OS matrix（todo b7fe931ffa、2026-09-27）。qsoku本体のWindows/
+  # PowerShell対応（人間から確認済み）を受けて、ubuntu-latest固定から拡張
+  # した。mtqg本体のci.yml（check jobの3 OS matrix、goモジュールキャッシュの
+  # github.com/amisonnet8/mtqg@v0.4.0で実物を確認）に倣う。
   check:
-    runs-on: ubuntu-latest
+    name: check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -46,14 +51,22 @@ jobs:
       # はUbuntu 24.04（noble）で、`libasound2`が仮想パッケージになり実体が
       # `libasound2t64`に変わっている（devcontainer側はDebian bookwormなので
       # `libasound2`のまま。実機のCIログで確認、2026-09-27：
-      # "Package 'libasound2' has no installation candidate"）
+      # "Package 'libasound2' has no installation candidate"）。
+      # macos-latest/windows-latestは元から実ディスプレイを持つランナーで
+      # Xvfbが要らない上、apt-getも無いのでLinuxだけに絞る（qsokufileの
+      # test:エントリもxvfb-runの有無で同じ判定をしている）。
       - name: Install headless VS Code dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb libnss3 libgtk-3-0 libasound2t64 libgbm1 libxkbfile1 libsecret-1-0 libxss1
+      # shell: bashはmtqg本体のci.ymlと同じ（Linux/macOSは元から既定がbashで
+      # 無害、Windowsは既定のpwshではなくGit Bashを使わせる）。
       - name: qsoku check
+        shell: bash
         run: qsoku check
       - name: qsoku test
+        shell: bash
         run: qsoku test
 
   shellcheck:

@@ -10,17 +10,24 @@ unit: (cd //; node --test 'out/test/unit/**/*.test.js')
 
 check: qsoku build && qsoku unit
 
-# Extension-host tests (test/vscode/): the real VS Code, in a headless X
-# server (no display in this container/CI otherwise). Runs node:test's own
+# Extension-host tests (test/vscode/): the real VS Code. Runs node:test's own
 # run() inside the extension host (test/vscode/suite/index.ts) instead of
 # mocha/@vscode/test-cli (.claude/rules/dependencies.md).
+#
+# xvfb-run only exists on Linux (this container, and CI's ubuntu-latest) --
+# there is no display otherwise, so VS Code needs Xvfb's virtual one.
+# windows-latest/macos-latest already have a real display and have no
+# xvfb-run at all, so the branch below runs node directly there (todo
+# b7fe931ffa: matrix-expanding CI to those two).
 #
 # ELECTRON_RUN_AS_NODE=1 is set repository-wide in this devcontainer (for the
 # remote-cli `code` shim, .devcontainer/postCreate.sh). Inherited by a
 # downloaded VS Code build, it makes that build's own Electron binary run as
 # plain Node instead of launching the app, so every VS Code CLI flag fails
-# with "bad option" (bug, todo 97779f964e). Unset it just for this run.
-test: qsoku build && (cd //; env -u ELECTRON_RUN_AS_NODE xvfb-run -a node out/test/vscode/runTest.js)
+# with "bad option" (bug, todo 97779f964e). Unset it just for this run --
+# harmless where it was never set (CI, any non-Linux OS) since unsetting an
+# already-absent variable is a no-op.
+test: qsoku build && (cd //; if command -v xvfb-run >/dev/null 2>&1; then env -u ELECTRON_RUN_AS_NODE xvfb-run -a node out/test/vscode/runTest.js; else node out/test/vscode/runTest.js; fi)
 
 # --include-dev-deps: this project's runtime dependencies are always empty
 # by design (.claude/rules/dependencies.md), so without this flag trivy scans
