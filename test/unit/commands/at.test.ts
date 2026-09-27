@@ -33,3 +33,12 @@ test('computeAt does not throw for a file outside the workspace root (not blocke
   const at = computeAt('/repo/sub', '/repo/other/file.ts', { startLine: 0, endLine: 0 });
   assert.equal(at.path, '../other/file.ts');
 });
+
+// path.relative uses the OS native separator (`\` on Windows); mtqg records
+// the path as-is, so a Windows-made record would otherwise carry backslashes
+// forever (bug `d9edda4615d9`, found on CI's windows-latest leg).
+test('computeAt always uses forward slashes, regardless of the OS path separator', () => {
+  const at = computeAt('/repo', '/repo/nested/dir/file.ts', { startLine: 0, endLine: 0 });
+  assert.ok(!at.path.includes('\\'), `expected no backslashes in ${at.path}`);
+  assert.equal(at.path, 'nested/dir/file.ts');
+});

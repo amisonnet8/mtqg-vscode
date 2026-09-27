@@ -30,9 +30,16 @@ export interface Selection {
  * mtqg does not normalize or validate the path it is given (same source,
  * "パスは渡されたとおりに記録されます") -- a file outside `workspaceRoot`
  * yields a `../`-prefixed path, which is accepted as-is rather than blocked.
+ *
+ * `path.relative`'s own separator is the OS native one (`\` on Windows), but
+ * mtqg records paths as-is with no normalization of its own -- a record
+ * made on Windows would otherwise carry backslashes forever. Converting to
+ * `/` here keeps every record's path in the one form mtqg's own paths
+ * already use (found via CI's Windows leg, bug `d9edda4615d9`).
  */
 export function computeAt(workspaceRoot: string, filePath: string, selection: Selection): AtInfo {
   const relativePath = path.relative(workspaceRoot, filePath) || path.basename(filePath);
+  const posixPath = relativePath.split(path.sep).join('/');
   const line = Math.min(selection.startLine, selection.endLine) + 1;
-  return { path: relativePath, line };
+  return { path: posixPath, line };
 }
