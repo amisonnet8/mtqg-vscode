@@ -29,5 +29,10 @@ trivy: (cd //; trivy fs --config trivy.yaml --include-dev-deps .)
 
 shellcheck: (cd //; git ls-files '*.sh' '*.bash' | xargs -r shellcheck)
 
-# vsce reads package.json/.vscodeignore from the current directory.
-package: (cd //; npx vsce package)
+# vsce reads package.json/.vscodeignore from the current directory. out/ is
+# removed first: a stale out/src/webview/client/main.js (from before the
+# root tsconfig excluded that directory, commit ac57f45) would otherwise
+# ride along into the .vsix even though nothing loads it anymore (the
+# Webview loads out/webview/main.js instead; found while packaging, todo
+# 2f60eb9fb1).
+package: (cd //; rm -rf out) && qsoku build && (cd //; npx vsce package)

@@ -2,18 +2,30 @@
   "name": "mtqg",
   "displayName": "mtqg",
   "description": "Record assist and process view for mtqg (memo & rules, todo, qa & bugs, glossary).",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "preview": true,
   "license": "MIT",
   "publisher": "amisonnet8",
   "repository": {
     "type": "git",
     "url": "https://github.com/amisonnet8/mtqg-vscode"
   },
+  "bugs": {
+    "url": "https://github.com/amisonnet8/mtqg-vscode/issues"
+  },
+  "homepage": "https://github.com/amisonnet8/mtqg-vscode#readme",
   "engines": {
     "vscode": "^1.100.0"
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "mtqg",
+    "memo",
+    "todo",
+    "qa",
+    "journal"
   ],
   "main": "./out/src/extension.js",
   "contributes": {

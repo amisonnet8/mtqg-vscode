@@ -175,6 +175,17 @@
 - ワークスペース外のファイルを開いていた場合、`../`始まりの相対パスになるが、mtqgはパスを正規化・検証せずそのまま記録する仕様（`/home/node/mtqg-cli-response.md`「パスは渡されたとおりに記録されます」）なのでブロックしない
 - 実機確認（Xvfb+CDP、一時リポジトリ）で、コマンドパレット・右クリック双方からの起動、複数行選択時に先頭行が使われること、Escapeでのキャンセル、未知のスラッシュコマンドのエラー、Viewボタンでのパネル起動、エディタ未オープン時のエラーメッセージを確認済み
 
+## パッケージング（決定、2026-09-27、todo`2f60eb9fb1`）
+
+6画面・エディタからの記録作成コマンド・CIが揃った状態で、`vsce package`が通る形（README・CHANGELOG・`package.json`のmetadata）を整えた。人間に確認した4点：
+
+1. **README**：英語で「それなり」の内容にし、冒頭にmtqg本体（`README.md`・`README_ja.md`）と同じ趣旨の「開発中、まだ使えない」注記を入れる。**mtqg v1公開時に、mtqg本体のREADMEを作り直すのに合わせてこちらも作り直す前提**——今のUIはまだ変わりうる段階なので、スクリーンショット等は今回入れない
+2. **アイコン**：今回は付けない（`package.json`に`icon`フィールドを入れない。Marketplaceでは既定のアイコンになる）
+3. **バージョン**：`0.1.0`＋`"preview": true`（Marketplaceに「Preview」バッジが出る。本体がv1前であることと揃える）
+4. **`checkMtqgAvailability`（`src/mtqg/availability.ts`）未接続**：パッケージング準備中に見つけた別件（起動時にmtqgの有無・最低版0.4.0を確認する関数がどこからも呼ばれておらず、古い版のmtqgでも警告が出ない）。bugとして記録し（`3fc28931b2`）、別todo（`239043c4c6`）に切り出した。今回のtodoでは触らない
+
+`qsokufile`の`package`ターゲットは、`vsce package`の前に`out/`を消すよう変更した——ルートの`tsconfig.json`が`src/webview/client`を`exclude`するようになる前（コミット`ac57f45`より前）にビルドされた`out/src/webview/client/main.js`が残ったままになっており、`vsce ls`で.vsixに含まれてしまっていた（実際にWebviewが読むのは`out/webview/main.js`で、この残骸は使われていない）。パッケージ後、実機（Xvfb+CDP）で.vsixの中身を展開して`--extensionDevelopmentPath`で読み込み、`mtqg: Open`で6タブが描画されること・エディタ右クリックに`mtqg: New Record Here`が出ることを確認済み。
+
 ## mtqg本体への依頼（CLIの不足）— 対応済み
 
 計画時（2026-09-26、todo`acd71a3a7b`）に`mtqg --json`（v0.2.0）を確かめて見つかった、この拡張の設計に対する不足。**洗い出して本体に依頼し、依存する画面・機能は実装待ちにする**（決定、q&a`c9386d8ed3`）。依頼はtodo`57713a45f4`で追跡し、mtqg本体v0.3.0で3件とも対応された（回答、2026-09-26、`/home/node/mtqg-cli-response.md`、動作確認済み、memo`b1853df160`）。本体側の設計判断は本体の`.mtqg/`（`8d245a8b2c`・`5b7fd793b8`・`473949da3e`）に記録されている。
@@ -204,4 +215,5 @@ Memo画面（todo`01ee2706ce`）の実装中に見つかった不足。人間が
 
 - **各画面の具体的なレイアウト**（列の並び、余白、詳細表示の形など）は未定（元の設計で「14章」に送られていたもの）。**画面ごとに、着手の直前で人間に確認する**（一括では決めない。決定、2026-09-26、todo`9985245ed8`）。6画面すべて確認済み（上の各節）。Bugsは「QAと同じ形」という既存の決定がそのまま答えだったため新規確認はしていない
 - npmの依存の線引きの例外が必要になった場合の判断（`.claude/rules/dependencies.md`）
-- `.github/workflows/`（CI）の内容
+- `checkMtqgAvailability`をどこで呼ぶか（bug`3fc28931b2`、todo`239043c4c6`）
+- mtqg v1公開時のREADME作り直し（本体のREADME作り直しに合わせる、上の「パッケージング」節）

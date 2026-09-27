@@ -1,11 +1,13 @@
 # ディレクトリ構成
 
-`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）・エディタからの記録作成コマンド（todo`24f2e871d5`）・CI（todo`53cbaa3265`）で作ったもの。6画面と主な操作、CIが揃った。それ以外は、後続のtodoで足す予定のもの。
+`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）・エディタからの記録作成コマンド（todo`24f2e871d5`）・CI（todo`53cbaa3265`）・パッケージング準備（todo`2f60eb9fb1`）で作ったもの。6画面と主な操作、CI、Marketplace向けのREADME・CHANGELOGが揃った。それ以外は、後続のtodoで足す予定のもの。
 
 ```
 mtqg-vscode/
 *├── CLAUDE.md
 *├── LICENSE
+*├── README.md               （Marketplaceの説明。暫定版、mtqg v1公開時に作り直す予定）
+*├── CHANGELOG.md
 *├── .gitattributes
 *├── .gitignore
 *├── trivy.yaml
