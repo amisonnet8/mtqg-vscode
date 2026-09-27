@@ -43,6 +43,11 @@ test('renderGlossary makes the definition editable but never the word (mtqg edit
   assert.match(row, /data-field="text"/);
 });
 
+test('renderGlossary gives each row a Copy ID button next to the delete button', () => {
+  const row = rowHtml(renderGlossary([entry('a', 'token', 'a definition', '2026-01-01T00:00:00Z')]), 'a');
+  assert.match(row, /data-action="copy-id"/);
+});
+
 test('the add row lets a new term and definition be typed', () => {
   const html = renderGlossary([]);
   assert.match(html, /class="add-row"/);

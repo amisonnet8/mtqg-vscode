@@ -186,6 +186,14 @@
 
 `qsokufile`の`package`ターゲットは、`vsce package`の前に`out/`を消すよう変更した——ルートの`tsconfig.json`が`src/webview/client`を`exclude`するようになる前（コミット`ac57f45`より前）にビルドされた`out/src/webview/client/main.js`が残ったままになっており、`vsce ls`で.vsixに含まれてしまっていた（実際にWebviewが読むのは`out/webview/main.js`で、この残骸は使われていない）。パッケージ後、実機（Xvfb+CDP）で.vsixの中身を展開して`--extensionDevelopmentPath`で読み込み、`mtqg: Open`で6タブが描画されること・エディタ右クリックに`mtqg: New Record Here`が出ることを確認済み。
 
+## IDコピーボタン（決定、2026-09-27、チャットでの要望）
+
+使い始めてすぐの人間からの要望：記録のID（`mtqg show <id>`等に使う32桁のID）を、全6画面（Memo・Todo・QA・Bug・Rule・Glossary）でクリップボードにコピーできるようにする。IDはこれまでUI上のどこにも見えず・コピーできなかった（`data-id`属性としてDOMには載っているが、人の目には触れない）。
+
+ui.md「機能は足さない」原則には触れないと判断した——mtqgに新しい操作・データを増やすものではなく、既存の記録が既に持っている属性を人間が使いやすくするだけの便宜。**mtqgを一切呼ばないため、`controller.ts`・`shared/messages.ts`に新しいメッセージ型は足さず、Webviewの固定スクリプト（`src/webview/client/main.ts`）だけで完結させた**（Clipboard API、`navigator.clipboard.writeText`）。共通部品`copyIdButton`/`copyIdButtonCell`（`src/webview/screens/table.ts`）を、既存の`deleteButton`/`deleteButtonCell`の隣に配置。Memo画面の削除済みの跡（`deletedPost`・`hiddenReplyPost`・`deletedReplyRow`）にも含めた——mtqgは編集・削除は`not_found`で拒否するが、IDを見ること自体は妨げないため。クリック後、ボタンが一瞬✓に変わるフィードバック（色だけに頼らない、ui.md）。
+
+**アイコンの選び直し**：当初⧉（U+29C9、Miscellaneous Mathematical Symbols-B）を選んだが、実機確認（Xvfb+CDP、この開発環境のフォント＝DejaVuのみ）で字形が無く豆腐表示になることが判明。📋（クリップボード絵文字）に変更した。ただし📋自体もこの環境には絵文字フォントが一切無いため確認はできておらず（豆腐表示のまま）、実際のデスクトップ（Windows/mac/多くのLinux、Noto Color Emoji等が標準で入っている）での見た目は人間が確認する前提。クリック動作自体（`navigator.clipboard.writeText`→32桁IDがそのままコピーされること）は実機で確認済み（本物のマウスイベント`Input.dispatchMouseEvent`が必要——合成`element.click()`はクリップボードAPIが要求するユーザー操作として認識されない）。
+
 ## mtqg本体への依頼（CLIの不足）— 対応済み
 
 計画時（2026-09-26、todo`acd71a3a7b`）に`mtqg --json`（v0.2.0）を確かめて見つかった、この拡張の設計に対する不足。**洗い出して本体に依頼し、依存する画面・機能は実装待ちにする**（決定、q&a`c9386d8ed3`）。依頼はtodo`57713a45f4`で追跡し、mtqg本体v0.3.0で3件とも対応された（回答、2026-09-26、`/home/node/mtqg-cli-response.md`、動作確認済み、memo`b1853df160`）。本体側の設計判断は本体の`.mtqg/`（`8d245a8b2c`・`5b7fd793b8`・`473949da3e`）に記録されている。

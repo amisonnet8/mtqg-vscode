@@ -63,3 +63,22 @@ export function deleteButton(): string {
 export function deleteButtonCell(): string {
   return `<td>${deleteButton()}</td>`;
 }
+
+/**
+ * Copies the record's own id to the clipboard. Handled entirely in the
+ * Webview's fixed script (`src/webview/client/main.ts`) via the id already
+ * carried by the ancestor `[data-id]` element (same lookup `deleteButton`
+ * relies on) -- this never calls mtqg, so unlike every other action here it
+ * needs no `vscode.postMessage` round trip to the host (decision, q&a
+ * `414d6889d172`). The clipboard emoji (rather than the originally-chosen
+ * `⧉`, U+29C9) is a deliberate choice: real-device testing found `⧉` has no
+ * glyph in this devcontainer's font (DejaVu) and rendered as tofu -- q&a
+ * `414d6889d172`'s follow-up answer.
+ */
+export function copyIdButton(): string {
+  return '<button type="button" class="copy-id" data-action="copy-id" aria-label="Copy ID" title="Copy ID">📋</button>';
+}
+
+export function copyIdButtonCell(): string {
+  return `<td>${copyIdButton()}</td>`;
+}

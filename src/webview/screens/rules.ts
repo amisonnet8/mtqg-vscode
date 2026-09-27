@@ -1,5 +1,5 @@
 import type { RuleRecord } from '../../mtqg/types';
-import { authorCell, dateCell, deleteButtonCell, editableCell } from './table';
+import { authorCell, copyIdButtonCell, dateCell, deleteButtonCell, editableCell } from './table';
 
 /**
  * `rule list` does not guarantee any particular order (verified against the
@@ -13,14 +13,14 @@ export function renderRules(records: RuleRecord[]): string {
   const rows = sorted
     .map(
       (r) =>
-        `<tr data-id="${r.id}">${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${deleteButtonCell()}</tr>`,
+        `<tr data-id="${r.id}">${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${copyIdButtonCell()}${deleteButtonCell()}</tr>`,
     )
     .join('');
 
   return `<table class="mtqg-table">
-  <thead><tr><th>Text</th><th>Author</th><th>Date</th><th></th></tr></thead>
+  <thead><tr><th>Text</th><th>Author</th><th>Date</th><th></th><th></th></tr></thead>
   <tbody>
-    <tr class="add-row">${editableCell('text', '', 'New rule text')}<td></td><td></td><td></td></tr>
+    <tr class="add-row">${editableCell('text', '', 'New rule text')}<td></td><td></td><td></td><td></td></tr>
     ${rows}
   </tbody>
 </table>`;

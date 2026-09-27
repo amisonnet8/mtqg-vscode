@@ -67,6 +67,11 @@ test('the card text is editable with the exact original value, and escaped', () 
   assert.doesNotMatch(card, /<b>bold<\/b>/);
 });
 
+test('the card has a Copy ID button next to the delete button', () => {
+  const card = cardHtml(renderTodos([todo('a', 'text', '2026-01-01T00:00:00Z')]), 'a');
+  assert.match(card, /data-action="copy-id"/);
+});
+
 test('the toolbar always includes an empty add field', () => {
   const html = renderTodos([]);
   assert.match(html, /class="add-row"/);

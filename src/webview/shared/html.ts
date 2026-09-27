@@ -126,7 +126,8 @@ export function renderShell(options: ShellOptions): string {
       font-size: 0.85em;
       opacity: 0.85;
     }
-    button[data-action="delete"] {
+    button[data-action="delete"],
+    button[data-action="copy-id"] {
       font-family: inherit;
       color: inherit;
       background: none;
@@ -134,7 +135,14 @@ export function renderShell(options: ShellOptions): string {
       cursor: pointer;
       opacity: 0.6;
     }
-    button[data-action="delete"]:hover {
+    button[data-action="delete"]:hover,
+    button[data-action="copy-id"]:hover {
+      opacity: 1;
+    }
+    /* Feedback for a successful copy (ui.md「色だけで意味を伝えない」): the
+       icon itself swaps to a checkmark for a moment, done in
+       src/webview/client/main.ts -- .copied carries no colour of its own. */
+    button[data-action="copy-id"].copied {
       opacity: 1;
     }
     .screen-toolbar {
@@ -192,7 +200,9 @@ export function renderShell(options: ShellOptions): string {
       font-size: 0.85em;
       color: var(--vscode-descriptionForeground);
     }
-    .card button[data-action="delete"] {
+    .card-actions {
+      display: flex;
+      gap: 4px;
       align-self: flex-end;
     }
     .toggle-expand {
@@ -285,10 +295,12 @@ export function renderShell(options: ShellOptions): string {
       color: var(--vscode-descriptionForeground);
       margin-bottom: 2px;
     }
-    .post button[data-action="delete"] {
+    .post-actions {
       position: absolute;
       top: 6px;
       right: 4px;
+      display: flex;
+      gap: 4px;
     }
     /* The trace a delete leaves (ui.md「消すと跡が残る」): no checkbox, no
        edit, no delete button (mtqg no longer accepts any of those on a

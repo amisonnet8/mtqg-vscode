@@ -1,7 +1,7 @@
 import type { Author, JournalEvent, MtqgRecord, RecordState } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
 import { replyRow } from './thread';
-import { authorText, badge, dateText, deleteButton, editableElement } from './table';
+import { authorText, badge, copyIdButton, dateText, deleteButton, editableElement } from './table';
 
 /** One `log --events` entry: any mtqg record, plus its own event history
  * (used to tell "edited" apart -- ui.md「訂正の事実を追記し、直したことを見せる」
@@ -97,7 +97,7 @@ function deletedPost(record: MemoRecord, hiddenCount?: number): string {
       : '';
   return `<article class="post post-deleted" data-id="${record.id}"><span class="post-action">${
     DELETED_LABELS[record.kind]
-  }</span>${meta}${hiddenLine}</article>`;
+  }</span>${meta}${hiddenLine}<div class="post-actions">${copyIdButton()}</div></article>`;
 }
 
 /** An answer/reply hidden because its own question/bug was deleted, shown on
@@ -111,7 +111,7 @@ function hiddenReplyPost(record: MemoRecord & { kind: 'answer' | 'reply' }): str
     record.author,
     record.created,
     false,
-  )}</article>`;
+  )}<div class="post-actions">${copyIdButton()}</div></article>`;
 }
 
 /** A reply row for an answer/reply that was deleted directly while its
@@ -123,11 +123,11 @@ function deletedReplyRow(record: MemoRecord & { kind: 'answer' | 'reply' }): str
   const meta = deleteEvent ? metaLine(deleteEvent.author, deleteEvent.ts, false, 'deleted') : '';
   return `<div class="thread-reply post-deleted" data-id="${record.id}"><span class="post-action">${
     DELETED_LABELS[record.kind]
-  }</span>${meta}</div>`;
+  }</span>${meta}${copyIdButton()}</div>`;
 }
 
 function postShell(id: string, extraClass: string, body: string): string {
-  return `<article class="post ${extraClass}" data-id="${id}">${body}${deleteButton()}</article>`;
+  return `<article class="post ${extraClass}" data-id="${id}">${body}<div class="post-actions">${copyIdButton()}${deleteButton()}</div></article>`;
 }
 
 function memoPost(record: MemoRecord & { kind: 'memo' }): string {

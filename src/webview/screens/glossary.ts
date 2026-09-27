@@ -1,6 +1,6 @@
 import type { GlossaryRecord } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
-import { authorCell, dateCell, deleteButtonCell, editableCell } from './table';
+import { authorCell, copyIdButtonCell, dateCell, deleteButtonCell, editableCell } from './table';
 
 /**
  * `edit` can change a glossary entry's definition but never its word
@@ -27,14 +27,14 @@ export function renderGlossary(records: GlossaryRecord[]): string {
         ? ' <span class="dup-badge" title="This term has more than one definition">⚠ dup</span>'
         : '';
       const wordCell = `<td class="${isDuplicate ? 'duplicate' : ''}">${escapeHtml(r.word)}${badge}</td>`;
-      return `<tr data-id="${r.id}">${wordCell}${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${deleteButtonCell()}</tr>`;
+      return `<tr data-id="${r.id}">${wordCell}${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${copyIdButtonCell()}${deleteButtonCell()}</tr>`;
     })
     .join('');
 
   return `<table class="mtqg-table">
-  <thead><tr><th>Word</th><th>Definition</th><th>Author</th><th>Date</th><th></th></tr></thead>
+  <thead><tr><th>Word</th><th>Definition</th><th>Author</th><th>Date</th><th></th><th></th></tr></thead>
   <tbody>
-    <tr class="add-row">${editableCell('word', '', 'New term')}${editableCell('text', '', 'New definition')}<td></td><td></td><td></td></tr>
+    <tr class="add-row">${editableCell('word', '', 'New term')}${editableCell('text', '', 'New definition')}<td></td><td></td><td></td><td></td></tr>
     ${rows}
   </tbody>
 </table>`;

@@ -35,7 +35,7 @@ mtqg-vscode/
 *│       ├── screens.ts      （renderScreenがタブIDで各画面の描画関数へ振り分ける。renderErrorもここ）
 *│       ├── screens/         （画面ごとの描画。vscode非依存、node:testで確認）
 *│       │   ├── format.ts   （日付の表示整形）
-*│       │   ├── table.ts    （Rules/Glossary/ToDo/QA/Bugs共通の部品：タグを選べる編集可能要素・削除ボタン・文字バッジ等）
+*│       │   ├── table.ts    （6画面共通の部品：タグを選べる編集可能要素・削除ボタン・IDコピーボタン・文字バッジ等）
 *│       │   ├── rules.ts    （renderRules）
 *│       │   ├── glossary.ts （renderGlossary：重複語のバッジ付け）
 *│       │   ├── todos.ts    （renderTodos：Keep風カードのグリッド、Done見出しでの下段まとめ）

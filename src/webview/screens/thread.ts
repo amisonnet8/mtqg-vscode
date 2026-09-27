@@ -1,6 +1,18 @@
 import type { Author, RecordState } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
-import { authorCell, authorText, badge, dateCell, dateText, deleteButton, deleteButtonCell, editableCell, editableElement } from './table';
+import {
+  authorCell,
+  authorText,
+  badge,
+  copyIdButton,
+  copyIdButtonCell,
+  dateCell,
+  dateText,
+  deleteButton,
+  deleteButtonCell,
+  editableCell,
+  editableElement,
+} from './table';
 
 /**
  * QA and Bugs share one shape (ui.md「Bugsは QAと同じ形」, todo
@@ -73,6 +85,7 @@ export function replyRow(reply: ThreadReply): string {
       ${badge(isAi ? 'AI' : 'human', isAi ? 'badge-ai' : 'badge-human')}
       ${editableElement('span', 'text', reply.text)}
       <span class="thread-reply-meta">${escapeHtml(authorText(reply.author))} · ${escapeHtml(dateText(reply.created))}</span>
+      ${copyIdButton()}
       ${deleteButton()}
     </div>`;
 }
@@ -101,11 +114,12 @@ function itemRows(record: ThreadItem, expanded: boolean, labels: ThreadLabels): 
     ${editableCell('text', record.text)}
     ${authorCell(record.author)}
     ${dateCell(record.created)}
+    ${copyIdButtonCell()}
     ${deleteButtonCell()}
   </tr>`;
 
   const detailRow = `<tr class="thread-detail" data-id="${record.id}"${expanded ? '' : ' hidden'}>
-    <td colspan="6">
+    <td colspan="7">
       <div class="thread-list">${replies.map(replyRow).join('')}</div>
       <div class="add-row" data-parent-id="${record.id}">${editableElement('div', 'text', '', labels.replyPlaceholder)}</div>
     </td>
@@ -129,7 +143,7 @@ export function renderThread(records: ThreadItem[], labels: ThreadLabels, view: 
 
   const openRows = open.map((r) => itemRows(r, expanded.has(r.id), labels)).join('');
   const doneRows = all
-    ? `<tr class="section-heading"><td colspan="6">${labels.sectionHeading} (${done.length})</td></tr>${done
+    ? `<tr class="section-heading"><td colspan="7">${labels.sectionHeading} (${done.length})</td></tr>${done
         .map((r) => itemRows(r, expanded.has(r.id), labels))
         .join('')}`
     : '';
@@ -139,7 +153,7 @@ export function renderThread(records: ThreadItem[], labels: ThreadLabels, view: 
   <label><input type="checkbox" data-action="show-all"${all ? ' checked' : ''}> ${labels.showAllLabel} (${done.length})</label>
 </div>
 <table class="mtqg-table">
-  <thead><tr><th></th><th></th><th>${labels.columnHeader}</th><th>Author</th><th>Date</th><th></th></tr></thead>
+  <thead><tr><th></th><th></th><th>${labels.columnHeader}</th><th>Author</th><th>Date</th><th></th><th></th></tr></thead>
   <tbody>${openRows}${doneRows}</tbody>
 </table>`;
 }

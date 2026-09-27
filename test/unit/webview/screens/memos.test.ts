@@ -11,6 +11,11 @@ function memo(id: string, text: string, created: string): MemoRecord {
   return { id, kind: 'memo', text, author: AUTHOR, created, updated: created };
 }
 
+test('renderMemos gives a live post a Copy ID button next to its delete button', () => {
+  const html = renderMemos([memo('a', 'text', '2026-01-01T00:00:00Z')]);
+  assert.match(html, /data-action="copy-id"/);
+});
+
 test('renderMemos orders posts oldest-first (log itself returns newest-first)', () => {
   // Literal `created` values, not real mtqg timing: two records added
   // within the same second have an unspecified tie-break order out of
@@ -129,6 +134,9 @@ test('renderMemos replaces a deleted memo\'s body with a trace, and drops its ed
     assert.match(html, /Deleted a memo/);
     assert.doesNotMatch(html, /gone tomorrow/);
     assert.doesNotMatch(html, /data-action="delete"/);
+    // Copy ID is not an mtqg operation (unlike edit/delete/checkbox), so it
+    // still appears on a deleted post's trace.
+    assert.match(html, /data-action="copy-id"/);
     // The only `editable` on the page is the composer's own add-row, not
     // something inside the deleted post.
     assert.equal((html.match(/class="editable"/g) ?? []).length, 1);

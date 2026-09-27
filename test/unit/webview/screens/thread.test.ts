@@ -146,3 +146,11 @@ test('the top-level add row uses the label\'s placeholder and the column header 
   assert.match(html, /aria-label="Add an item…"/);
   assert.match(html, /<th>Item<\/th>/);
 });
+
+test('an item\'s head row and each of its replies carry a Copy ID button', () => {
+  const html = renderThread([item('a', 'text', '2026-01-01T00:00:00Z', { replies: [reply('r1', 'a reply', '2026-01-02T00:00:00Z')] })], LABELS, {
+    expanded: new Set(['a']),
+  });
+  assert.match(headRow(html, 'a'), /data-action="copy-id"/);
+  assert.match(detailRow(html, 'a'), /data-action="copy-id"/);
+});

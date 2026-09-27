@@ -30,6 +30,11 @@ test('renderRules always includes an empty add row', () => {
   assert.match(html, /data-field="text" data-original=""/);
 });
 
+test('renderRules gives each row a Copy ID button next to the delete button', () => {
+  const html = renderRules([rule('a', 'text', '2026-01-01T00:00:00Z')]);
+  assert.match(html, /data-action="copy-id"/);
+});
+
 test('a real rule added through mtqg renders with its author and date', async () => {
   const repo = await createTempRepo();
   try {

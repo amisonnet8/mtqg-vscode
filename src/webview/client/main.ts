@@ -202,6 +202,27 @@ declare function acquireVsCodeApi(): {
       if (tab) {
         vscode.postMessage({ type: 'undo', tab });
       }
+      return;
+    }
+
+    // Copies the record's own id (q&a `414d6889d172`). Unlike every other
+    // action here, this never touches mtqg, so it is handled entirely in
+    // this script -- no `vscode.postMessage` round trip to the host.
+    const copyIdButton = target.closest<HTMLElement>('[data-action="copy-id"]');
+    if (copyIdButton) {
+      const id = copyIdButton.closest<HTMLElement>('[data-id]')?.dataset.id;
+      if (!id) {
+        return;
+      }
+      navigator.clipboard.writeText(id).then(() => {
+        const original = copyIdButton.textContent;
+        copyIdButton.textContent = '✓';
+        copyIdButton.classList.add('copied');
+        setTimeout(() => {
+          copyIdButton.textContent = original;
+          copyIdButton.classList.remove('copied');
+        }, 1200);
+      });
     }
   });
 
