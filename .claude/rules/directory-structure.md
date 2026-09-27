@@ -8,6 +8,9 @@ mtqg-vscode/
 *├── LICENSE
 *├── README.md               （Marketplaceの説明。暫定版、mtqg v1公開時に作り直す予定）
 *├── CHANGELOG.md
+*├── media/                  （このリポジトリ唯一の画像資産。mtqgパネルのタブアイコン、Codicon book由来・CC BY 4.0）
+*│   ├── tab-icon-light.svg
+*│   └── tab-icon-dark.svg
 *├── .gitattributes
 *├── .gitignore
 *├── trivy.yaml

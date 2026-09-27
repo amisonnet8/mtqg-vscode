@@ -21,6 +21,13 @@ export function openPanel(extensionUri: vscode.Uri): void {
     enableScripts: true,
     localResourceRoots: [scriptDir],
   });
+  // Same book glyph as the editor/title button (package.json's mtqg.open
+  // icon), but as actual files -- WebviewPanel.iconPath does not accept a
+  // Codicon reference like "$(book)", only a Uri (q&a `f16585cd161d`).
+  panel.iconPath = {
+    light: vscode.Uri.joinPath(extensionUri, 'media', 'tab-icon-light.svg'),
+    dark: vscode.Uri.joinPath(extensionUri, 'media', 'tab-icon-dark.svg'),
+  };
 
   const scriptUri = panel.webview.asWebviewUri(vscode.Uri.joinPath(scriptDir, 'main.js'));
   panel.webview.html = renderShell({

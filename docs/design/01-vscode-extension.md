@@ -183,6 +183,12 @@ Claude Code拡張の右上アイコン（クリックで開く）と同じよう
 
 **ツールチップの表示（修正、2026-09-27、bug`68a82b6998`）**：当初`category: "mtqg"`＋`title: "Open"`のままアイコンだけ足したところ、ツールバーのツールチップに「Open」としか出ずmtqgのコマンドと分かりにくいと人間から指摘があった。`mtqg.createAt`のときと同じ原因（`category`はコマンドパレットにしか前置されない）。`category`を外し`title`を`"mtqg: Open"`に直した（`.claude/rules/naming.md`にルール化）。
 
+## mtqgパネルのタブアイコン（決定、2026-09-27、チャットでの要望）
+
+続けて人間から、タブの「mtqg」ラベル左のファイル種別アイコン（既定の「未設定のファイル」アイコンのまま）も、右上のボタンと同じ見た目にしたいとの要望。`vscode.window.createWebviewPanel`が返す`WebviewPanel`の`iconPath`プロパティで設定する——ただし**このAPIは`package.json`のコマンド`icon`と違い、Codicon参照（`$(book)`のような文字列）を受け付けず、実際の画像ファイル（`Uri`か`{light, dark}`）が要る**。この拡張がこれまで一切持っていなかった画像資産を、ここで初めて追加することになった（Marketplaceアイコンは「今回は付けない」と決めている、todo`2f60eb9fb1`）。
+
+新しくロゴを描き起こすのではなく、右上のボタンと同じCodiconの`book`をそのまま流用した。Codiconのソース（`https://github.com/microsoft/vscode-codicons`の`src/icons/book.svg`）を取得し、ライト用（`media/tab-icon-light.svg`、`#424242`）・ダーク用（`media/tab-icon-dark.svg`、`#C5C5C5`）の2ファイルとして`fill`を固定色に変えて保存した（色の方針は人間に確認、q&a`f16585cd161d`——VS Code標準のアイコン色に合わせる）。**Codiconのライセンスは（MITではなく）CC BY 4.0**——著作権表示・ライセンス参照・変更点の明記が条件になるため、両SVGファイルの先頭にXMLコメントで出典・ライセンス・変更内容（`fill="currentColor"`→固定色）を明記した（README等への別枠の謝辞は作らない、同q&a）。`panel.ts`の`createWebviewPanel`呼び出し直後に`panel.iconPath`を設定するだけで、他のコード・テストへの影響は無い。`.vscodeignore`は`media/`を除外していないため変更不要（`qsoku package`で`.vsix`に2ファイルとも含まれることを確認済み）。実機確認（Xvfb+CDP、ライト/ダーク両テーマ）で、タブに本のアイコンが表示されることを確認した。
+
 ## パッケージング（決定、2026-09-27、todo`2f60eb9fb1`）
 
 6画面・エディタからの記録作成コマンド・CIが揃った状態で、`vsce package`が通る形（README・CHANGELOG・`package.json`のmetadata）を整えた。人間に確認した4点：
