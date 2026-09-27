@@ -421,6 +421,48 @@ test('deleteRecord hides the record from the re-rendered tab', async () => {
   }
 });
 
+test('deleteRecord on the Memo tab leaves a trace instead of hiding the post (mtqg v0.4.0)', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.memoAdd('to be deleted');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'deleteRecord', tab: 'memos', id: added.data.record.id });
+    await waitUntil(() => posts.length === 1);
+
+    assert.doesNotMatch(posts[0].html, /to be deleted/);
+    assert.match(posts[0].html, /Deleted a memo/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('undoing a delete on the Memo tab brings the post back to its normal form', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.memoAdd('to be deleted');
+    const { posts, post } = collector();
+    const controller = createPanelController({ client, post });
+
+    controller.handleMessage({ type: 'deleteRecord', tab: 'memos', id: added.data.record.id });
+    await waitUntil(() => posts.length === 1);
+    assert.match(posts[0].html, /Deleted a memo/);
+
+    controller.handleMessage({ type: 'undo', tab: 'memos' });
+    await waitUntil(() => posts.length === 2);
+
+    assert.doesNotMatch(posts[1].html, /Deleted a memo/);
+    assert.match(posts[1].html, /to be deleted/);
+    controller.dispose();
+  } finally {
+    await repo.cleanup();
+  }
+});
+
 test('a write to an unknown id renders mtqg\'s own error instead of crashing the controller', async () => {
   const repo = await createTempRepo();
   try {

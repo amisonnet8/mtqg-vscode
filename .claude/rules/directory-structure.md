@@ -38,7 +38,7 @@ mtqg-vscode/
 *│       │   ├── questions.ts（renderQuestions：renderThreadにQA用のThreadLabelsを渡す薄い包み）
 *│       │   ├── bugs.ts     （renderBugs：renderThreadにBugs用のThreadLabelsを渡す薄い包み）
 *│       │   ├── composer.ts （parseComposer：Memo画面の入力欄のスラッシュコマンド解釈。純粋関数、vscode非依存）
-*│       │   └── memos.ts    （renderMemos：`log --events`をタイムラインに描画。answer/replyはthread.tsのreplyRowを再利用してスレッド化、edited判定・Load earlier・Undo通知を持つ）
+*│       │   └── memos.ts    （renderMemos：`log --events`をタイムラインに描画。answer/replyはthread.tsのreplyRowを再利用してスレッド化、edited判定・Load earlier・Undo通知・削除の跡（v0.4.0、`deleted:true`）を持つ）
 *│       ├── shared/          （6画面共通、vscode非依存。node:testで確認できる）
 *│       │   ├── html.ts     （renderShell：CSP・タブバー・タブパネルの外枠）
 *│       │   ├── tabs.ts     （6画面のID・ラベル・既定タブ）
@@ -76,6 +76,7 @@ mtqg-vscode/
 - **`setStatus`のようなタブ横断の種別非依存メッセージは、タブが増えるほどネストした三項演算子ではなく`Partial<Record<TabId, {...}>>`のようなルックアップに寄せる。** `controller.ts`の`statusActions`（todo`13570d152b`）。**1つのタブに複数の記録の種類が混在する画面（Memo、todo`01ee2706ce`）では、タブだけでは振り分けられない。** `setStatus`に任意の`kind`を足し、`kind`があればそちらを優先してルックアップする（`statusActionsByKind`）。タブ由来の`statusActions`はこのルックアップの別名として組み直し、二重管理にしない
 - **読み取り側の再フェッチも、書き込み側（`runWrite`）と同じ「mtqgから毎回取り直す、DOMを推測で直さない」方針に揃える。** Memo画面（todo`01ee2706ce`）はページングに`log --before`ではなく`log --limit`を伸ばす方式を選んだ——`--before`でページを継ぎ足すと、既に読み込んだページの記録が後から編集・削除されても、そのページを再取得しない限り古いまま残ってしまうため（`docs/design/01-vscode-extension.md`「Memo画面の実装」）。表示件数（`memoLimit`）は`showAll`/`expanded`と同じくcontroller.tsが持つ表示状態で、mtqgの記録ではない
 - **`log --json --events`の`op:"edit"`の有無で「編集済み」を判定する。** `updated`はdone/reopen等でも進むため、`created !== updated`だけでは編集と状態変更を区別できない
+- **削除された記録を返すのは`log --json --events`だけ**（mtqg本体v0.4.0、`deleted:true`＋自分自身の`delete`イベント）。`show`・`--events`無しの`log`・各`list`は変わらず削除されたら見えなくなる。親（質問・バグ）が削除されて隠れた回答・返信も`deleted:true`が付くが、自分自身の`delete`イベントは持たない——`memos.ts`はこの2つを区別して、削除されたレコードは跡（本文を隠した一行）、親ごと隠れただけのレコードは親の跡に件数だけ足す形にしている
 - **`vscode`を触るのは`src/webview/panel.ts`だけ。** `controller.ts`・`screens.ts`・`shared/`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）
 - **Webview内で実際に動くスクリプト（`src/webview/client/`）は別tsconfig。** ホスト側はCommonJS（`vscode`の型）、Webview側はDOM型・ブラウザ向けESM出力で、1つのtsconfigでは両立しない（バンドラを使わない方針、`.claude/rules/dependencies.md`）。ルートの`tsconfig.json`は`src/webview/client`を`exclude`する
 - **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く

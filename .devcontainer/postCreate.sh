@@ -45,7 +45,11 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 # v0.3.0: adds --at, `log --before` and `log --json --events` (only additive
 # fields/flags, verified against this repository before bumping the pin,
 # .claude/rules/mtqg-cli.md "版"; todo 57713a45f4).
-go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.3.0
+# v0.4.0: `log --json --events` now includes deleted records (each with
+# `deleted: true` and, for the delete itself, an `op:"delete"` event) --
+# `--events` off, or any other read command, is unchanged (verified before
+# bumping the pin; todo 01ee2706ce follow-up, commit 684c87d upstream).
+go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.4.0
 
 # Wire up qsoku's shell integration (working-directory carry-back and
 # completion) for bash. Idempotent: skipped if already present, so

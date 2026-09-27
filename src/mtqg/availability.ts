@@ -7,7 +7,7 @@ import type { VersionResult } from './types';
  * (.claude/rules/mtqg-cli.md "版"). Bump both together, after checking the
  * new release's `--json` only adds fields.
  */
-export const MIN_SUPPORTED_MTQG_VERSION = '0.3.0';
+export const MIN_SUPPORTED_MTQG_VERSION = '0.4.0';
 
 export type AvailabilityResult =
   | { ok: true; version: string; format: VersionResult['format'] }

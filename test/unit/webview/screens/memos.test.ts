@@ -112,3 +112,149 @@ test('renderMemos labels a glossary post "Defined a term" and a rule post "Adopt
     await repo.cleanup();
   }
 });
+
+// mtqg v0.4.0: `log --json --events` includes deleted records (`deleted:
+// true`, plus an `op:"delete"` event of their own) instead of hiding them
+// entirely -- the trace ui.md calls for (q&a `36a56edded8e`, `c379a8d90bb9`).
+
+test('renderMemos replaces a deleted memo\'s body with a trace, and drops its edit/delete controls', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.memoAdd('gone tomorrow');
+    await client.delete(added.data.record.id);
+    const log = await client.log({ events: true });
+
+    const html = renderMemos(log.data.records);
+    assert.match(html, /Deleted a memo/);
+    assert.doesNotMatch(html, /gone tomorrow/);
+    assert.doesNotMatch(html, /data-action="delete"/);
+    // The only `editable` on the page is the composer's own add-row, not
+    // something inside the deleted post.
+    assert.equal((html.match(/class="editable"/g) ?? []).length, 1);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('renderMemos shows who deleted a post and when, from its own delete event', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const added = await client.ruleAdd('will be revoked');
+    await client.delete(added.data.record.id);
+    const log = await client.log({ events: true });
+
+    const html = renderMemos(log.data.records);
+    assert.match(html, /Deleted a rule/);
+    // The meta line reads "deleted <date>" (from the delete event), not the
+    // plain creation date -- ui.md's "削除の事実を追記し、消えないことを正直に見せる".
+    assert.match(html, /deleted \d{4}-\d{2}-\d{2}/);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('renderMemos summarizes answers hidden by a deleted question as a count, not individually', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    await client.qaAnswer(asked.data.record.id, 'Yes, in v2');
+    await client.qaAnswer(asked.data.record.id, 'Actually no');
+    await client.delete(asked.data.record.id);
+    const log = await client.log({ events: true });
+
+    const html = renderMemos(log.data.records);
+    assert.match(html, /Deleted a question/);
+    assert.match(html, /2 answers hidden with it/);
+    assert.doesNotMatch(html, /Yes, in v2/);
+    assert.doesNotMatch(html, /Actually no/);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('renderMemos shows a deleted answer as a trace row inside its still-open question\'s thread', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    const answered = await client.qaAnswer(asked.data.record.id, 'Yes, in v2');
+    await client.delete(answered.data.record.id);
+    const log = await client.log({ events: true });
+
+    const html = renderMemos(log.data.records);
+    assert.match(html, /Should we cache this\?/);
+    assert.match(html, /Deleted an answer/);
+    assert.doesNotMatch(html, /Yes, in v2/);
+    // The question itself is untouched: still one live thread post.
+    assert.equal(html.match(/class="post post-thread/g)?.length, 1);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('renderMemos shows a standalone deleted-answer trace when its question is outside the loaded window', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    const answered = await client.qaAnswer(asked.data.record.id, 'Yes, in v2');
+    await client.delete(answered.data.record.id);
+    const log = await client.log({ events: true });
+    const answerOnly = log.data.records.filter((r) => r.kind !== 'question');
+
+    const html = renderMemos(answerOnly);
+    assert.match(html, /Deleted an answer/);
+    assert.doesNotMatch(html, /Yes, in v2/);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('renderMemos counts an answer already deleted before its question, once the question is also deleted', async () => {
+  // A real-device check (Xvfb+CDP, todo `01ee2706ce` follow-up) found this:
+  // deleting the parent after one of its answers was already deleted on its
+  // own used to make that answer disappear entirely -- neither shown as a
+  // trace (its parent renders as `deletedPost`, which never calls
+  // `threadPost`) nor counted (it had its own delete event, so the earlier
+  // logic treated it as "not hidden by the parent").
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    const firstAnswer = await client.qaAnswer(asked.data.record.id, 'answer one');
+    await client.qaAnswer(asked.data.record.id, 'answer two');
+    await client.delete(firstAnswer.data.record.id);
+    await client.delete(asked.data.record.id);
+    const log = await client.log({ events: true });
+
+    const html = renderMemos(log.data.records);
+    assert.match(html, /Deleted a question/);
+    assert.match(html, /2 answers hidden with it/);
+    assert.doesNotMatch(html, /answer one/);
+    assert.doesNotMatch(html, /answer two/);
+    assert.doesNotMatch(html, /Deleted an answer/);
+  } finally {
+    await repo.cleanup();
+  }
+});
+
+test('renderMemos shows a standalone "hidden with its deleted question" trace when the deleted parent is outside the loaded window', async () => {
+  const repo = await createTempRepo();
+  try {
+    const client = createMtqgClient(repo.root);
+    const asked = await client.qaAsk('Should we cache this?');
+    await client.qaAnswer(asked.data.record.id, 'Yes, in v2');
+    await client.delete(asked.data.record.id);
+    const log = await client.log({ events: true });
+    const answerOnly = log.data.records.filter((r) => r.kind !== 'question');
+
+    const html = renderMemos(answerOnly);
+    assert.match(html, /Hidden with its deleted question/);
+    assert.doesNotMatch(html, /Yes, in v2/);
+  } finally {
+    await repo.cleanup();
+  }
+});

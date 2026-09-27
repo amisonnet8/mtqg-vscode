@@ -290,6 +290,24 @@ export function renderShell(options: ShellOptions): string {
       top: 6px;
       right: 4px;
     }
+    /* The trace a delete leaves (ui.md「消すと跡が残る」): no checkbox, no
+       edit, no delete button (mtqg no longer accepts any of those on a
+       deleted or hidden record) -- muted and italic, on both a top-level
+       post and a thread reply row, so it reads as "gone" without relying on
+       color alone (the "Deleted a memo" text itself carries the meaning). */
+    .post-deleted {
+      font-style: italic;
+      color: var(--vscode-descriptionForeground);
+    }
+    .post-deleted .post-action {
+      color: inherit;
+    }
+    .post-hidden-count {
+      font-size: 0.85em;
+      font-style: italic;
+      color: var(--vscode-descriptionForeground);
+      margin: 2px 0 0;
+    }
     .load-earlier {
       font-family: inherit;
       font-size: inherit;
