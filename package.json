@@ -33,7 +33,8 @@
       {
         "command": "mtqg.open",
         "title": "Open",
-        "category": "mtqg"
+        "category": "mtqg",
+        "icon": "$(book)"
       },
       {
         "command": "mtqg.createAt",
@@ -45,6 +46,13 @@
         {
           "command": "mtqg.createAt",
           "group": "mtqg",
+          "when": "workspaceFolderCount > 0"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "mtqg.open",
+          "group": "navigation",
           "when": "workspaceFolderCount > 0"
         }
       ]

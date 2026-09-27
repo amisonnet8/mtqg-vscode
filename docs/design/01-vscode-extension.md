@@ -175,6 +175,12 @@
 - ワークスペース外のファイルを開いていた場合、`../`始まりの相対パスになるが、mtqgはパスを正規化・検証せずそのまま記録する仕様（`/home/node/mtqg-cli-response.md`「パスは渡されたとおりに記録されます」）なのでブロックしない
 - 実機確認（Xvfb+CDP、一時リポジトリ）で、コマンドパレット・右クリック双方からの起動、複数行選択時に先頭行が使われること、Escapeでのキャンセル、未知のスラッシュコマンドのエラー、Viewボタンでのパネル起動、エディタ未オープン時のエラーメッセージを確認済み
 
+## エディタタイトルのアイコンボタン（決定、2026-09-27、チャットでの要望）
+
+Claude Code拡張の右上アイコン（クリックで開く）と同じように、`mtqg.open`をエディタタイトル右上（`editor/title`メニュー貢献点、`navigation`グループ）からも呼べるようにした。新しいコマンド・ロジックは追加していない——既存の`mtqg.open`（`src/extension.ts`で登録済み）に`icon`を足し、`package.json`の`contributes.menus`に`editor/title`を1件追加しただけ。`openPanel`（`src/webview/panel.ts`）は元々「開いていればreveal」を持っているので、そのまま流用できる。
+
+アイコンは新しい画像資産を作らず、VS Code標準のCodicon `$(book)`を使った（q&a`7b9561fcd43d`）——mtqgが記録を経時で積み上げる「日誌」という性質に合う、という理由。`when`は`mtqg.createAt`の`editor/context`と同じ`workspaceFolderCount > 0`（ワークスペースが無いと`openPanel`はcontroller/watcherを組み立てず空のパネルになるため、`mtqg.createAt`同様に隠す）。実機確認（Xvfb+CDP）で、ファイルを開いたエディタタイトルの右上に本のアイコンが表示され、クリックするとmtqgパネルが開くことを確認済み。
+
 ## パッケージング（決定、2026-09-27、todo`2f60eb9fb1`）
 
 6画面・エディタからの記録作成コマンド・CIが揃った状態で、`vsce package`が通る形（README・CHANGELOG・`package.json`のmetadata）を整えた。人間に確認した4点：
