@@ -32,8 +32,7 @@
     "commands": [
       {
         "command": "mtqg.open",
-        "title": "Open",
-        "category": "mtqg",
+        "title": "mtqg: Open",
         "icon": "$(book)"
       },
       {

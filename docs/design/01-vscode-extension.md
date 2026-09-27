@@ -181,6 +181,8 @@ Claude Code拡張の右上アイコン（クリックで開く）と同じよう
 
 アイコンは新しい画像資産を作らず、VS Code標準のCodicon `$(book)`を使った（q&a`7b9561fcd43d`）——mtqgが記録を経時で積み上げる「日誌」という性質に合う、という理由。`when`は`mtqg.createAt`の`editor/context`と同じ`workspaceFolderCount > 0`（ワークスペースが無いと`openPanel`はcontroller/watcherを組み立てず空のパネルになるため、`mtqg.createAt`同様に隠す）。実機確認（Xvfb+CDP）で、ファイルを開いたエディタタイトルの右上に本のアイコンが表示され、クリックするとmtqgパネルが開くことを確認済み。
 
+**ツールチップの表示（修正、2026-09-27、bug`68a82b6998`）**：当初`category: "mtqg"`＋`title: "Open"`のままアイコンだけ足したところ、ツールバーのツールチップに「Open」としか出ずmtqgのコマンドと分かりにくいと人間から指摘があった。`mtqg.createAt`のときと同じ原因（`category`はコマンドパレットにしか前置されない）。`category`を外し`title`を`"mtqg: Open"`に直した（`.claude/rules/naming.md`にルール化）。
+
 ## パッケージング（決定、2026-09-27、todo`2f60eb9fb1`）
 
 6画面・エディタからの記録作成コマンド・CIが揃った状態で、`vsce package`が通る形（README・CHANGELOG・`package.json`のmetadata）を整えた。人間に確認した4点：
