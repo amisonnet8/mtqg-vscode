@@ -1,7 +1,7 @@
 import type { Author, JournalEvent, MtqgRecord, RecordState } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
 import { replyRow } from './thread';
-import { authorText, badge, copyIdButton, dateSpan, deleteButton, editableElement } from './table';
+import { authorText, badge, copyIdButton, dateText, deleteButton, editableElement } from './table';
 
 /** One `log --events` entry: any mtqg record, plus its own event history
  * (used to tell "edited" apart -- ui.md「訂正の事実を追記し、直したことを見せる」
@@ -46,10 +46,10 @@ function ownDeleteEvent(record: MemoRecord): JournalEvent | undefined {
 function metaLine(author: Author, timestamp: string, edited: boolean, verb?: string): string {
   const isAi = author.kind === 'ai';
   const editedMark = edited ? ' <span class="post-edited">(edited)</span>' : '';
-  const dateLabel = verb ? `${escapeHtml(verb)} ${dateSpan(timestamp)}` : dateSpan(timestamp);
+  const dateLabel = verb ? `${verb} ${dateText(timestamp)}` : dateText(timestamp);
   return `<span class="post-meta">${badge(isAi ? 'AI' : 'human', isAi ? 'badge-ai' : 'badge-human')} ${escapeHtml(
     authorText(author),
-  )} · ${dateLabel}${editedMark}</span>`;
+  )} · ${escapeHtml(dateLabel)}${editedMark}</span>`;
 }
 
 /** Every kind's "Deleted a/an <noun>" wording (naming.md's question/answer,

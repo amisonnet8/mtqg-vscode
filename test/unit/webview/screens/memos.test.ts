@@ -157,10 +157,7 @@ test('renderMemos shows who deleted a post and when, from its own delete event',
     assert.match(html, /Deleted a rule/);
     // The meta line reads "deleted <date>" (from the delete event), not the
     // plain creation date -- ui.md's "削除の事実を追記し、消えないことを正直に見せる".
-    // The date itself is a `dateSpan` element (bug `062ae1c25e`: the Webview
-    // replaces its UTC fallback text with the viewer's local time), not bare
-    // text, so "deleted " is followed by that element's opening tag.
-    assert.match(html, /deleted <span[^>]*>\d{4}-\d{2}-\d{2}/);
+    assert.match(html, /deleted \d{4}-\d{2}-\d{2}/);
   } finally {
     await repo.cleanup();
   }

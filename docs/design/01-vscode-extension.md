@@ -212,11 +212,11 @@ ui.md「機能は足さない」原則には触れないと判断した——mtq
 
 各画面の日時（`created`/`updated`）は、mtqgが記録するISO 8601 UTC文字列の`T`/`Z`を取り除くだけ（`src/webview/screens/format.ts`の`formatDate`）で、常にUTC（標準時間）のまま表示していた——ローカルタイムゾーンへの変換を一切していなかった。人間から「時間が設定しているものではなく標準時間で表示される」という指摘で発覚。
 
-直し方は2案あった：①Webview（クライアント、ブラウザ環境）側でISO文字列を実際にビューアが見ている画面のローカルタイムゾーンに変換する、②拡張ホスト（Node）側で`Intl.DateTimeFormat`を使いホストプロセスのタイムゾーンで変換する。②は既存方針（「HTMLはホスト側で組む」）を保てるが、devcontainer/remote環境ではホストと実際に見ている画面のタイムゾーンが一致しない場合があり、今回の指摘もこのケースだった可能性が高い（このリポジトリのdevcontainer自体はJST設定だったが、`formatDate`はそもそも変換をしていなかったため、コンテナのタイムゾーン設定と無関係に常にUTCの数字がそのまま出ていた）。人間に確認（AskUserQuestion）した結果、①Webview側での変換を採用（bug`062ae1c25e`の返信）。
+直し方は2案あった：①Webview（クライアント、ブラウザ環境）側でISO文字列を実際にビューアが見ている画面のローカルタイムゾーンに変換する、②拡張ホスト（Node）側で拡張ホストプロセス自身のローカルタイムゾーンで変換する。当初、人間に確認（AskUserQuestion）した結果①を採用したが、実装・実機確認後、人間から意図の訂正があった（q&a`2a7f51aca969`）：望んでいたのは「コンテナを使わない場合はローカルPCの時刻、コンテナを使う場合はコンテナの時刻」——つまり**mtqg自身が動いている側（＝拡張ホストの環境）**の時刻であり、①（常に画面を描いている実機の時刻）とは意味が違う。人間が実際にコンテナのタイムゾーンを設定する方法（`sudo ln -sf /usr/share/zoneinfo/<tz> /etc/localtime`によるシステムレベルの書き換え）を確認したところ、これは対話シェル（`~/.bashrc`のような）を経由せず全プロセスに効くため、②（拡張ホスト側変換）で正しく反映されることが分かり、②に修正した。
 
-実装：`table.ts`の`dateText`（プレーンテキストを返す関数）を廃止し、`dateSpan(iso)`（`<span class="date" data-iso="${iso}">${formatDate(iso)}</span>`というマークアップを返す関数）に置き換えた。`formatDate`が返すUTC表記はJS実行前のフォールバック表示に位置づけが変わり、`data-iso`に生のISO文字列を保持する。Webviewの固定スクリプト（`src/webview/client/main.ts`）に`localizeDates(root)`を追加し、`render`メッセージで各タブのHTMLを差し込むたびに、`[data-iso]`要素をすべて`new Date(iso)`のローカルgetter（`getFullYear`等）から組み立てた「YYYY-MM-DD HH:MM」というテキストに置き換える——`toLocaleString`のような言語依存の表記ではなく、フォールバックと同じ数値の並びのまま、変換元だけをローカルタイムゾーンに変える。`dateSpan`を直接使わずテキストとして`escapeHtml`に渡していた3箇所（`thread.ts`の返信メタ行、`memos.ts`の投稿メタ行、`todos.ts`のカード）は、マークアップをそのまま埋め込む形に直した。
+実装：`table.ts`の`dateCell`/`dateText`（プレーンテキストを返す）は当初のまま維持し、`src/webview/screens/format.ts`の`formatDate`の実装だけを変更した——ISO文字列の`Z`を取り除く固定スライスから、`new Date(iso)`のローカルgetter（`getFullYear`等）で「YYYY-MM-DD HH:MM」を組み立てる形にした。`Date`の非UTCゲッターは、プロセス自身の`TZ`環境変数（無ければOSの`/etc/localtime`）に従うため、この関数はそのまま「拡張ホストが動いている環境の時刻」になる。Webview側（`client/main.ts`）への変更は不要——最初の①案で追加した`dateSpan`・`data-iso`・`localizeDates`はすべて取り除いた（`.claude/rules/directory-structure.md`の「HTMLはホスト側で組む」の例外扱いも撤回）。
 
-実機確認（Xvfb+CDP、一時mtqgリポジトリ）：このdevcontainerの実際のタイムゾーンJST（UTC+9、`timedatectl`で確認）で、6画面すべて（Memo・Todo・QA（質問＋回答）・Bug・Rule・Glossary）について、`mtqg`が記録したUTC時刻（例：`13:50:08Z`）が画面上でJST（`22:50`）として表示されることを確認した。
+実機確認：このdevcontainer自身がJST設定（`/etc/timezone`＝`Asia/Tokyo`）のため、`formatDate`が`13:50:08Z`（UTC）を`22:50`（JST、+9h）に変換することをNode実行で確認した。CIの3 OS matrix（`.github/workflows/ci.yml`）は各ランナーの既定タイムゾーンがまちまちなため、`test/unit/webview/format.test.ts`の期待値は固定のUTC文字列ではなく、テスト実行プロセス自身の`Date`ローカルgetターから組み立てる形にしている（ハードコードした1つのタイムゾーンに依存しない）。
 
 ## mtqg本体への依頼（CLIの不足）— 対応済み
 
