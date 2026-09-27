@@ -41,6 +41,10 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
   7. **他のタブの`hidden`な内容も同じDOMに残っている。** `render`はそのタブの`panel-<id>`だけを書き換え、他のタブは`hidden`属性がつくだけで中身は消えない（起動直後の`ready`で最初に描画されたタブぶんも含む）。そのため`data-action="toggle-status"`のような共通セレクタを`document`全体に対して`querySelector`すると、見えている画面ではなく別の（隠れた）タブの要素を誤って掴むことがある（todo`8b7b600827`で発見：QA画面のチェックボックスのつもりがToDo画面の要素を操作していた）。CDPからの操作は必ず`#panel-<tab-id>`配下に絞る（例：`querySelector('#panel-questions [data-action="toggle-status"]')`）
 - この手順は6画面それぞれのtodoで繰り返す見込み。同じ手順を素の状態から毎回組み立てるのはコストなので、繰り返す段階でSkill化を検討する（提案済み、todo`b9caf0b88c`）
 
-## CI（予定）
+## CI（`.github/workflows/ci.yml`、todo`53cbaa3265`）
 
-- `.github/workflows/`はまだ無い。作るときは、mtqgと同じ考え方で複数OSを見る：VSCodeはWindows・macOS・Linuxで動くが、この拡張がOS依存な部分を持つとすれば`mtqg`実行ファイルの解決（Windowsは`mtqg.exe`）くらいのはずで、そこを確かめるテストは3OSで回す
+- **`ubuntu-latest`固定（matrixは使わない）。** VSCodeはWindows・macOS・Linuxで動き、mtqg本体の実CI（`github.com/amisonnet8/mtqg`の`.github/workflows/ci.yml`）は3 OS matrixで回しているが、mtqg-vscodeのCIを作った時点（2026-09-27）では**qsoku自体がまだWindows/PowerShellに正式対応していない**（人間から聞いたロードマップ：①qsokuのWindows/PowerShell対応→②そこで出た問題対応→③mtqg v1・正式公開）。そのため今回は現状のdevcontainerと同じLinuxだけに絞った（q&a`82fd9fe8fff2`）。**①が済み次第、mtqg本体のci.ymlに倣ってWindows/macOSへmatrix拡張する**（この拡張自体は新しいtodoとして起票する。この拡張がOS依存な部分を持つとすれば`mtqg`実行ファイルの解決（Windowsは`mtqg.exe`）くらいのはずだが、それを含め`qsoku unit`・`qsoku test`がまるごと3 OSで通ることを確かめる）
+- 3ジョブ：`check`（`npm ci`→`qsoku`・`mtqg`をインストール→`qsoku check`→`qsoku test`）・`shellcheck`（`qsoku shellcheck`）・`trivy`（`qsoku trivy`）。いずれも`qsokufile`をそのまま呼ぶだけで、CI固有のロジックを持たない（ローカルの`qsoku check`等と同じコマンドが通ることがCIが通ることの前提になる）
+- `mtqg`のインストール版（`go install .../mtqg@v0.4.0`）は`.devcontainer/postCreate.sh`・`src/mtqg/availability.ts`の`MIN_SUPPORTED_MTQG_VERSION`と3か所そろえる（`.claude/rules/mtqg-cli.md`「版」）
+- `qsoku test`（拡張開発ホストで実物VS Codeを起動）に必要なXvfb一式（`libnss3`等）は`.devcontainer/postCreate.sh`と同じ、動作確認済みのパッケージ一覧をそのまま`apt-get install`する
+- `actions/checkout`・`actions/setup-go`の版・`go-version`はmtqg本体のci.ymlとそろえる（版の食い違いで「手元は通るがCIは落ちる」を避ける）

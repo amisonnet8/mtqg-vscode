@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ubuntu-latest固定（このdevcontainerと同じLinuxのみ）。Windows/macOSへの
+  # 拡張は、qsoku本体のWindows/PowerShell対応が済んでから（人間の指示、
+  # 2026-09-27）。対応が済んだら、mtqg本体のci.yml（check jobの3 OS matrix）
+  # に倣ってmatrixへ拡張する。
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+      - name: Install npm dependencies
+        run: npm ci
+      # qsoku: build/unit/test/trivy/shellcheckの入口（qsokufile、
+      # .claude/rules/testing.md）。@latestはこのリポジトリのdevcontainer
+      # （.devcontainer/postCreate.sh）と同じ選択（qsoku自身がまだ動きの速い
+      # 段階のため。mtqg本体のci.ymlも同じ）
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      # v0.4.0はpostCreate.shとsrc/mtqg/availability.tsのMIN_SUPPORTED_MTQG_VERSION
+      # に合わせている。どちらかを上げたら3か所とも揃える（.claude/rules/mtqg-cli.md「版」）
+      - name: Install mtqg
+        run: go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.4.0
+      # xvfb一式：qsoku test（拡張開発ホストで実物VS Codeを起動する。
+      # .claude/rules/testing.md）に必要。.devcontainer/postCreate.shと同じ
+      # パッケージ一覧（動作確認済みの組み合わせをそのまま使う）
+      - name: Install headless VS Code dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libnss3 libgtk-3-0 libasound2 libgbm1 libxkbfile1 libsecret-1-0 libxss1
+      - name: qsoku check
+        run: qsoku check
+      - name: qsoku test
+        run: qsoku test
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - name: qsoku shellcheck
+        run: qsoku shellcheck
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - uses: aquasecurity/setup-trivy@v0.3.1
+        with:
+          version: v0.71.2
+      - name: qsoku trivy
+        run: qsoku trivy

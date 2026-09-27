@@ -1,6 +1,6 @@
 # ディレクトリ構成
 
-`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）・エディタからの記録作成コマンド（todo`24f2e871d5`）で作ったもの。6画面と主な操作が揃った。それ以外は、後続のtodoで足す予定のもの。
+`*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）・エディタからの記録作成コマンド（todo`24f2e871d5`）・CI（todo`53cbaa3265`）で作ったもの。6画面と主な操作、CIが揃った。それ以外は、後続のtodoで足す予定のもの。
 
 ```
 mtqg-vscode/
@@ -63,7 +63,8 @@ mtqg-vscode/
 *├── .vscode/
 *│   ├── launch.json          （F5で拡張開発ホストを起動）
 *│   └── tasks.json           （tsc -wのバックグラウンドタスク）
- └── .github/workflows/       （予定：CI、todo`53cbaa3265`）
+*└── .github/workflows/
+*    └── ci.yml                （check・shellcheck・trivyの3ジョブ、ubuntu-latest固定。.claude/rules/testing.md「CI」）
 ```
 
 ## 配置の判断基準
