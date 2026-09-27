@@ -267,7 +267,11 @@ export function renderShell(options: ShellOptions): string {
     }
     .post {
       position: relative;
-      padding: 6px 28px 6px 4px;
+      /* Right padding must clear the widest .post-actions cluster (copy-id +
+         delete, ~47px measured), not just one button -- a live post's text
+         used to wrap right up against the buttons and visually collide with
+         them (bug found by the human right after the copy-id button shipped). */
+      padding: 6px 60px 6px 4px;
       border-bottom: 1px solid var(--vscode-panel-border);
     }
     .post .editable {
