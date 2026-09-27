@@ -42,11 +42,15 @@ jobs:
         run: go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.4.0
       # xvfb一式：qsoku test（拡張開発ホストで実物VS Codeを起動する。
       # .claude/rules/testing.md）に必要。.devcontainer/postCreate.shと同じ
-      # パッケージ一覧（動作確認済みの組み合わせをそのまま使う）
+      # パッケージ一覧（動作確認済みの組み合わせ）がベースだが、`ubuntu-latest`
+      # はUbuntu 24.04（noble）で、`libasound2`が仮想パッケージになり実体が
+      # `libasound2t64`に変わっている（devcontainer側はDebian bookwormなので
+      # `libasound2`のまま。実機のCIログで確認、2026-09-27：
+      # "Package 'libasound2' has no installation candidate"）
       - name: Install headless VS Code dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libnss3 libgtk-3-0 libasound2 libgbm1 libxkbfile1 libsecret-1-0 libxss1
+          sudo apt-get install -y xvfb libnss3 libgtk-3-0 libasound2t64 libgbm1 libxkbfile1 libsecret-1-0 libxss1
       - name: qsoku check
         run: qsoku check
       - name: qsoku test
