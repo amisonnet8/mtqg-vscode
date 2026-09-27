@@ -156,6 +156,23 @@
 - 用語へのホバーでglossaryの定義を表示する、他のエディタにも同じ機能を提供するためにLSP化する、といった機能は、必要性が確認できてから検討する
 - メンション（「この質問は誰に聞いているか」）は、過程を残す情報になりうるため、都度判断する
 
+## エディタからの記録作成（決定、2026-09-27、todo`24f2e871d5`）
+
+「提供する操作」で元々書いていた「選択範囲・カーソル位置から記録を作った場合、成果物の位置を自動で付ける」の実装。CLIの不足①（`--at`）がmtqg本体v0.3.0で解消されたことで着手できた（memo`b1853df160`）。Webviewを経由しない、独立したコマンド`mtqg.createAt`（コマンドパレット上の表示は「New Record Here」）として作る。
+
+人間に確認した結果（AskUserQuestion、いずれも推奨案）：
+
+1. **呼び出し方**：コマンドパレット＋エディタ右クリックメニュー（`editor/context`）両方（q&a`f3cc16690df3`）
+2. **入力方法**：1つのInputBoxで、Memo画面の入力欄と同じスラッシュ記法。`src/webview/screens/composer.ts`の`parseComposer`をそのまま再利用し、Memo画面とまったく同じ解釈（`/todo`〜`/glossary`と1文字短縮、未知の`/foo`はエラーで作成しない）にする（q&a`3c51406bbe5a`）
+3. **作成後のフィードバック**：`showInformationMessage`で「Added a memo at src/foo.ts:42」のような一行を出し、「View」ボタンでmtqgパネルを開く（`openPanel`をそのまま呼ぶ）。常にパネルを開いて前面化はしない（q&a`5892105177`）
+
+設計：
+
+- **`src/commands/at.ts`（新規、vscode非依存・pure）**：エディタの選択範囲・カーソル位置から`AtInfo`を組み立てる`computeAt(workspaceRoot, filePath, selection)`。`node:test`で確認できる（`.claude/rules/testing.md`「ロジックをVSCode APIから切り離してテストできる形にする」と同じ考え方、`src/webview/screens/`とpanel.tsの分離が元ネタ）。複数行の選択は先頭行を使う（`--at`は1行しか持てない）。パスは`path.relative`（Node標準）で組み、`vscode.workspace.asRelativePath`は使わない。`head`はmtqg側が自動で埋めるため、ここでは付けない
+- **`src/commands/createRecordAt.ts`（新規、vscodeを触る）**：`mtqg.createAt`を登録。`computeAt`→`showInputBox`→`parseComposer`→対応する`client.xxxAdd(text, at)`の一連。mtqg呼び出しの例外は`try/catch`で拾い`showErrorMessage`（`controller.ts`の`runWrite`の`.catch`と同じ考え方）。**`src/webview/panel.ts`と並ぶ、2つ目のvscode接点**（`.claude/rules/directory-structure.md`を合わせて修正）
+- ワークスペース外のファイルを開いていた場合、`../`始まりの相対パスになるが、mtqgはパスを正規化・検証せずそのまま記録する仕様（`/home/node/mtqg-cli-response.md`「パスは渡されたとおりに記録されます」）なのでブロックしない
+- 実機確認（Xvfb+CDP、一時リポジトリ）で、コマンドパレット・右クリック双方からの起動、複数行選択時に先頭行が使われること、Escapeでのキャンセル、未知のスラッシュコマンドのエラー、Viewボタンでのパネル起動、エディタ未オープン時のエラーメッセージを確認済み
+
 ## mtqg本体への依頼（CLIの不足）— 対応済み
 
 計画時（2026-09-26、todo`acd71a3a7b`）に`mtqg --json`（v0.2.0）を確かめて見つかった、この拡張の設計に対する不足。**洗い出して本体に依頼し、依存する画面・機能は実装待ちにする**（決定、q&a`c9386d8ed3`）。依頼はtodo`57713a45f4`で追跡し、mtqg本体v0.3.0で3件とも対応された（回答、2026-09-26、`/home/node/mtqg-cli-response.md`、動作確認済み、memo`b1853df160`）。本体側の設計判断は本体の`.mtqg/`（`8d245a8b2c`・`5b7fd793b8`・`473949da3e`）に記録されている。

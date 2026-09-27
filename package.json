@@ -22,8 +22,22 @@
         "command": "mtqg.open",
         "title": "Open",
         "category": "mtqg"
+      },
+      {
+        "command": "mtqg.createAt",
+        "title": "New Record Here",
+        "category": "mtqg"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "mtqg.createAt",
+          "group": "mtqg",
+          "when": "workspaceFolderCount > 0"
+        }
+      ]
+    }
   },
   "devDependencies": {
     "@types/node": "~22.16.0",
