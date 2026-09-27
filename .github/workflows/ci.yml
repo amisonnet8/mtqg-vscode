@@ -30,9 +30,13 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+      # cache: false -- setup-go's own caching keys off go.mod/go.sum, which
+      # this repo (TypeScript, not a Go module) has neither of. Without this,
+      # every job prints a harmless but noisy "Restore cache failed" warning.
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'
+          cache: false
       - name: Install npm dependencies
         run: npm ci
       # qsoku: build/unit/test/trivy/shellcheckの入口（qsokufile、
@@ -76,6 +80,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'
+          cache: false
       - name: Install qsoku
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - name: qsoku shellcheck
@@ -88,6 +93,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.27'
+          cache: false
       - name: Install qsoku
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - uses: aquasecurity/setup-trivy@v0.3.1
