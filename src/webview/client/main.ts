@@ -137,12 +137,25 @@ declare function acquireVsCodeApi(): {
         dropdown.appendChild(item);
       });
     }
-    // Below the cell itself, not the caret -- every field this attaches to
-    // is single-line, so the cell's own edge is precise enough.
+    // Anchored to the cell itself, not the caret -- every field this
+    // attaches to is single-line, so the cell's own edge is precise enough.
     const rect = mentionState.cell.getBoundingClientRect();
     dropdown.style.left = `${rect.left}px`;
-    dropdown.style.top = `${rect.bottom}px`;
+    // Measure this render's actual height (display:none reports 0, so it
+    // has to be shown-but-invisible first) to decide whether it fits below
+    // the cell. The Memo composer sits at the bottom of the panel, where a
+    // dropdown opening downward would run past the viewport and get clipped
+    // (human report) -- flip it above the cell whenever there isn't room
+    // below and there is room above.
+    dropdown.style.visibility = 'hidden';
+    dropdown.style.top = '0px';
     dropdown.hidden = false;
+    const height = dropdown.offsetHeight;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openAbove = spaceBelow < height && spaceAbove > spaceBelow;
+    dropdown.style.top = `${openAbove ? rect.top - height : rect.bottom}px`;
+    dropdown.style.visibility = 'visible';
   }
 
   /** Replaces the trailing "@query" (still in the text) with "@<path> ". */

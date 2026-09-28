@@ -4,7 +4,13 @@
 # the Webview's own client script (ES modules, DOM types, no bundler --
 # .claude/rules/dependencies.md). Kept as two tsconfig.json rather than one,
 # since a single Node process can't be both CommonJS and browser-ESM.
-build: (cd //; npx tsc -p . && npx tsc -p src/webview/client)
+#
+# `rm -rf out` first: plain `tsc` (no --build/composite) never deletes output
+# for a source file that was since deleted, so a removed test file keeps
+# running from its stale compiled .js forever, inflating `qsoku unit`'s count
+# (bug: `test/unit/commands/at.test.ts`'s removal alongside `mtqg.createAt`
+# silently kept passing this way).
+build: (cd //; rm -rf out && npx tsc -p . && npx tsc -p src/webview/client)
 
 unit: (cd //; node --test 'out/test/unit/**/*.test.js')
 

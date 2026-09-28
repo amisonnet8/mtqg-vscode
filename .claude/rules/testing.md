@@ -16,6 +16,7 @@
 - UIの見た目（Webview）は、DOM操作のロジックをVSCode APIから切り離してテストできる形にする（画面を持たないテストで確かめられる部分を増やす）。`src/webview/shared/html.ts`の`renderShell`・`src/webview/controller.ts`はこの形で、`test/unit/`から本物のmtqgバイナリを使って呼べる（`test/unit/webview/controller.test.ts`）
 - **`src/webview/client/`（Webview内で実際に動くスクリプト）は`node:test`の対象外。** DOM APIが無いNodeでは実行できない。ロジックはできる限り`controller.ts`・`shared/`側（ホスト、vscode非依存）に寄せて、そちらをテストする。`client/main.ts`自体は「動かして確かめる」で見る
 - **`test/vscode/runTest.ts`は、`.mtqg/`を初期化した一時リポジトリをワークスペースとして開く**（`--disable-workspace-trust`と併用。信頼ダイアログがヘッドレス実行を止めないため）。ワークスペースが無いと`vscode.workspace.workspaceFolders`が空になり、`openPanel`（`src/webview/panel.ts`）の`FileSystemWatcher`・`controller`を作る分岐がテストで一度も通らない（todo`b9caf0b88c`で発見。それまでの`test/vscode/`はワークスペース無しで動いていた）
+- **プレーンな`tsc`（`--build`/`composite`を使わない今の構成）は、削除済みのソースに対応する出力を消さない。** テストファイルを削除しても、古い`out/`の`.js`がそのまま残り`node --test`に拾われ続け、存在しないはずのテストが通り続ける（不具合：`mtqg.createAt`廃止で`test/unit/commands/at.test.ts`を消したのに、`qsoku unit`のテスト数がその後もしばらく減らなかった）。`qsokufile`の`build`は`rm -rf out`してから`tsc`する
 
 ## この開発環境（devcontainer）固有の落とし穴
 
