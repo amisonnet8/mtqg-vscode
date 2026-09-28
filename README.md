@@ -38,7 +38,7 @@
 - 📖 **Rule and Glossary tabs** -- plain tables of adopted rules and defined terms
 - 🕓 **Nothing silently disappears** -- editing and deleting a record leaves a visible trace, and every write can be undone right after it's made
 - 🤖 **Built for humans and AI agents together** -- AI- and human-authored records sit in the same timeline, each with its own badge
-- 📍 **mtqg: New Record Here** -- create a record at the file and line of your current selection or cursor, from the editor's right-click menu
+- 🔗 **Type `@` to link a file** -- typing `@` in any input field opens a dropdown of workspace files; picking one inserts its path into the record's text
 
 ## Prerequisites
 
@@ -51,14 +51,13 @@ If `mtqg` is missing or older than this extension needs, a notification says so 
 
 Run **mtqg: Open** to open the mtqg panel, a chat-like view of your project's journal with six tabs (Memo, Todo, QA, Bug, Rule, Glossary). The Memo tab's input field posts a memo by default; prefix it with a slash command to record something else instead: `/todo`, `/qa`, `/bug`, `/rule`, `/glossary` (or the one-letter aliases `/t`, `/q`, `/b`, `/r`, `/g`).
 
-**mtqg: New Record Here** (also in the editor's right-click menu) creates a record at the file and line of your current selection or cursor, so a memo, todo, question, bug, rule, or glossary entry can point back to the exact code it's about.
+Type `@` in any input field -- the Memo composer, an add row, a reply field, or an existing record you're editing -- to search workspace files and insert a path into the text.
 
 ### Commands
 
 | Command | Title | Where |
 |---|---|---|
 | `mtqg.open` | mtqg: Open | Command Palette, editor title bar |
-| `mtqg.createAt` | mtqg: New Record Here | Command Palette, editor right-click menu |
 
 ## Learn more
 
