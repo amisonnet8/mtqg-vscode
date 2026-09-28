@@ -6,7 +6,7 @@
   size (16px) the heading/captions are illegible and the per-tile letters
   (m/t/q/g) blur into noise (checked by rendering both at 16/24/32px before
   choosing). This file keeps only the four-color tile grid itself, without
-  letters or text -- legible at 16px and consistent with ui.md's "文字にあまり
+  letters or text: legible at 16px and consistent with ui.md's "文字にあまり
   頼らないUIにする" (rely on shape/color, not text, for identity at this
   size). Colors match the logo's own fixed rect fills, so the same file
   works for both the light and dark variant (unlike the previous Codicon

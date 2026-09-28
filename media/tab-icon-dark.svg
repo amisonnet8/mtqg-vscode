@@ -3,7 +3,7 @@
   the four-color tile grid from mtqg's own logo, docs/assets/logo.svg in
   amisonnet8/mtqg, with the letters/text dropped for legibility at 16px).
   The colors are fixed brand colors, not theme-dependent, so this file is
-  identical to the light variant -- kept as a separate file only because
+  identical to the light variant: kept as a separate file only because
   WebviewPanel.iconPath and package.json's command icon both require a
   {light, dark} pair.
 -->
