@@ -45,8 +45,9 @@ jobs:
       # 段階のため。mtqg本体のci.ymlも同じ）
       - name: Install qsoku
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
-      # v1.0.0はpostCreate.shとsrc/mtqg/availability.tsのMIN_SUPPORTED_MTQG_VERSION
-      # に合わせている。どちらかを上げたら3か所とも揃える（.claude/rules/mtqg-cli.md「版」）
+      # v1.0.0はこの拡張が前提とする最低版（src/mtqg/availability.tsの
+      # MIN_SUPPORTED_MTQG_VERSION）に合わせている。上げたら両方揃える
+      # （.devcontainer/postCreate.shのmtqgは@latestで別枠、.claude/rules/mtqg-cli.md「版」）
       - name: Install mtqg
         run: go install github.com/amisonnet8/mtqg/cmd/mtqg@v1.0.0
       # xvfb一式：qsoku test（拡張開発ホストで実物VS Codeを起動する。

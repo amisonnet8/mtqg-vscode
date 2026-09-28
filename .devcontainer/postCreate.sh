@@ -40,21 +40,15 @@ sudo apt-get install -y gh
 go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 
 # mtqg: the process record for this repository (.claude/rules/mtqg-usage.md).
-# A pinned, known-good release of a separate, external project -- a broken
-# build there must not be able to corrupt this repository's own records.
-# v0.3.0: adds --at, `log --before` and `log --json --events` (only additive
-# fields/flags, verified against this repository before bumping the pin,
-# .claude/rules/mtqg-cli.md "版"; todo 57713a45f4).
-# v0.4.0: `log --json --events` now includes deleted records (each with
-# `deleted: true` and, for the delete itself, an `op:"delete"` event) --
-# `--events` off, or any other read command, is unchanged (verified before
-# bumping the pin; todo 01ee2706ce follow-up, commit 684c87d upstream).
-# v1.0.0: mtqg's own v1 (journal format bumped 0->1, plus a new `mtqg
-# upgrade` command); --json is unchanged for every command this extension
-# calls (only a new `upgrade` command's own output was added -- verified via
-# the source diff between the two release tags before bumping the pin, todo
-# 239043c4c6).
-go install github.com/amisonnet8/mtqg/cmd/mtqg@v1.0.0
+# @latest here, same as qsoku above -- this container is for day-to-day
+# development, where always having the newest mtqg is more useful than a
+# pinned version. This is *not* the version this extension declares as its
+# floor: `src/mtqg/availability.ts`'s MIN_SUPPORTED_MTQG_VERSION and CI's own
+# `go install ...@v1.0.0` (.github/workflows/ci.yml) stay pinned on purpose,
+# so the extension's actual minimum stays a deliberately verified, stable
+# version regardless of what this container happens to install (decision,
+# 2026-09-29, todo 7a072cc72a).
+go install github.com/amisonnet8/mtqg/cmd/mtqg@latest
 
 # Wire up qsoku's shell integration (working-directory carry-back and
 # completion) for bash. Idempotent: skipped if already present, so

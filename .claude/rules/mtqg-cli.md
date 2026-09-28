@@ -19,4 +19,5 @@
 
 ## 版
 
-- `.devcontainer/postCreate.sh`が入れる`mtqg`の版を、この拡張が前提にする最低版として扱う。mtqg側の`--json`の形が変わったら（フィールド追加のみのはずだが）、動作確認してからpostCreate.shの版を上げる
+- **この拡張が前提にする最低版は`src/mtqg/availability.ts`の`MIN_SUPPORTED_MTQG_VERSION`。** mtqg側の`--json`の形が変わったら（フィールド追加のみのはずだが）、動作確認してからここと`.github/workflows/ci.yml`のインストール版を揃えて上げる（決定、2026-09-29、todo`7a072cc72a`）
+- **`.devcontainer/postCreate.sh`が入れるmtqgは`@latest`（固定版ではない）。** 開発用コンテナは常に最新のmtqgを試せる方が有用なため、qsokuと同じ扱いにしている。上の最低版とは別物——`postCreate.sh`のmtqgが先に上がっても、この拡張が実際に前提とする版（コード上の`MIN_SUPPORTED_MTQG_VERSION`・CIのインストール版）はそのままでよい

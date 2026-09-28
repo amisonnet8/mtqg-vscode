@@ -11,7 +11,8 @@
       "extensions": [
         "github.vscode-github-actions",
         "timonwong.shellcheck",
-        "amodio.tsl-problem-matcher"
+        "amodio.tsl-problem-matcher",
+        "amisonnet8.mtqg"
       ],
       "settings": {
         "editor.formatOnSave": true
