@@ -1,7 +1,7 @@
 import type { MtqgClient } from '../mtqg/client';
 import { parseComposer } from './screens/composer';
 import { renderError, renderScreen, type ScreenView } from './screens';
-import { type HostMessage, parseWebviewMessage, type WebviewMessage } from './shared/messages';
+import { parseWebviewMessage, type RenderMessage, type WebviewMessage } from './shared/messages';
 import { DEFAULT_TAB, type TabId } from './shared/tabs';
 
 export interface PanelController {
@@ -13,7 +13,7 @@ export interface PanelController {
 
 export interface PanelControllerOptions {
   client: MtqgClient;
-  post: (message: HostMessage) => void;
+  post: (message: RenderMessage) => void;
   /** How long to wait for a burst of journal changes to settle before re-rendering. */
   debounceMs?: number;
 }

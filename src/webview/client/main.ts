@@ -26,6 +26,7 @@ declare function acquireVsCodeApi(): {
   }
 
   function selectTab(tab: string): void {
+    closeMentionDropdown(); // the open dropdown's cell is about to be hidden
     for (const tabButton of document.querySelectorAll<HTMLElement>('[role="tab"]')) {
       tabButton.setAttribute('aria-selected', String(tabButton.dataset.tab === tab));
     }
@@ -54,10 +55,148 @@ declare function acquireVsCodeApi(): {
     return element.closest<HTMLElement>('[role="tabpanel"]')?.dataset.tab;
   }
 
+  // "@"-mention file typeahead, in every editable field at once (ui.md's
+  // "机能を足さない" reading of this: the inserted path is plain text in the
+  // record body, not a new field -- mtqg has no `--at` any more (v1.1.0) for
+  // this to attach to). The file list itself arrives once via a `files`
+  // message from panel.ts and is never re-fetched from here.
+  let fileList: string[] = [];
+  let mentionState: { cell: HTMLElement; matches: string[]; selectedIndex: number } | null = null;
+  let mentionDropdown: HTMLElement | undefined;
+
+  function getMentionDropdown(): HTMLElement {
+    if (!mentionDropdown) {
+      const dropdown = document.createElement('div');
+      dropdown.className = 'mention-dropdown';
+      dropdown.setAttribute('role', 'listbox');
+      dropdown.hidden = true;
+      // Keeps the contenteditable cell focused -- without this, the click's
+      // focus change would fire the focusout handler below first, which
+      // would submit the text while "@query" is still in it.
+      dropdown.addEventListener('mousedown', (event) => event.preventDefault());
+      dropdown.addEventListener('click', (event) => {
+        const path = (event.target as HTMLElement).closest<HTMLElement>('.mention-item')?.dataset.path;
+        if (path) {
+          insertMention(path);
+        }
+      });
+      document.body.appendChild(dropdown);
+      mentionDropdown = dropdown;
+    }
+    return mentionDropdown;
+  }
+
+  function closeMentionDropdown(): void {
+    mentionState = null;
+    if (mentionDropdown) {
+      mentionDropdown.hidden = true;
+    }
+  }
+
+  /** basename-starts-with, then basename-contains, then full-path-contains. */
+  function matchFiles(query: string): string[] {
+    if (query === '') {
+      return fileList.slice(0, 8);
+    }
+    const lower = query.toLowerCase();
+    const startsWith: string[] = [];
+    const contains: string[] = [];
+    const pathContains: string[] = [];
+    for (const path of fileList) {
+      const base = path.slice(path.lastIndexOf('/') + 1).toLowerCase();
+      if (base.startsWith(lower)) {
+        startsWith.push(path);
+      } else if (base.includes(lower)) {
+        contains.push(path);
+      } else if (path.toLowerCase().includes(lower)) {
+        pathContains.push(path);
+      }
+    }
+    return [...startsWith, ...contains, ...pathContains].slice(0, 8);
+  }
+
+  function renderMentionDropdown(): void {
+    if (!mentionState) {
+      return;
+    }
+    const dropdown = getMentionDropdown();
+    dropdown.innerHTML = '';
+    if (mentionState.matches.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'mention-empty';
+      empty.textContent = 'No matching files';
+      dropdown.appendChild(empty);
+    } else {
+      mentionState.matches.forEach((path, index) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = index === mentionState!.selectedIndex ? 'mention-item active' : 'mention-item';
+        item.dataset.path = path;
+        item.setAttribute('role', 'option');
+        item.textContent = path;
+        dropdown.appendChild(item);
+      });
+    }
+    // Below the cell itself, not the caret -- every field this attaches to
+    // is single-line, so the cell's own edge is precise enough.
+    const rect = mentionState.cell.getBoundingClientRect();
+    dropdown.style.left = `${rect.left}px`;
+    dropdown.style.top = `${rect.bottom}px`;
+    dropdown.hidden = false;
+  }
+
+  /** Replaces the trailing "@query" (still in the text) with "@<path> ". */
+  function insertMention(path: string): void {
+    const cell = mentionState?.cell;
+    if (!cell) {
+      return;
+    }
+    const text = cell.textContent ?? '';
+    const match = /(^|\s)@([^\s@]*)$/.exec(text);
+    if (match) {
+      cell.textContent = `${text.slice(0, match.index)}${match[1]}@${path} `;
+    }
+    closeMentionDropdown();
+    cell.focus();
+    // A single, always-append edit: editing a mention typed earlier in the
+    // middle of the text is not supported, so the caret always goes to the
+    // end rather than tracking where "@query" was.
+    const range = document.createRange();
+    range.selectNodeContents(cell);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  }
+
+  document.addEventListener('input', (event) => {
+    const cell = (event.target as HTMLElement).closest<HTMLElement>('[data-field].editable');
+    if (!cell) {
+      return;
+    }
+    // Cursor-at-the-end assumption: only the trailing "@query" is detected,
+    // so editing a mention already typed earlier in the text is out of
+    // scope (see insertMention above).
+    const match = /(^|\s)@([^\s@]*)$/.exec(cell.textContent ?? '');
+    if (match) {
+      mentionState = { cell, matches: matchFiles(match[2]), selectedIndex: 0 };
+      renderMentionDropdown();
+    } else if (mentionState?.cell === cell) {
+      closeMentionDropdown();
+    }
+  });
+
   document.addEventListener('focusout', (event) => {
     const cell = (event.target as HTMLElement).closest<HTMLElement>('[data-field]');
     if (!cell) {
       return;
+    }
+    if (mentionState?.cell === cell) {
+      // Real focus loss (a dropdown-item click never gets here: its
+      // mousedown already prevented the blur). Close, but submit whatever
+      // text -- including an unfinished "@query" -- is there, same as any
+      // other focusout.
+      closeMentionDropdown();
     }
     const tab = tabOf(cell);
     // A table row (Rules/Glossary) or a card (ToDo) for an existing
@@ -154,6 +293,31 @@ declare function acquireVsCodeApi(): {
     if (!cell) {
       return;
     }
+    if (mentionState && mentionState.cell === cell) {
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const delta = event.key === 'ArrowDown' ? 1 : -1;
+        mentionState.selectedIndex = Math.max(
+          0,
+          Math.min(mentionState.selectedIndex + delta, mentionState.matches.length - 1),
+        );
+        renderMentionDropdown();
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeMentionDropdown();
+        return;
+      }
+      if ((event.key === 'Enter' || event.key === 'Tab') && mentionState.matches.length > 0) {
+        event.preventDefault();
+        insertMention(mentionState.matches[mentionState.selectedIndex]);
+        return;
+      }
+      // No matches, or some other key: close and fall through to the
+      // normal handling below (e.g. Enter with no matches still submits).
+      closeMentionDropdown();
+    }
     if (event.key === 'Enter') {
       event.preventDefault(); // contenteditable's default is a line break
       cell.blur();
@@ -227,12 +391,21 @@ declare function acquireVsCodeApi(): {
   });
 
   window.addEventListener('message', (event) => {
-    const message = event.data as { type?: string; tab?: string; html?: string };
+    const message = event.data as { type?: string; tab?: string; html?: string; paths?: string[] };
+    if (message?.type === 'files') {
+      fileList = Array.isArray(message.paths) ? message.paths : [];
+      return;
+    }
     if (message?.type !== 'render' || !message.tab) {
       return;
     }
     const panel = document.getElementById(`panel-${message.tab}`);
     if (panel) {
+      // The re-render is about to replace mentionState.cell's DOM node, so
+      // any reference to it (and the dropdown pointing at it) would go stale.
+      if (mentionState && panel.contains(mentionState.cell)) {
+        closeMentionDropdown();
+      }
       panel.innerHTML = message.html ?? '';
       // Memo screen only (todo `01ee2706ce`): scroll the composer (at the
       // timeline's newest end) into view, unless this render is a "Load

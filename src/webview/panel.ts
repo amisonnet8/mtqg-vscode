@@ -71,6 +71,15 @@ export function openPanel(extensionUri: vscode.Uri): void {
 
     panel.webview.onDidReceiveMessage((message: unknown) => controller.handleMessage(message));
 
+    // One-time file list for the `@`-mention typeahead (src/webview/client/main.ts):
+    // not live-watched, a known limitation left for a future todo if it matters.
+    void vscode.workspace
+      .findFiles(new vscode.RelativePattern(folder, '**/*'), '**/{node_modules,.git}/**', 5000)
+      .then((uris) => {
+        const paths = uris.map((uri) => vscode.workspace.asRelativePath(uri, false));
+        void panel.webview.postMessage({ type: 'files', paths } satisfies HostMessage);
+      });
+
     // .mtqg/journal.jsonl's contents are never read here -- mtqg is always
     // re-run for the current data (.claude/rules/mtqg-cli.md).
     const watcher = vscode.workspace.createFileSystemWatcher(

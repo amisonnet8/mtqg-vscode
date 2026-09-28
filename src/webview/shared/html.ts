@@ -364,6 +364,49 @@ export function renderShell(options: ShellOptions): string {
       color: var(--vscode-descriptionForeground);
       margin: 4px 0;
     }
+    /* "@"-mention file typeahead (src/webview/client/main.ts). Positioned by
+       JS (element.style.left/top), which the CSP's style-src does not block
+       -- only <style>/style="" attributes need the nonce. */
+    .mention-dropdown {
+      position: fixed;
+      z-index: 10;
+      min-width: 200px;
+      max-width: 400px;
+      max-height: 180px;
+      overflow-y: auto;
+      background-color: var(--vscode-editorWidget-background);
+      border: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+      border-radius: 4px;
+      box-shadow: 0 2px 8px var(--vscode-widget-shadow, transparent);
+    }
+    .mention-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      font-size: inherit;
+      color: var(--vscode-foreground);
+      background: none;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    .mention-item:hover {
+      background-color: var(--vscode-list-hoverBackground);
+    }
+    /* Keyboard selection (ui.md「色だけで意味を伝えない」): the same item
+       also carries an outline, not just a background tint. */
+    .mention-item.active {
+      background-color: var(--vscode-list-activeSelectionBackground);
+      color: var(--vscode-list-activeSelectionForeground);
+      outline: 1px solid var(--vscode-focusBorder);
+      outline-offset: -1px;
+    }
+    .mention-empty {
+      padding: 4px 8px;
+      color: var(--vscode-descriptionForeground);
+      font-style: italic;
+    }
   </style>
 </head>
 <body>

@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createMtqgClient } from '../../../src/mtqg/client';
 import { createPanelController } from '../../../src/webview/controller';
-import type { HostMessage } from '../../../src/webview/shared/messages';
+import type { RenderMessage } from '../../../src/webview/shared/messages';
 import { createTempGitRepo, createTempRepo } from '../../helpers/tempRepo';
 
 function collector() {
-  const posts: HostMessage[] = [];
-  return { posts, post: (message: HostMessage) => posts.push(message) };
+  const posts: RenderMessage[] = [];
+  return { posts, post: (message: RenderMessage) => posts.push(message) };
 }
 
 async function waitUntil(condition: () => boolean, timeoutMs = 5000): Promise<void> {

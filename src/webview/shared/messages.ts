@@ -38,12 +38,20 @@ export type WebviewMessage =
   | { type: 'loadEarlier'; tab: TabId }
   | { type: 'undo'; tab: TabId };
 
-/** Sent by the host (src/webview/controller.ts) to the Webview. */
-export interface HostMessage {
+/** Sent by the controller (src/webview/controller.ts) to the Webview. */
+export interface RenderMessage {
   type: 'render';
   tab: TabId;
   html: string;
 }
+
+/**
+ * Every message the host can send the Webview. `files` comes straight from
+ * panel.ts (it is workspace file listing, not mtqg data, so it does not go
+ * through the controller -- see the `@`-mention feature in
+ * src/webview/client/main.ts).
+ */
+export type HostMessage = RenderMessage | { type: 'files'; paths: string[] };
 
 /**
  * A message from the Webview crosses a process boundary (postMessage), so
