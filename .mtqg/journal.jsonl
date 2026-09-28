@@ -333,3 +333,9 @@
 {"id":"36b19b01c9214081b0cff8f122909c05","op":"create","type":"todo","status":"open","text":"項番7：README.md・README_ja.mdからNew Record Hereの記述（Features箇条書き・Usage段落・Commandsテーブル行）を削除し、@メンション機能の説明に置き換える","v":1,"ts":"2026-09-28T08:15:11Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"7b55adfee70d4531a0d8b124510c6ad1","op":"create","type":"memo","text":"項番7完了：README.md・README_ja.mdのFeatures箇条書き・Usage段落・CommandsテーブルからNew Record Here/mtqg.createAtの記述を削除し、@メンション機能の説明に置き換えた。両ファイルとも行番号がそろった対訳構成を維持。8項目の計画（本体at削除・New Record Here廃止・@メンション追加・journal.jsonl対応不要・Description/Topics変更不要・ドキュメント見直し・README見直し）はこれで残り項番8（Marketplace公開todo 78a6384b9f）のみ","v":1,"ts":"2026-09-28T08:15:52Z","author":{"kind":"ai","name":"claude-code"}}
 {"id":"36b19b01c9214081b0cff8f122909c05","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:15:55Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"831d39f0815b468fa87410d30ad26036","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:19:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"bed3562b8dcd45f1a389782869d830cc","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:19:26Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"0f1c8b73fb6c4789a423c56f07b829e3","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:19:27Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"6809d2433a5c47a2a0cee95d503eeaad","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:19:27Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"53bd659113cc4d4ea1f5760a8299b98d","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:19:27Z","author":{"kind":"ai","name":"claude-code"}}
+{"id":"2179e5dacff748588385bf9a7274a4f8","op":"status","from":"open","status":"done","basis":1,"v":1,"ts":"2026-09-28T08:19:27Z","author":{"kind":"ai","name":"claude-code"}}
