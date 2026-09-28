@@ -15,8 +15,7 @@ mtqg-vscode/
 *│   └── icon.png            （Marketplaceアイコン、128×128。tab-icon-light.svgをrsvg-convertでPNG化したもの）
 *├── docs/assets/            （READMEだけが参照する画像。.vscodeignoreのdocs/**で.vsixには含めず、vsceのREADMEリンク書き換え機能でGitHub上の実体を指す——公開前にpushしておく必要がある）
 *│   ├── icon.png            （README見出し用、256×256）
-*│   ├── demo.gif
-*│   └── screenshot-*.png
+*│   └── demo.gif            （デモはこのGIF1本のみ。静止画は役割が重複するため置かない、人間の判断）
 *├── .gitattributes
 *├── .gitignore
 *├── trivy.yaml

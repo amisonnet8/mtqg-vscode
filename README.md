@@ -40,19 +40,6 @@
 - 🤖 **Built for humans and AI agents together** -- AI- and human-authored records sit in the same timeline, each with its own badge
 - 📍 **mtqg: New Record Here** -- create a record at the file and line of your current selection or cursor, from the editor's right-click menu
 
-<p align="center">
-  <img src="docs/assets/screenshot-memo.png" alt="Memo tab: a timeline with a checked-off todo, a threaded question and answer, and a plain memo" width="700">
-</p>
-<p align="center">
-  <img src="docs/assets/screenshot-todo.png" alt="Todo tab: two Keep-style cards with checkboxes" width="700">
-</p>
-<p align="center">
-  <img src="docs/assets/screenshot-qa.png" alt="QA tab: a question expanded to show its threaded answer" width="700">
-</p>
-<p align="center">
-  <img src="docs/assets/screenshot-new-record.png" alt="Editor right-click menu showing the mtqg: New Record Here command" width="700">
-</p>
-
 ## Prerequisites
 
 - `mtqg` 1.0.0 or later on your `PATH` -- see the [mtqg repository](https://github.com/amisonnet8/mtqg) for installation (`go install github.com/amisonnet8/mtqg/cmd/mtqg@latest`, or a prebuilt binary from its [Releases](https://github.com/amisonnet8/mtqg/releases))

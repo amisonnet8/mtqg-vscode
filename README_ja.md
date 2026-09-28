@@ -40,19 +40,6 @@
 - 🤖 **人間とAIエージェントが同じタイムラインに並ぶ** — それぞれのバッジ付きで、誰の記録か一目で分かる
 - 📍 **mtqg: New Record Here** — エディタの右クリックメニューから、選択範囲・カーソル位置のファイルと行に記録を作る
 
-<p align="center">
-  <img src="docs/assets/screenshot-memo.png" alt="Memo画面：チェック済みのtodo、スレッド化された質問と回答、普通のメモが並ぶタイムライン" width="700">
-</p>
-<p align="center">
-  <img src="docs/assets/screenshot-todo.png" alt="Todo画面：チェックボックス付きのKeep風カードが2枚" width="700">
-</p>
-<p align="center">
-  <img src="docs/assets/screenshot-qa.png" alt="QA画面：質問を展開してスレッド化された回答を表示" width="700">
-</p>
-<p align="center">
-  <img src="docs/assets/screenshot-new-record.png" alt="エディタの右クリックメニューに出るmtqg: New Record Here" width="700">
-</p>
-
 ## Prerequisites
 
 - `PATH`上に`mtqg` 1.0.0以降が必要——インストール方法は[mtqgリポジトリ](https://github.com/amisonnet8/mtqg)を参照（`go install github.com/amisonnet8/mtqg/cmd/mtqg@latest`、または[Releases](https://github.com/amisonnet8/mtqg/releases)のビルド済みバイナリ）
