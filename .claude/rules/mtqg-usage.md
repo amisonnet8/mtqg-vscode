@@ -32,6 +32,10 @@ mtqg本体の運用（mtqgリポジトリ`.claude/rules/mtqg-usage.md`）と同�
 
 `mtqg context`を読む。ここが現状・今後の一次情報（mtqgリポジトリと違い、`PLAN.md`にも過去の経緯にも頼らない）。
 
+## docs/design/との役割分担（決定、2026-09-28）
+
+`docs/design/`（`vscode-extension.md`）は**現状の設計だけ**を保つ。決定に至った経緯・やり取り・修正の履歴（日付、todo/bug/q&a ID、「最初はXにしたがYと指摘されZに直した」のような narrative）はここに書かず、`.mtqg/`（`m add`・`q add`・`b add`）にだけ記録する。理由：経緯はmtqgの journal が既に唯一の記録先として持っており、design docにも同じ経緯を書くと二重管理になる（`.claude/rules/mtqg-cli.md`「解釈はコアの1か所に集める」と同じ考え方をdesign docにも広げたもの）。design docを更新するときは「今どうなっているか」だけを書き、経緯はmtqgの記録（このメモも含む）を辿れば分かる状態にする。
+
 ## その他
 
 - `.mtqg/.local/`はコミットされない

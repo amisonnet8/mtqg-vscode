@@ -1,293 +1,83 @@
 # VSCode拡張の設計
 
-**出典：** mtqg本体リポジトリ（`github.com/amisonnet8/mtqg`）`docs/design/07-integrations.md` §11.4・§11.5（コミット`5662e8d`時点）。以下はその写しで、書いた時点ではmtqg本体の開発が進む前の下書きだった。実装しながら、ここに追記・修正していく（食い違ったら、このファイルとこのリポジトリのコードが正）。
+このファイルは**現状の設計だけ**を保つ。決定に至った経緯・やり取り・修正の履歴は書かず、`.mtqg/`（`mtqg log`・`mtqg show <id>`）に記録する——このファイルと食い違ったら、このファイルとコードが正（人間の指示、2026-09-28、todo`5f7b9007d1`）。
+
+出典：mtqg本体`docs/design/07-integrations.md` §11.4。
 
 ## 位置づけ
 
 人間が作業の流れの中で記録し、状態と過程を見るための入口。**記録作成のアシストと、状態・過程の表示に絞る**。
 
-## UIを豊かにする理由：人間との作業のため
+## UIの原則
 
-- AIエージェントとの作業では、UIはほぼ必要ない。AIは画面を見ず、MCPで記録し、フックで`context`を受け取れば足りる
-- 人間との作業で威力が出る。人間には記録を強制できず、使いたくなる体験で越えるしかない
-- 人間同士の質問や相談は、今はSlackやDiscordで行われ、流れて消えていく。見慣れたチャットの形にすることで、人がすでに持っている「チャットで相談する」習慣を、そのままリポジトリの中に持ち込める。新しい作法を覚えさせる必要がない
+- UIの文言（ボタン・見出し・メニュー・通知）は英語。入力と記録の中身はどの言語でもよい（翻訳しない）
+- 文字にあまり頼らないUIにする。チェックボックス・アイコン・色・スレッドの形など、見れば分かる要素で状態を伝える。色だけで意味を伝えない
+- UIは過程を残すアシストとして豊かにするが、新しいデータや操作は増やさない（詳細・理由は`.claude/rules/ui.md`）
+- 対象はまずVSCode系のエディタ（Cursor等含む）に絞る
 
-## UIの言語：英語、文字に頼らない
+## 画面構成
 
-- UIの文言（ボタン、見出し、メニュー、通知）は英語。入力と記録の中身は日本語など、どの言語でもよい
-- 文字にあまり頼らないUIにする。チェックボックス、アイコン、色、スレッドの形など、見れば分かる要素で状態を伝え、ラベルは最小限にする
-- 翻訳の仕組み（多言語化）は持たない
-
-## 原則：UIは豊かにするが、機能は足さない
-
-- UIは、過程を残すアシストとして豊かにする。新しいデータや操作を増やすのではなく、すでにある記録を「書きやすく、見やすく」するためのもの
-- 仕組み（追記するだけ）は変えず、使われ方の側だけを磨く
-- 参考にするUIの機能（Keepのリマインダー・色分け・ピン留め、Slackの通知・リアクション等）は真似ない。判断の問いは「課題を管理するための機能か、過程を残すための情報か」
-
-## 画面構成：ToDo・QA・Bugs・Rules・用語集の表と、Slack風のメモ
-
-**見直し（2026-09-26）：** 元の写し（下記）は4画面（ToDo・QA・用語集・メモ）だったが、bug・ruleが抜けていた（mtqg本体側での見直し、`docs/design/07-integrations.md`§11.4「見直し：bugとruleの画面」と同じ経緯）。Bugs・Rulesの2画面を足し、6画面にした。この節は写しの更新として直接書き換えている（冒頭の「食い違ったら、このファイルが正」の通り）。
+6画面をタブ（`Memo・Todo・QA・Bug・Rule・Glossary`、すべて単数形）で切り替える。どれも、mtqgの`--json`が返す同じデータの見え方にすぎない。
 
 | 画面 | 形 | 表示範囲 |
 |---|---|---|
-| ToDo | Google Keep風のカード | 全件（デフォルトは未完了のみ） |
+| Memo | Slack・Discord風のタイムライン | 最近の分から表示し、遡るときに読み込む |
+| Todo | Google Keep風のカード | 全件（デフォルトは未完了のみ） |
 | QA | 表 | 全件（デフォルトは未回答のみ） |
-| Bugs | 表（QAと同じ形） | 全件（デフォルトは未クローズのみ） |
-| Rules | ただの表 | 全件 |
-| 用語集 | ただの表 | 全件 |
-| メモ | Slack・Discord風のタイムライン（他の種類も含む） | 最近の分から表示し、遡るときに読み込む |
+| Bug | 表（QAと同じ形） | 全件（デフォルトは未クローズのみ） |
+| Rule | ただの表 | 全件 |
+| Glossary | ただの表 | 全件 |
 
-- 6つの画面はタブで切り替える。どれも、CLIの`--json`が返す同じデータの見え方にすぎない
-- データモデルとの対応：メモのタイムラインは、種類を問わずすべての記録を時系列で流す基本の画面。ToDo・QA・Bugs・Rules・用語集は、そこから種類ごとに取り出し、構造に合った形で見せる画面
+**Todo**：カードはグリッドで並ぶ。追加はカード群の上の入力欄（Enterで確定）。完了済みを表示したときは「Done (n)」の見出しの下にまとめる（取り消し線＋チェック済みで示し、色だけに頼らない）。
 
-**表示範囲の考え方**
+**QA・Bug**：行内の折りたたみボタンで展開し、下に返信スレッドが伸びる。回答済み・返信済みでも常に返信欄が残る。AI／人間のバッジで記録者を見分ける。実装は`src/webview/screens/thread.ts`の`renderThread`をQA・Bug共通で使い、文言（Answer/Reply等）だけ`ThreadLabels`で注入する。
 
-- ToDo・QA・Bugs・Rules・用語は「管理する対象」なので、件数に自然な上限がある。完了済み・回答済み・クローズ済みを含めても全件表示で困らない
-- メモは「流れていく記録」なので、件数に上限がない。ここだけSlackと同じく、最近の分から表示して遡るときに読み込む
-- デフォルトをOpenのみにすることで、「今やるべきこと、答えるべきことが残っている」ことが一目で分かる
+**Rule・Glossary**：追加・編集はインライン編集（表の空白行に直接入力、Enterで確定）。並び順は新しい→古い。削除は確認なしの即時削除（mtqgは追記だけで消えないため）。
 
-**ToDo：Google Keep風のカード**
-
-- チェックボックス付きのカードを並べる。チェックすれば完了（内部では状態変更の追記）
-- デフォルトは未完了のみ。切り替えで完了済みも表示する
-
-**ToDoの操作（決定、2026-09-26、todo`4e09f42a9f`、q&a`1b4676d825`）**
-
-- **カードはグリッド。** 幅に応じて複数列に並べ、パネルが狭ければ自然に1列になる
-- **追加はカード群の上の入力欄。** Rules/Glossaryの「空白行に直接入力」と同じ考え方（Enterで確定、ボタン起点の別フォームは作らない）
-- **完了済みを表示したときは下にまとめる。** 未完了（新しい→古い）を先に並べ、「Done (n)」の見出しの下に完了済み（同じく新しい→古い）を続ける。チェック済み＋取り消し線で示し、色だけに頼らない
-- 本文の編集・削除はRules/Glossaryと同じ仕組み（インライン編集、確認なし削除）をそのまま使う
-
-**QA：表**
-
-- デフォルトは未回答の質問のみ。「答えるべきものが残っている」ことが一目で分かることが、この画面の一番大事な役割
-- 切り替えで回答済みも表示する。質問を開くと回答が見える
-- 「AIが推測で書いた回答」と「人間が確定させた回答」を、小さなバッジで見分けられるようにする
-
-**QAの操作（決定、2026-09-26、todo`8b7b600827`、q&a`e4eddd6e3628`）**
-
-- **行内で展開。** 質問の行をクリックするのではなく、専用の折りたたみボタン（▸/▾）で開閉し、表の形を保ったまま下に回答スレッドが伸びる。`qa list`は各質問に`replies`を既に含めて返すため、開くときに`show`を別途呼ぶ必要はない
-- **回答欄は常に表示。** 回答済みの質問でも下に「Write a reply…」の入力欄が残り、追記できる（mtqgの`replies`が配列であることと整合）
-- **done（回答済みにする）／reopenはToDoと同じチェックボックス。** 見た目の言語を画面間でそろえる
-- 回答済みを表示したときは、ToDoの「Done」と同じく「Answered (n)」の見出しの下にまとめる
-- AI／人間のバッジは各回答のそばに文字で表示する（色だけに頼らない）。質問の追加・本文の編集・削除はRules/Glossary/ToDoと同じ仕組み（インライン編集、確認なし削除）をそのまま使う
-
-**Bugs：表（QAと同じ形）**
-
-- QAと同じ形の別画面にする（統合しない。モデル層の実装はqaと共通だが、質問と不具合は読み手にとって意味が違うカテゴリなので画面を分ける）
-- デフォルトは未クローズ（open）のみ。切り替えでクローズ済みも表示する。バグを開くと返信（やり取り）が見える
-
-**Bugsの実装（決定、2026-09-26、todo`13570d152b`）**
-
-- レイアウトはQAで確認済みの形（行内展開、常時の返信欄、done/reopenチェックボックス）をそのまま適用する。新たな確認は行わなかった（「QAと同じ形にする」という上記の決定自体が既にレイアウトの答えだったため）
-- 実装も共通化した：`src/webview/screens/thread.ts`の`renderThread`をQA・Bugs両方が使う（`questions.ts`・`bugs.ts`は文言（`ThreadLabels`）だけを渡す薄い包み）
-- 文言はnaming.mdの用語対応表どおりに書き分ける：QAは「question/answer」（Answers・Show answered・Answered）、Bugsは「bug/reply」（Replies・Show closed・Closed）。QA実装時に一度、Bugs用の語「Reply」を誤って使っていた不具合を、この画面を作るタイミングで直した
-
-**Rules：ただの表**
-
-- 用語集と同じ「ただの表」の形にする。ruleは`word`を持たないので列は本文・記録者・日付だけ
-- 用語集と同じく全件表示、archiveされない。メモのタイムラインに埋もれさせず、常に一覧できる場所にする
-
-**用語集：ただの表**
-
-- 用語、定義、記録者、日付の列
-- 同じ用語が別々に定義されている場合だけ、並べて目立たせる
-
-**Rules・Glossaryの操作（決定、2026-09-26、todo`9985245ed8`、q&a`e07736f680`）**
-
-- **追加・編集はインライン編集。** 表の行をクリックするとその場で書き換えられる。新規追加も、表の空白行に直接入力する（ボタン起点の別フォームは作らない）
-- **並び順は新しい→古い**（他の画面と一貫させる）
-- **削除は確認ダイアログなしで即時削除。** mtqgは追記だけで消えない（削除も事実として記録される）ため、確認は不要と判断した
-
-**メモ：Slack・Discord風のタイムライン**
-
-チャットは、もともと追記だけで成り立っているUIであり、mtqgの仕組みと作法が一致する。
-
-| チャットの見慣れた作法 | mtqgの仕組み |
-|---|---|
-| 新しい発言は下に追加され、過去の発言は動かない | 追記するだけ |
-| 発言を直すと「（編集済み）」と表示される | 訂正の事実を追記し、直したことを見せる |
-| 消すと「このメッセージは削除されました」と跡が残る | 削除の事実を追記し、消えないことを正直に見せる |
-| 質問への返信がスレッドにぶら下がる | qaの回答は親への参照を持つ記録 |
-| 発言者のアイコンと名前が並ぶ | 記録者。人間とAIの記録が同じタイムラインに並ぶ |
-
-タイムラインには、memo以外の種類も構造が見える形で流れる。
-
-- todoはチェックボックス付きの投稿として流れ、完了は「✓ Marked as done」という控えめな行で表示する
-- qaはスレッドになり、回答は返信としてぶら下がる
-- bugも同じくスレッドになり、返信がぶら下がる
-- glossaryは「Defined a term」という投稿として流れる
-- ruleは「Adopted a rule」という投稿として流れる
-
-入力欄は、普段はmemoとして投稿し、`/todo`、`/qa`、`/bug`、`/rule`、`/glossary`のようなスラッシュコマンドで種類を書き分ける。新しい操作を足さず、見慣れた作法で書き分けられるようにする。**この並びはタブバーの順（Memo/Todo/QA/Bug/Rule/Glossary）に合わせている**（決定、2026-09-26、q&a`112863a3fc43`）。元の並び（`/todo`・`/qa`・`/bug`・`/glossary`・`/rule`）はmtqg本体の旧設計文書（bug・rule追加前）の一文をそのまま引き写したもので、タブの並びを決めた際（q&a`70787501f3f3`）に見直されておらず根拠が無かったため直した。
-
-**Undoの置き場所**（決定、2026-09-26、q&a`e11514c49f`）。`mtqg undo`は「このセッションが最後に書いた1行を戻す」という単発の仕組みで、記録の種類やタブに紐づかない。この拡張はmtqgをパイプ経由で呼ぶため`tty`が付かず、どのタブから操作しても書き込みは1つの対象を共有する（`docs/reference/cli.md`「undo」）。したがってUndoをタブごとに置くと別タブの操作を戻してしまい得るため、全種類を横断して見るMemoタイムラインだけに置く。MVPの着手順（Rules/Glossary→ToDo→QA→Bugs→Memo）はこのために変えない。Memo画面ができるまでUIからのUndoは無く、それは許容する。**実装時（todo`01ee2706ce`、下記）に、当初考えていた「一番新しい投稿にだけ結び付ける」形から、「入力欄の横に常設し結果を一行表示する」形に変えた**（人間へのAskUserQuestionでの確認、推奨案どおり）。同じタブに1つだけ、という制約は変わらないので別タブの操作を戻してしまう懸念は解消されたままで、特定の投稿要素に結び付けない分実装が単純になる。
-
-**Memo画面の実装（決定、2026-09-26、todo`01ee2706ce`）**
-
-- **入力欄は画面下部、投稿は古い→新しい順（新しい投稿が下）。** 上端に「Load earlier」ボタンを置く（AskUserQuestionで確認、推奨案どおり）
-- **さかのぼり読み込みは、下の「mtqg本体への依頼」2.で追加してもらった`log --before`ではなく、`log --limit`を伸ばして毎回取り直す方式にした。** 理由：この拡張は「書き込み後・journal変更時にmtqgから取り直して描画する、DOMを推測で直さない」という方針（`controller.ts`の`runWrite`）を読み取りにも広げている。`--before`でページを継ぎ足すと、古いページに含まれる記録が後から編集・完了・削除されても、そのページを再度取りに行かない限り古い表示のまま残ってしまう。`--limit`を伸ばして毎回全体を取り直せば、この不整合が起きない。`--before`自体はCLIの機能として残っており無駄にはならない（他の用途や将来の消費者のために残る）
-- **削除の跡（決定、2026-09-27、q&a`36a56edded8e`・`c379a8d90bb9`、mtqg本体v0.4.0対応後）。** 当初（v0.3.0時点）は`log`が`--events`を付けても削除された記録を一切返さなかったため見送り、下の「mtqg本体への依頼」5.として依頼していた。本体がv0.4.0で対応し（`log --json --events`だけが`deleted:true`と、削除された記録自身の`op:"delete"`イベントを返す）、組み込んだ。本文は完全に隠し、「Deleted a memo」のような一行＋削除した人・日時（削除イベントの`author`・`ts`）に置き換える。元の位置（作成時刻の位置）はそのまま。編集・削除・チェックの操作は付けない（mtqgが`not_found`で受け付けないため）。**質問・バグが削除されると、ぶら下がっていた回答・返信は個別に出さず「N answers/replies hidden with it」と件数だけ添える**（本文はもう見せない。親を`undo`すれば一緒に戻る）。回答・返信だけが個別に削除された場合（親は生きている）は、スレッド内にその1件だけ同じ形の跡を出す。**削除された記録を返すのは`--events`付きの`log`だけ**（`show`・`--events`無しの`log`・各`list`は無変更）で、他の5画面はこれまでどおり削除されたら見えなくなる（`.claude/rules/ui.md`に注記済み）
-- **スラッシュコマンドは先頭の語の完全一致。** `/todo`・`/qa`・`/bug`・`/rule`は本文だけ、`/glossary`は本文を最初の空白で用語と定義に分ける（AskUserQuestionで確認、推奨案どおり）。未知の`/foo …`はmemoとして投稿せず、エラーをその場に表示する（打ち間違いを埋もれさせない）。**`/t`・`/q`・`/b`・`/r`・`/g`の1文字の短縮形も同じ意味で使える**（人間の指示、q&a`70787501f3f3`、`COMMAND_KINDS`に別名として追加しただけで判定ロジックは変えていない）
-- **`(edited)`の判定は`updated`ではなく`log --json --events`の`op:"edit"`の有無を見る。** `updated`はdone/reopenでも進むため、編集の有無を区別できない
-- 質問・バグの回答／返信は、同じ読み込み範囲に親がある限り`thread.ts`の部品でスレッド表示する。親が範囲外なら「Answered a question」「Replied to a bug」と添えて単独表示する
-- todo・question・bugの完了操作は既存の`setStatus`メッセージに`kind`を足して振り分ける（1つのタイムラインに複数の種類が混在するため、タブだけでは判別できない）
+**Memo画面の実装**：入力欄は画面下部、投稿は古い→新しい順（新しい投稿が下）。普段はメモとして投稿し、`/todo`・`/qa`・`/bug`・`/rule`・`/glossary`（1文字短縮`/t`・`/q`・`/b`・`/r`・`/g`）で種類を書き分ける。todo/question/bugはチェックボックス・スレッド付きの投稿として流れ、glossary/ruleは「Defined a term」「Adopted a rule」という投稿になる。編集は「(edited)」と表示し、削除は本文を完全に隠して「Deleted a memo」のような一行＋削除した人・日時に置き換える（質問・バグが削除された場合、ぶら下がっていた回答・返信は個別に出さず件数だけ添える）。さかのぼり読み込みは`log --limit`を伸ばして毎回取り直す方式にしている——`--before`でページを継ぎ足すと、既に読み込んだページの記録が後から編集・削除されても再取得しない限り古いまま残ってしまうため。**Undo**（`mtqg undo`、このセッションが最後に書いた1行を戻す単発の仕組み）は、全種類を横断して見えるMemo画面の入力欄の横にだけ置く——他のタブに置くと別タブの操作を戻してしまい得るため。
 
 ## 提供する操作
 
-- **記録作成**：メモのタイムラインの入力欄（スラッシュコマンドで種類を書き分け）や、各画面から、memo・qa・todo・bug・glossary・ruleを作る。選択範囲やカーソル位置から作った場合は、成果物の位置を自動で付ける。記録者は自動で付ける
-- **状態の操作**：ToDoのカード、QA・Bugsの表、タイムラインの投稿やスレッドから、完了・回答（返信）・訂正・削除を行う（いずれも内部では追記）
+- **記録作成**：メモのタイムラインの入力欄（スラッシュコマンドで種類を書き分け）や、各画面から、memo・qa・todo・bug・glossary・ruleを作る。選択範囲やカーソル位置から作った場合は、成果物の位置（`--at`）を自動で付ける。記録者は自動で付く
+- **状態の操作**：完了・回答（返信）・訂正・削除を行う（いずれも内部では追記）
 
 ## 実装方針
 
-- 画面はVSCodeの**Webview**で作る。**エディタのタブ（`WebviewPanel`）に置く**（サイドバー`WebviewView`ではない。決定、2026-09-26、todo`acd71a3a7b`の計画時。q&a`8d650dcc83`）。6画面はこのパネルの中でタブ切り替えする
+- 画面はVSCodeの**Webview**で作り、エディタのタブ（`WebviewPanel`）に置く（サイドバー`WebviewView`ではない）。6画面はこのパネルの中でタブ切り替えする
 - データの解釈はCLIに任せる。拡張本体はCLIの`--json`出力と記録コマンドを呼び、Webviewは表示と操作に徹する（`.claude/rules/mtqg-cli.md`）
-- **画面の更新は、`.mtqg/journal.jsonl`の変更を`FileSystemWatcher`で検知し、CLIを呼び直すことで行う**（決定、2026-09-26、q&a`924ca6ff9a`）。ファイルの中身は拡張側で読まない（読み書きはCLI経由、`.claude/rules/mtqg-cli.md`）。人間の操作（AskUserQuestionでの回答記録を含む）とAIによるMCP・CLI経由の追記の両方を、この1つの仕組みで検知できる。下の「採らない、または後で判断するもの」の「ファイル監視」はLSPの重い機能（構文解析・警告表示等）の話で、これとは別
-- 対象はまずVSCode系のエディタ（Cursor等を含む）に絞る。他のエディタは必要になってから考える
+- 画面の更新は、`.mtqg/journal.jsonl`の変更を`FileSystemWatcher`で検知し、CLIを呼び直すことで行う。ファイルの中身は拡張側で読まない（読み書きはCLI経由）
+- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**——バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める
 - **別リポジトリにする**（TypeScript/Node.jsをmtqg本体に持ち込まない。このリポジトリがそれにあたる）
-- **MVPは画面ごとに完成させる**（決定、2026-09-26、q&a`f5587ff34d`）。表示と操作をそろえてから次の画面に進む。順番はRules/Glossary→ToDo→QA→Bugs→Memo（詳細は`mtqg show acd71a3a7b`）
-- **画面のHTMLはホスト側（Node）で組む。Webview側では組まない**（決定、2026-09-26、q&a`0736e37fd7`）。バンドラを持たず実行時依存も0という制約の下、全6画面共通のロジックを`node:test`で試せるようにするため。拡張ホストがCLIを呼んでHTML文字列を組み（`src/webview/screens.ts`）、Webviewの固定スクリプト（`src/webview/client/main.ts`）はその断片を差し込み、クリックをホストへ伝えるだけに留める。タブの並びは`Memo・Todo・QA・Bug・Rule・Glossary`（決定、2026-09-26、q&a`70787501f3f3`・`a1daf7a25153`。人間の指示でMemoを先頭に、ラベルもすべて単数形・QAに変更——`.claude/rules/naming.md`の用語対応表の複数形を使うとした当初の決定、q&a`25f60225e5`を上書きした。最初はBugs/Rulesだけ複数形のままだったが、単数形で統一したい旨の人間の相談に応じてBug/Ruleに揃えた）
-- Webviewの土台（タブ・CSP・メッセージ・`FileSystemWatcher`）はtodo`b9caf0b88c`で作った。設計・配置の詳細は`.claude/rules/directory-structure.md`・`.claude/rules/testing.md`
-- **タブバーはスクロールしても画面上端に固定表示する**（人間の指示、2026-09-26、q&a`70787501f3f3`）。`[role="tablist"]`に`position: sticky; top: 0`を付け、下に重なるコンテンツが透けないよう背景色も明示した（`src/webview/shared/html.ts`）
 
 採らない、または後で判断するもの：
 
-- ファイル監視、警告表示など重いLSP機能は採らない
-- 用語へのホバーでglossaryの定義を表示する、他のエディタにも同じ機能を提供するためにLSP化する、といった機能は、必要性が確認できてから検討する
-- メンション（「この質問は誰に聞いているか」）は、過程を残す情報になりうるため、都度判断する
+- ファイル監視・警告表示など重いLSP機能
+- 用語へのホバーでglossaryの定義を表示する、他のエディタへのLSP化：必要性が確認できてから検討する
+- メンション（「この質問は誰に聞いているか」）：都度判断する
 
-## エディタからの記録作成（決定、2026-09-27、todo`24f2e871d5`）
+## エディタからの記録作成
 
-「提供する操作」で元々書いていた「選択範囲・カーソル位置から記録を作った場合、成果物の位置を自動で付ける」の実装。CLIの不足①（`--at`）がmtqg本体v0.3.0で解消されたことで着手できた（memo`b1853df160`）。Webviewを経由しない、独立したコマンド`mtqg.createAt`として作る。
+**mtqg: New Record Here**（コマンドパレット、およびエディタ右クリックメニュー）：エディタの選択範囲・カーソル位置から`AtInfo`（path・line）を組み立て（`src/commands/at.ts`、vscode非依存・pure）、InputBoxでMemo画面の入力欄と同じスラッシュ記法の入力を受け（`parseComposer`を再利用）、対応する記録を作る（`src/commands/createRecordAt.ts`、vscodeを触る）。作成後は`showInformationMessage`で「Added a memo at src/foo.ts:42」のような一行を出し、「View」ボタンでmtqgパネルを開く。複数行選択時は先頭行を使う。ワークスペース外のファイルでもブロックしない（mtqgはパスをそのまま記録する）。
 
-**コマンド名の表示（修正、2026-09-27）**：当初`category: "mtqg"`＋`title: "New Record Here"`にしていたが、この形だとエディタ右クリックメニュー（`editor/context`。VSCodeはメニュー項目に`category`を前置しない）に「New Record Here」とだけ出てmtqgのコマンドだと分かりにくいと人間から指摘があった。`category`を外し、`title`自体に`"mtqg: New Record Here"`と書く形に直した——コマンドパレットでもエディタ右クリックメニューでも同じ文言がそのまま表示され、mtqg由来だと一目で分かる。
+**mtqg: Open**はコマンドパレットに加え、エディタタイトル右上のアイコンボタン（`editor/title`メニュー貢献点）からも呼べる。開いていれば`reveal()`するだけ。
 
-人間に確認した結果（AskUserQuestion、いずれも推奨案）：
+## アイコン
 
-1. **呼び出し方**：コマンドパレット＋エディタ右クリックメニュー（`editor/context`）両方（q&a`f3cc16690df3`）
-2. **入力方法**：1つのInputBoxで、Memo画面の入力欄と同じスラッシュ記法。`src/webview/screens/composer.ts`の`parseComposer`をそのまま再利用し、Memo画面とまったく同じ解釈（`/todo`〜`/glossary`と1文字短縮、未知の`/foo`はエラーで作成しない）にする（q&a`3c51406bbe5a`）
-3. **作成後のフィードバック**：`showInformationMessage`で「Added a memo at src/foo.ts:42」のような一行を出し、「View」ボタンでmtqgパネルを開く（`openPanel`をそのまま呼ぶ）。常にパネルを開いて前面化はしない（q&a`5892105177`）
+`media/tab-icon-{light,dark}.svg`（mtqgパネルのタブアイコン）・`package.json`の`mtqg.open`コマンドアイコン・`media/icon.png`（Marketplaceアイコン）は、いずれもmtqg本体のロゴ（`docs/assets/logo.svg`）の4色角丸正方形部分だけを抜き出した同じ画像。16px前後では判読できない文字（m/t/q/g）・見出し・説明文は落としてある。色は固定（`#1F6FEB`・`#1F883D`・`#8250DF`・`#BC4C00`）でテーマに依存しないため、ライト・ダーク用ファイルの中身は同一。
 
-設計：
+## checkMtqgAvailability
 
-- **`src/commands/at.ts`（新規、vscode非依存・pure）**：エディタの選択範囲・カーソル位置から`AtInfo`を組み立てる`computeAt(workspaceRoot, filePath, selection)`。`node:test`で確認できる（`.claude/rules/testing.md`「ロジックをVSCode APIから切り離してテストできる形にする」と同じ考え方、`src/webview/screens/`とpanel.tsの分離が元ネタ）。複数行の選択は先頭行を使う（`--at`は1行しか持てない）。パスは`path.relative`（Node標準）で組み、`vscode.workspace.asRelativePath`は使わない。`head`はmtqg側が自動で埋めるため、ここでは付けない
-- **`src/commands/createRecordAt.ts`（新規、vscodeを触る）**：`mtqg.createAt`を登録。`computeAt`→`showInputBox`→`parseComposer`→対応する`client.xxxAdd(text, at)`の一連。mtqg呼び出しの例外は`try/catch`で拾い`showErrorMessage`（`controller.ts`の`runWrite`の`.catch`と同じ考え方）。**`src/webview/panel.ts`と並ぶ、2つ目のvscode接点**（`.claude/rules/directory-structure.md`を合わせて修正）
-- ワークスペース外のファイルを開いていた場合、`../`始まりの相対パスになるが、mtqgはパスを正規化・検証せずそのまま記録する仕様（`/home/node/mtqg-cli-response.md`「パスは渡されたとおりに記録されます」）なのでブロックしない
-- 実機確認（Xvfb+CDP、一時リポジトリ）で、コマンドパレット・右クリック双方からの起動、複数行選択時に先頭行が使われること、Escapeでのキャンセル、未知のスラッシュコマンドのエラー、Viewボタンでのパネル起動、エディタ未オープン時のエラーメッセージを確認済み
+`openPanel()`が新規にパネルを作るとき（`currentPanel`が無いとき）だけ、`mtqg`の有無・最低版（`MIN_SUPPORTED_MTQG_VERSION`、`.claude/rules/mtqg-cli.md`「版」で3か所同期）を確認する。無ければエラー、最低版より古ければ警告を、VS Code標準の通知（`showWarningMessage`/`showErrorMessage`）で1回だけ出す。`reveal()`で済む再オープン時や、個々の書き込み失敗のたびには再チェックしない——各画面の`renderError`が失敗をその場に表示できるため。判定ロジックは`src/mtqg/availability.ts`（vscode非依存の`checkMtqgAvailability`・`describeAvailabilityWarning`）に置き、`panel.ts`は届いた`severity`で通知を出し分けるだけにする。
 
-## エディタタイトルのアイコンボタン（決定、2026-09-27、チャットでの要望）
+## ドキュメント
 
-Claude Code拡張の右上アイコン（クリックで開く）と同じように、`mtqg.open`をエディタタイトル右上（`editor/title`メニュー貢献点、`navigation`グループ）からも呼べるようにした。新しいコマンド・ロジックは追加していない——既存の`mtqg.open`（`src/extension.ts`で登録済み）に`icon`を足し、`package.json`の`contributes.menus`に`editor/title`を1件追加しただけ。`openPanel`（`src/webview/panel.ts`）は元々「開いていればreveal」を持っているので、そのまま流用できる。
-
-アイコンは新しい画像資産を作らず、VS Code標準のCodicon `$(book)`を使った（q&a`7b9561fcd43d`）——mtqgが記録を経時で積み上げる「日誌」という性質に合う、という理由。`when`は`mtqg.createAt`の`editor/context`と同じ`workspaceFolderCount > 0`（ワークスペースが無いと`openPanel`はcontroller/watcherを組み立てず空のパネルになるため、`mtqg.createAt`同様に隠す）。実機確認（Xvfb+CDP）で、ファイルを開いたエディタタイトルの右上に本のアイコンが表示され、クリックするとmtqgパネルが開くことを確認済み。
-
-**ツールチップの表示（修正、2026-09-27、bug`68a82b6998`）**：当初`category: "mtqg"`＋`title: "Open"`のままアイコンだけ足したところ、ツールバーのツールチップに「Open」としか出ずmtqgのコマンドと分かりにくいと人間から指摘があった。`mtqg.createAt`のときと同じ原因（`category`はコマンドパレットにしか前置されない）。`category`を外し`title`を`"mtqg: Open"`に直した（`.claude/rules/naming.md`にルール化）。
-
-## mtqgパネルのタブアイコン（決定、2026-09-27、チャットでの要望）
-
-続けて人間から、タブの「mtqg」ラベル左のファイル種別アイコン（既定の「未設定のファイル」アイコンのまま）も、右上のボタンと同じ見た目にしたいとの要望。`vscode.window.createWebviewPanel`が返す`WebviewPanel`の`iconPath`プロパティで設定する——ただし**このAPIは`package.json`のコマンド`icon`と違い、Codicon参照（`$(book)`のような文字列）を受け付けず、実際の画像ファイル（`Uri`か`{light, dark}`）が要る**。この拡張がこれまで一切持っていなかった画像資産を、ここで初めて追加することになった（Marketplaceアイコンは「今回は付けない」と決めている、todo`2f60eb9fb1`）。
-
-新しくロゴを描き起こすのではなく、右上のボタンと同じCodiconの`book`をそのまま流用した。Codiconのソース（`https://github.com/microsoft/vscode-codicons`の`src/icons/book.svg`）を取得し、ライト用（`media/tab-icon-light.svg`、`#424242`）・ダーク用（`media/tab-icon-dark.svg`、`#C5C5C5`）の2ファイルとして`fill`を固定色に変えて保存した（色の方針は人間に確認、q&a`f16585cd161d`——VS Code標準のアイコン色に合わせる）。**Codiconのライセンスは（MITではなく）CC BY 4.0**——著作権表示・ライセンス参照・変更点の明記が条件になるため、両SVGファイルの先頭にXMLコメントで出典・ライセンス・変更内容（`fill="currentColor"`→固定色）を明記した（README等への別枠の謝辞は作らない、同q&a）。`panel.ts`の`createWebviewPanel`呼び出し直後に`panel.iconPath`を設定するだけで、他のコード・テストへの影響は無い。`.vscodeignore`は`media/`を除外していないため変更不要（`qsoku package`で`.vsix`に2ファイルとも含まれることを確認済み）。実機確認（Xvfb+CDP、ライト/ダーク両テーマ）で、タブに本のアイコンが表示されることを確認した。
-
-## パッケージング（決定、2026-09-27、todo`2f60eb9fb1`）
-
-6画面・エディタからの記録作成コマンド・CIが揃った状態で、`vsce package`が通る形（README・CHANGELOG・`package.json`のmetadata）を整えた。人間に確認した4点：
-
-1. **README**：英語で「それなり」の内容にし、冒頭にmtqg本体（`README.md`・`README_ja.md`）と同じ趣旨の「開発中、まだ使えない」注記を入れる。**mtqg v1公開時に、mtqg本体のREADMEを作り直すのに合わせてこちらも作り直す前提**——今のUIはまだ変わりうる段階なので、スクリーンショット等は今回入れない
-2. **アイコン**：今回は付けない（`package.json`に`icon`フィールドを入れない。Marketplaceでは既定のアイコンになる）
-3. **バージョン**：`0.1.0`＋`"preview": true`（Marketplaceに「Preview」バッジが出る。本体がv1前であることと揃える）
-4. **`checkMtqgAvailability`（`src/mtqg/availability.ts`）未接続**：パッケージング準備中に見つけた別件（起動時にmtqgの有無・最低版0.4.0を確認する関数がどこからも呼ばれておらず、古い版のmtqgでも警告が出ない）。bugとして記録し（`3fc28931b2`）、別todo（`239043c4c6`）に切り出した。今回のtodoでは触らない
-
-`qsokufile`の`package`ターゲットは、`vsce package`の前に`out/`を消すよう変更した——ルートの`tsconfig.json`が`src/webview/client`を`exclude`するようになる前（コミット`ac57f45`より前）にビルドされた`out/src/webview/client/main.js`が残ったままになっており、`vsce ls`で.vsixに含まれてしまっていた（実際にWebviewが読むのは`out/webview/main.js`で、この残骸は使われていない）。パッケージ後、実機（Xvfb+CDP）で.vsixの中身を展開して`--extensionDevelopmentPath`で読み込み、`mtqg: Open`で6タブが描画されること・エディタ右クリックに`mtqg: New Record Here`が出ることを確認済み。
-
-## IDコピーボタン（決定、2026-09-27、チャットでの要望）
-
-使い始めてすぐの人間からの要望：記録のID（`mtqg show <id>`等に使う32桁のID）を、全6画面（Memo・Todo・QA・Bug・Rule・Glossary）でクリップボードにコピーできるようにする。IDはこれまでUI上のどこにも見えず・コピーできなかった（`data-id`属性としてDOMには載っているが、人の目には触れない）。
-
-ui.md「機能は足さない」原則には触れないと判断した——mtqgに新しい操作・データを増やすものではなく、既存の記録が既に持っている属性を人間が使いやすくするだけの便宜。**mtqgを一切呼ばないため、`controller.ts`・`shared/messages.ts`に新しいメッセージ型は足さず、Webviewの固定スクリプト（`src/webview/client/main.ts`）だけで完結させた**（Clipboard API、`navigator.clipboard.writeText`）。共通部品`copyIdButton`/`copyIdButtonCell`（`src/webview/screens/table.ts`）を、既存の`deleteButton`/`deleteButtonCell`の隣に配置。Memo画面の削除済みの跡（`deletedPost`・`hiddenReplyPost`・`deletedReplyRow`）にも含めた——mtqgは編集・削除は`not_found`で拒否するが、IDを見ること自体は妨げないため。クリック後、ボタンが一瞬✓に変わるフィードバック（色だけに頼らない、ui.md）。
-
-**アイコンの選び直し**：当初⧉（U+29C9、Miscellaneous Mathematical Symbols-B）を選んだが、実機確認（Xvfb+CDP、この開発環境のフォント＝DejaVuのみ）で字形が無く豆腐表示になることが判明。📋（クリップボード絵文字）に変更した。ただし📋自体もこの環境には絵文字フォントが一切無いため確認はできておらず（豆腐表示のまま）、実際のデスクトップ（Windows/mac/多くのLinux、Noto Color Emoji等が標準で入っている）での見た目は人間が確認する前提。クリック動作自体（`navigator.clipboard.writeText`→32桁IDがそのままコピーされること）は実機で確認済み（本物のマウスイベント`Input.dispatchMouseEvent`が必要——合成`element.click()`はクリップボードAPIが要求するユーザー操作として認識されない）。
-
-## 日時表示のタイムゾーン（修正、2026-09-27、bug`062ae1c25e`）
-
-各画面の日時（`created`/`updated`）は、mtqgが記録するISO 8601 UTC文字列の`T`/`Z`を取り除くだけ（`src/webview/screens/format.ts`の`formatDate`）で、常にUTC（標準時間）のまま表示していた——ローカルタイムゾーンへの変換を一切していなかった。人間から「時間が設定しているものではなく標準時間で表示される」という指摘で発覚。
-
-直し方は2案あった：①Webview（クライアント、ブラウザ環境）側でISO文字列を実際にビューアが見ている画面のローカルタイムゾーンに変換する、②拡張ホスト（Node）側で拡張ホストプロセス自身のローカルタイムゾーンで変換する。当初、人間に確認（AskUserQuestion）した結果①を採用したが、実装・実機確認後、人間から意図の訂正があった（q&a`2a7f51aca969`）：望んでいたのは「コンテナを使わない場合はローカルPCの時刻、コンテナを使う場合はコンテナの時刻」——つまり**mtqg自身が動いている側（＝拡張ホストの環境）**の時刻であり、①（常に画面を描いている実機の時刻）とは意味が違う。人間が実際にコンテナのタイムゾーンを設定する方法（`sudo ln -sf /usr/share/zoneinfo/<tz> /etc/localtime`によるシステムレベルの書き換え）を確認したところ、これは対話シェル（`~/.bashrc`のような）を経由せず全プロセスに効くため、②（拡張ホスト側変換）で正しく反映されることが分かり、②に修正した。
-
-実装：`table.ts`の`dateCell`/`dateText`（プレーンテキストを返す）は当初のまま維持し、`src/webview/screens/format.ts`の`formatDate`の実装だけを変更した——ISO文字列の`Z`を取り除く固定スライスから、`new Date(iso)`のローカルgetter（`getFullYear`等）で「YYYY-MM-DD HH:MM」を組み立てる形にした。`Date`の非UTCゲッターは、プロセス自身の`TZ`環境変数（無ければOSの`/etc/localtime`）に従うため、この関数はそのまま「拡張ホストが動いている環境の時刻」になる。Webview側（`client/main.ts`）への変更は不要——最初の①案で追加した`dateSpan`・`data-iso`・`localizeDates`はすべて取り除いた（`.claude/rules/directory-structure.md`の「HTMLはホスト側で組む」の例外扱いも撤回）。
-
-実機確認：このdevcontainer自身がJST設定（`/etc/timezone`＝`Asia/Tokyo`）のため、`formatDate`が`13:50:08Z`（UTC）を`22:50`（JST、+9h）に変換することをNode実行で確認した。CIの3 OS matrix（`.github/workflows/ci.yml`）は各ランナーの既定タイムゾーンがまちまちなため、`test/unit/webview/format.test.ts`の期待値は固定のUTC文字列ではなく、テスト実行プロセス自身の`Date`ローカルgetターから組み立てる形にしている（ハードコードした1つのタイムゾーンに依存しない）。
-
-## アイコンをmtqgロゴ由来のものに更新（決定、2026-09-28、チャットでの要望）
-
-mtqgがv1になり、本体側に正式なロゴ（`docs/assets/logo.svg`、`amisonnet8/mtqg`）ができた。人間から、この拡張のタブアイコン（上の「mtqgパネルのタブアイコン」節）とエディタタイトルの`mtqg: Open`アイコン（上の「エディタタイトルのアイコンボタン」節）を、これまでの暫定（VS Code標準Codicon`$(book)`の流用）からこのロゴ由来のものに差し替えたいとの要望があった。
-
-mtqgのロゴ自体は560×200のワードマーク（「mtqg」見出し＋4色の角丸正方形（各色に`m`/`t`/`q`/`g`の文字）＋説明文）で、READMEのバナー用に作られたもの（`README.md`/`README_ja.md`で`width="420"`表示）——mtqg本体にもこれ以外の小さい正方形アイコン（favicon相当）は無い。タブアイコン・エディタタイトルのボタンはどちらも16px前後の正方形で表示されるため、ワードマークをそのまま縮小すると見出し・説明文は判読できず、正方形内の文字（m/t/q/g）も潰れて見える。実際にrsvg-convertで16/24/32pxにレンダリングして確認した上で、**4色の角丸正方形部分だけを抜き出し、文字・見出し・説明文を落として正方形（16×16）に組み直した**（`media/tab-icon-light.svg`・`media/tab-icon-dark.svg`）。文字を落とした判断は、レンダリング比較で16pxでは文字が判読できずノイズに見えたことに加え、ui.mdの「文字にあまり頼らないUIにする」（色・形で状態を伝える）の原則にも沿うため。色はロゴの4つの角丸正方形の固定色（`#1F6FEB`・`#1F883D`・`#8250DF`・`#BC4C00`）をそのまま使っており、テーマに依存しない色なので、ライト用・ダーク用の2ファイルは中身が同一（同じ理由で、以前のCodicon版にあった`fill="currentColor"`→固定色の付け替えやCC BY 4.0のライセンス表示コメントは不要になった——この画像はmtqg本体（同じ開発者）の自前の資産であり、第三者のCodiconから複製したものではないため）。
-
-変更箇所は3つ：`media/tab-icon-{light,dark}.svg`の中身の差し替え、`package.json`の`mtqg.open`コマンドの`icon`を`$(book)`（Codicon文字列）から`{light, dark}`の2ファイル参照に変更、`panel.ts`の該当コメント（Codicon前提の文言）の更新。`panel.iconPath`と`package.json`のコマンド`icon`は元々別々の実装（前者はCodicon参照を受け付けずファイルが必須、後者はどちらも受け付ける）だが、両方とも同じ2ファイルを指すようにしたことで、タブアイコンとボタンアイコンが名実ともに同じ画像になった。Marketplace公開用のアイコン（`package.json`のトップレベル`icon`フィールド）は今回も対象外のまま（「パッケージング」節の決定どおり、todo`5f7b9007d1`でのREADME作り直しと合わせて再検討する）。
-
-**不具合と誤診断（bug`ade0b2a247`）**：最初の実装（コミット`f516128`）は、SVGのXMLコメント内で区切り記号として`" -- "`（半角二重ハイフン）を使っていた。**XML仕様上、コメント本文に`--`は含められない**——これは不正なXML＝不正なSVGだった。人間から「アイコンが表示されない。media配下のファイルを開くとエラーになる」と報告があり発覚。
-
-発覚前の実機確認（Xvfb+CDP、`--disable-gpu`）では、DOM上は正しいファイルへの`background-image`参照ができていることを確認できたが、肝心のSVGの見た目（実際にラスタライズされて描かれるか）は確認できていなかった。data URIで同じSVGを直接`<img>`に読ませると`onerror`になる一方、同じ経路のPNGは問題なく描けたため、**このとき「GPU無しのこの開発環境ではSVGの`<img>`描画自体が機能しない環境側の制約」と誤って結論づけていた**（GLの実装が使えない旨のログ`Requested GL implementation ... not found`と一見符合していたため）。実際には、`--`を`: `に置換して不正なXMLを直しただけで、同じ`--disable-gpu`環境でも同じdata URIが問題なく`onload`し、mtqgパネルのタブ・エディタタイトルのボタンとも4色のアイコンが正しく表示されることを確認できた——GPU制約は無関係で、原因は最初から不正なXMLだけだった。**教訓**：SVGを`<img>`として読み込めない事象に直面したとき、環境側の制約を疑う前に、まずXMLとして妥当か（`xml.dom.minidom.parse`等で）確認する。
-
-## mtqg本体への依頼（CLIの不足）— 対応済み
-
-計画時（2026-09-26、todo`acd71a3a7b`）に`mtqg --json`（v0.2.0）を確かめて見つかった、この拡張の設計に対する不足。**洗い出して本体に依頼し、依存する画面・機能は実装待ちにする**（決定、q&a`c9386d8ed3`）。依頼はtodo`57713a45f4`で追跡し、mtqg本体v0.3.0で3件とも対応された（回答、2026-09-26、`/home/node/mtqg-cli-response.md`、動作確認済み、memo`b1853df160`）。本体側の設計判断は本体の`.mtqg/`（`8d245a8b2c`・`5b7fd793b8`・`473949da3e`）に記録されている。
-
-1. **記録作成時に位置（`at`：path・line）を渡す手段が無い。** →`--at <path>[:<line>]`を全add系コマンド（`memo add`・`todo add`・`rule add`・`qa add`・`bug add`・`glossary add`）に一律で追加。`head`（コミットハッシュ）はmtqg側が自動で埋める。`--json`の`record`に`at`が付く。「選択範囲・カーソル位置からの記録作成」（todo`24f2e871d5`）はこれを使う。**MCPのadd系ツールへの`--at`対応は今回見送り**（拡張はCLIを直接呼ぶため実害なし。必要になれば改めて依頼する）
-2. **`log`に`--limit`しかなく、さかのぼって読み込むカーソルが無い。** →`log --before <id>`を追加（カーソル型ページング。指定IDより厳密に古い記録だけを返す。次のページは返ってきた`records`の最後の要素のIDを渡す）。**実装時（todo`01ee2706ce`）には、既に読み込んだページの記録が後から編集・削除されても古いまま残ってしまう問題を避けるため、結局`--limit`を伸ばして毎回取り直す方式を採用し、この画面では`--before`は使わなかった**（理由は上のMemo節）。CLIの機能自体は依頼どおりのものが実装されており、他の消費者・将来の用途のために残る
-3. **`log --json`はレコード単位で、編集・削除・完了のイベントを含まない。** →`log --json --events`を追加（各レコードに、自分自身の`journal.jsonl`行を作成順に含む`events`が付く。質問・バグの返信自身の`create`は含まない点に注意——返信は`log`の一覧に別レコードとして出るので、そちらの`events`を見る）。Memo画面のタイムライン表示で使う
-4. `.devcontainer/postCreate.sh`の`mtqg`のpin版を`v0.2.0`→`v0.3.0`に上げた（`.claude/rules/mtqg-cli.md`「版」、動作確認済み）。**下の5.への対応で、続けて`v0.3.0`→`v0.4.0`にも上げている**
-
-## mtqg本体への依頼（CLIの不足）— 対応済み（続き）
-
-Memo画面（todo`01ee2706ce`）の実装中に見つかった不足。人間が本体へ伝え（2026-09-26、memo`45960bf190`）、本体v0.4.0（コミット`684c87d`）で対応された（2026-09-27）。
-
-5. **削除された記録が、読み取り系のコマンドすべてから完全に見えなくなる。** `mtqg delete <id>`した記録は、`log --json --events`にも一覧に出てこず（`events`にdeleteイベントも現れない）、`mtqg show <id>`も`not_found`エラーになる（実機で確認、v0.3.0）。journal.jsonl自体には削除の事実が追記されているはずだが、読み取り側からは辿れない。→ ui.mdが想定する「消すと跡が残る」（Slackの「このメッセージは削除されました」と同じ考え方）をMemo画面で実現できないため（`.claude/rules/ui.md`に注記済み）、`log --json --events`だけでも、削除された記録を`op:"delete"`のイベント付きで一覧に含めてほしい（`show`まで変える必要はない。`--events`無しの既定の`log`の挙動は変えなくてよい——変えると他の画面のstateful listの挙動に影響しうるため）。**対応内容（v0.4.0）**：依頼どおり`log --json --events`のときだけ、削除された記録を`deleted:true`＋`op:"delete"`イベント付きで返すようになった。親（質問・バグ）が削除されて隠れた回答・返信も`deleted:true`が付くが、自分自身の`delete`イベントは持たない（本体側で「隠れている」と「削除された」を区別できるようにしたもの、実装時にMemo画面側で判別に使った）。`show`・`--events`無しの`log`・各`list`は依頼どおり無変更
-
-## checkMtqgAvailabilityの配線（決定、2026-09-28、todo`239043c4c6`）
-
-bug`3fc28931b2`（パッケージング準備中に発見：`checkMtqgAvailability`がどこからも呼ばれておらず、古い版のmtqgが入っていても警告が出ない）への対応。あわせて、mtqgがv1.0.0になったのを受けて`MIN_SUPPORTED_MTQG_VERSION`を`0.4.0`から`1.0.0`に上げた（人間の指示）。goモジュールキャッシュで両版のソース差分（`internal/cli/json.go`）を確認し、`--json`出力は純追加（新しい`upgrade`コマンド自身の出力が増えただけで、既存の構造体は無変更）と確認した上でのバージョンアップ——実体はjournal形式のバージョンを0→1に上げただけ（mtqg本体`docs/design/history.md`）。
-
-配線先は`src/webview/panel.ts`の`openPanel()`——**新規にパネルを作るとき（`currentPanel`が無いとき）だけ**`checkMtqgAvailability`を呼ぶ。`reveal()`で済む再オープンでは呼び直さない（関数自身のdocコメントが謳う「一度きりの起動時チェック」の意図どおり、かつ同じ通知が開くたびに出るのを避ける）。**書き込み失敗のたびに再チェックする案（todo本文の「または呼び出し失敗時」）は採用しなかった**——mtqgが無い場合はどのみち`screens.ts`の`renderError`が個々の呼び出し失敗をそのまま表示できており、失敗のたびに`mtqg version`をもう1回起動するコストと通知の連打に見合わないと判断した。
-
-警告の見せ方は人間に確認（AskUserQuestion、q&a`831d39f081`）：VS Code標準の通知（`showWarningMessage`/`showErrorMessage`）を採用し、パネル内バナー（`shared/html.ts`・`controller.ts`の変更が要る）は見送った。`not_found`はエラー、`too_old`は警告と、`AvailabilityResult`の`reason`にそのまま対応させている（`src/mtqg/availability.ts`の新しい純粋関数`describeAvailabilityWarning`。vscode非依存のまま`node:test`で確認できる形を保ち、`panel.ts`側は届いた`severity`で呼び分けるだけにした）。
-
-version pinの3か所同期（`.claude/rules/mtqg-cli.md`「版」）：`.devcontainer/postCreate.sh`・`.github/workflows/ci.yml`の`go install .../mtqg@v0.4.0`を`@v1.0.0`に、`README.md`・`CHANGELOG.md`の「`mtqg` 0.4.0 or later」を`1.0.0 or later`に更新した。README冒頭の「mtqgにはまだ公開版が無い」という記述はそのまま残した——ここを含む本格的な書き直しはtodo`5f7b9007d1`（mtqg v1公開に合わせたREADME作り直し）の範囲。
-
-実機確認（Xvfb+CDP）：`MIN_SUPPORTED_MTQG_VERSION`を一時的に`99.0.0`にしてビルドし、`mtqg: Open`で実際に警告の通知（画面右下のトースト）が出ることをスクリーンショットで確認した上で、値を戻して再確認した。
-
-## README本格作成・Marketplace公開準備（決定、2026-09-28、todo`5f7b9007d1`）
-
-mtqgがv1.0.0になり、q&a`f1e2277f6a`（Marketplace公開はmtqg v1・正式公開と同時にする）の条件が揃ったのを受けて着手。「パッケージング」節（上）で暫定にしていた3点（README・アイコン・バージョン）を、正式公開向けに作り直した。作業量が多いため4ステップに分け、ステップごとにコミットした。人間に確認した4点（AskUserQuestion、2026-09-28、q&a`bed3562b8d`・`0f1c8b73fb`・`6809d2433a`・`53bd659113`）：
-
-1. **設定の節は作らない**——`contributes.configuration`が1つも無いため。ui.md「機能は足さない」と同じ判断
-2. **バージョンは`1.0.0`、`preview`を外す**——mtqg v1と揃えて正式版として出す（`package.json`・`CHANGELOG.md`）
-3. **デモはGIF1本＋静止画数枚**——この環境（Xvfb+CDP）で撮影する
-4. **`docs/design/`は`vscode-extension.md`に改名、索引`README.md`は削除**（固有内容は「着手の経緯」節へ統合。上の見出しに反映済み）
-
-**アイコン**：Marketplaceの`icon`フィールドは画像ファイル必須でSVG不可のため、既存の`media/tab-icon-light.svg`（mtqgロゴ由来の4色タイル、上の「アイコンをmtqgロゴ由来のものに更新」節）を`rsvg-convert`で128×128のPNGに書き出し`media/icon.png`とした。新しい画像を描き起こさず、タブアイコン・エディタタイトルのボタン・Marketplaceアイコンの3箇所すべてが同じロゴ由来の画像になった。README見出し用に同じSVGから256×256でも書き出し`docs/assets/icon.png`とした（`.vscodeignore`の`docs/**`で`.vsix`には含まれないが、README用の画像は`.vsix`に同梱する必要が無い——vsceがGitHub上のパスへ書き換えるため、下記参照）。
-
-**README本文**：mtqg本体のREADME（`README.md`/`README_ja.md`、中央寄せヘッダー・バッジ・目次リンク・Featuresの絵文字箇条書き・Prerequisites・Learn more、という構成）にそのまま倣った。設定の節・スクリーンショット付きの詳細レイアウト説明（列の並び等）は「レイアウトの詳細は未定」（ui.md）のためどのみち作れず、Featuresは機能の一覧に留めた。冒頭の「Work in progress」注記は削除した（正式公開のため）。
-
-**デモの撮影**：一時的なgit＋mtqg初期化リポジトリ（サンプルの「csv-importer」プロジェクト）を用意し、`.claude/rules/testing.md`のXvfb+CDP手順で拡張開発ホストを起動。**Memo画面の投稿欄への入力は、キー入力の合成ではなくDOM操作（`.composer .add-row .editable`の`textContent`を書き換えて`input`・`focusout`イベントを発火）で行った**——最初、投稿のたびに固定座標をクリックする方式を試したところ、投稿後にレイアウトが変わり同じ座標が別の要素（直前の投稿の行内編集欄）に当たってしまい、複数回分のテキストが1つの記録に混ざる不具合を自分で踏んだ（本番のUIではなく検証スクリプトの不具合)。`testing.md`が元々示していた「contenteditableのtextContentを書き換えてfocusoutを飛ばす」方式に切り替え、`#panel-<tab-id>`配下に加えて`.composer .add-row`／`.add-row[data-parent-id]`まで絞り込むセレクタにしたことで解消した——**同じ「隠れた要素を誤って掴む」教訓（todo`8b7b600827`）が、UI実装だけでなく検証スクリプトの側でも起こりうる**。`Ctrl+Shift+P`の合成キーイベントでは、CDPの`modifiers`ビット値（Alt=1・Ctrl=2・Meta=4・Shift=8）を取り違えて別のショートカット（Copilot Chatが開いた）を踏んだ誤りも1回あり、値を直して解決した。todo・question・memoを投稿→Todo画面でチェック→QA画面で展開して回答、という一連をスクリーンショットに撮り、`convert -layers Optimize`でGIF化（`docs/assets/demo.gif`、約140KB）。
-
-**静止画は置かなかった（修正、2026-09-28、人間の指摘）**：当初、同じ撮影セッションからMemo・Todo・QA各画面とエディタ右クリックメニューの静止画も切り出し、Featuresの箇条書きの下に並べていたが、「デモで十分役割を果たしている」と指摘があり削除した。デモGIF自体がMemo→Todo→QAの一連を動きとして見せており、同じ画面の静止画を重ねて並べても情報が増えない（役割が重複するだけ）という判断。`docs/assets/screenshot-*.png`のファイル自体も削除した（参照されなくなった画像を残さない）。
-
-**バージョンpinの3か所同期は済んでいる**（前節`checkMtqgAvailability`の配線で`1.0.0`に揃え済み）。GitHubのDescription・Topics設定、Marketplace公開（`vsce publish`）自体は人間が行う——手順はチャットで提示した（このファイルには残さない。実行の記録が要れば、実施後に別途memoで残す）。
+README.md（英語）・README_ja.md（日本語）は、中央寄せヘッダー・バッジ・デモGIF・絵文字付きFeatures・Prerequisites・Learn moreという構成（mtqg本体READMEに倣う）。デモはGIF1本のみ（同じ画面の静止画は役割が重複するため置かない）。`docs/assets/`はREADMEだけが参照する画像で、`.vscodeignore`により`.vsix`には含めない——vsceがMarketplace向けにGitHub上のパスへ書き換えるため、公開前にpushしておく必要がある。
 
 ## gitとの接点：mtqgは何もしない
 
-`.mtqg/`は普通のテキストファイルとしてコミットされるので、GitHub等のコミット画面やPRの差分には、コードの変更と、追加された記録の行がそのまま並んで表示される。コードと過程の紐づけは、gitとGitHubが最初から持っている仕組みだけで成立する。mtqg（この拡張を含む）がすることは、差分として読みやすい形で書き出すことだけ。紐づけのための機能（トレーラーの規約、gitフック、履歴の解析）は作らない。
-
-## 着手の経緯
-
-- 段階1〜3（CLI完成、サンプルPJでの検証）を終え、段階4（AIエージェント向けの組み込み：指示ファイル→フック→MCP）まで進んだ後に着手する、というのが元の設計判断だった
-- 実際の着手は、mtqg本体の質問`08b09858fc`への人間の回答（2026-09-26）で決まった：「VSCode拡張対応→mtqgを使ってqsoku側で改修を行って出た問題を修正（段階5とする）→v1確定」の順で進める
-- 新しいリポジトリの置き場所は`/home/vscode/mtqg-vscode`（人間の指示、2026-09-26、mtqg本体のmemo`d48b4a55b5`）。これ以降の設計判断・記録は、mtqg本体側ではなくこのリポジトリ側に残る
-- **このリポジトリの生まれた経緯自体は、mtqg本体（`github.com/amisonnet8/mtqg`）側にも残っている**（旧`docs/design/README.md`の内容をここへ統合）：`docs/design/07-integrations.md` §11.4（画面構成・実装方針の元の設計）、mtqg本体の`.mtqg/`の質問`08b09858fc`・memo`d48b4a55b5`（着手の決定、置き場所の決定）、コミット`5662e8d`（この経緯を記録した時点）。**このリポジトリの誕生以降の設計判断は、このファイルとこのリポジトリの`.mtqg/`だけに残す**（mtqg本体の`PLAN.md`やmtqg本体の`.mtqg/`には残らない。このリポジトリは`PLAN.md`を使わず、`mtqg context`が一次情報、`.claude/rules/mtqg-usage.md`）
+`.mtqg/`は普通のテキストファイルとしてコミットされるので、GitHub等のコミット画面やPRの差分には、コードの変更と追加された記録の行がそのまま並んで表示される。コードと過程の紐づけは、gitとGitHubが最初から持っている仕組みだけで成立する。紐づけのための機能（トレーラーの規約、gitフック、履歴の解析）は作らない。
 
 ## 未決事項
 
-- **各画面の具体的なレイアウト**（列の並び、余白、詳細表示の形など）は未定（元の設計で「14章」に送られていたもの）。**画面ごとに、着手の直前で人間に確認する**（一括では決めない。決定、2026-09-26、todo`9985245ed8`）。6画面すべて確認済み（上の各節）。Bugsは「QAと同じ形」という既存の決定がそのまま答えだったため新規確認はしていない
+- 各画面の具体的なレイアウト（列の並び、余白、詳細表示の形など）は未定。画面ごとに、着手の直前で人間に確認する（一括では決めない）
 - npmの依存の線引きの例外が必要になった場合の判断（`.claude/rules/dependencies.md`）
