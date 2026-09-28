@@ -21,7 +21,7 @@ mtqg-vscode/
 *├── trivy.yaml
 *├── .mtqg/
 *├── .mcp.json
-*├── docs/design/vscode-extension.md（設計判断と理由の記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
+*├── docs/design/vscode-extension.md（**現状の設計だけ**を保つ。経緯は`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
 *│   ├── devcontainer.json
 *│   └── postCreate.sh
@@ -59,8 +59,8 @@ mtqg-vscode/
 *│           └── tsconfig.json
 *├── test/
 *│   ├── unit/                （node:test。VSCode APIを使わないテスト）
+*│   │   ├── html.test.ts     （renderShellの確認）
 *│   │   ├── mtqg/
-*│   │   ├── commands/
 *│   │   └── webview/
 *│   │       └── screens/
 *│   ├── helpers/tempRepo.ts  （git init＋mtqg initした一時リポジトリ）
@@ -92,5 +92,5 @@ mtqg-vscode/
 - **`vscode`を触るのは`src/webview/panel.ts`だけ。** `controller.ts`・`screens.ts`・`shared/`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）。**Webview以外の新しいvscodeコマンドを足すときは、位置計算・入力解釈など純粋なロジックをvscode非依存のファイルに切り出し、vscodeを触る部分（`vscode.window`・`vscode.commands.registerCommand`等）だけをコマンド登録側に残す**（`screens/`とpanel.tsの分離と同じ考え方。かつて`src/commands/`にこの形で置いていたが、唯一の中身だった`mtqg.createAt`を廃止したため今は無い）
 - **Webview内で実際に動くスクリプト（`src/webview/client/`）は別tsconfig。** ホスト側はCommonJS（`vscode`の型）、Webview側はDOM型・ブラウザ向けESM出力で、1つのtsconfigでは両立しない（バンドラを使わない方針、`.claude/rules/dependencies.md`）。ルートの`tsconfig.json`は`src/webview/client`を`exclude`する
 - **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く
-- **`docs/design/`**：設計判断と理由の記録（日本語）。mtqg設計§11.4からの引き継ぎと、このリポジトリ側で新たに決めたことを書く。仕様と食い違う場合はコード（と、あれば`docs/reference/`相当の文書）が正、という考え方はmtqgと同じ
+- **`docs/design/`**：**現状の設計だけ**を保つ記録（日本語）。決定に至った経緯・修正の履歴はここに書かず`.mtqg/`に記録する（`.claude/rules/mtqg-usage.md`「docs/design/との役割分担」）。仕様と食い違う場合はコード（と、あれば`docs/reference/`相当の文書）が正、という考え方はmtqgと同じ
 - **`.mtqg/`の中のファイルを直接編集しない。** すべてmtqgのコマンド経由（`.claude/rules/mtqg-usage.md`）
