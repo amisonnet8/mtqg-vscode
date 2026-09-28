@@ -33,7 +33,10 @@
       {
         "command": "mtqg.open",
         "title": "mtqg: Open",
-        "icon": "$(book)"
+        "icon": {
+          "light": "media/tab-icon-light.svg",
+          "dark": "media/tab-icon-dark.svg"
+        }
       },
       {
         "command": "mtqg.createAt",
