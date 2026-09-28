@@ -7,7 +7,7 @@ import type { VersionResult } from './types';
  * (.claude/rules/mtqg-cli.md "版"). Bump both together, after checking the
  * new release's `--json` only adds fields.
  */
-export const MIN_SUPPORTED_MTQG_VERSION = '0.4.0';
+export const MIN_SUPPORTED_MTQG_VERSION = '1.0.0';
 
 export type AvailabilityResult =
   | { ok: true; version: string; format: VersionResult['format'] }
@@ -49,6 +49,24 @@ export async function checkMtqgAvailability(root: string, binary = 'mtqg'): Prom
   }
 
   return { ok: true, version: result.mtqg, format: result.format };
+}
+
+/**
+ * Turns an `AvailabilityResult` into what to show the human, or nothing if
+ * mtqg is fine (todo `239043c4c6`). Kept vscode-free like the rest of this
+ * file: the caller (`src/webview/panel.ts`) just picks
+ * `showErrorMessage`/`showWarningMessage` by `severity`. `not_found` is an
+ * error (nothing works at all); `too_old` is a warning (some commands may
+ * still work, but newer flags this extension relies on -- e.g. `--events`
+ * -- can fail in confusing ways).
+ */
+export function describeAvailabilityWarning(
+  result: AvailabilityResult,
+): { severity: 'error' | 'warning'; message: string } | undefined {
+  if (result.ok) {
+    return undefined;
+  }
+  return { severity: result.reason === 'not_found' ? 'error' : 'warning', message: result.message };
 }
 
 type Semver = [number, number, number];

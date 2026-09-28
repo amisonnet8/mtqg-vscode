@@ -1,5 +1,6 @@
 import * as crypto from 'node:crypto';
 import * as vscode from 'vscode';
+import { checkMtqgAvailability, describeAvailabilityWarning } from '../mtqg/availability';
 import { createMtqgClient } from '../mtqg/client';
 import { createPanelController, type PanelController } from './controller';
 import { renderShell } from './shared/html';
@@ -39,6 +40,26 @@ export function openPanel(extensionUri: vscode.Uri): void {
 
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (folder) {
+    // One-time check, only when actually creating the panel (todo
+    // `239043c4c6`, bug `3fc28931b2`): a missing mtqg already surfaces per
+    // screen (screens.ts's renderError, from the same MtqgNotFoundError
+    // every render hits), but an old-but-present mtqg does not -- it just
+    // fails confusingly on a screen that happens to use a newer flag (e.g.
+    // Memo's `--events`). Not re-checked on reveal() of an already-open
+    // panel, and not re-checked on every write failure -- both would just
+    // spend an extra `mtqg version` call and repeat the same notification.
+    void checkMtqgAvailability(folder.uri.fsPath).then((result) => {
+      const warning = describeAvailabilityWarning(result);
+      if (!warning) {
+        return;
+      }
+      if (warning.severity === 'error') {
+        void vscode.window.showErrorMessage(warning.message);
+      } else {
+        void vscode.window.showWarningMessage(warning.message);
+      }
+    });
+
     const client = createMtqgClient(folder.uri.fsPath);
     const controller = createPanelController({
       client,

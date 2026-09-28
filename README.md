@@ -16,7 +16,7 @@ and writing goes through the `mtqg` CLI (invoked with `--json`); nothing in
 
 ## Requirements
 
-- `mtqg` 0.4.0 or later on your `PATH` (see the
+- `mtqg` 1.0.0 or later on your `PATH` (see the
   [mtqg repository](https://github.com/amisonnet8/mtqg) for installation)
 - A workspace folder that is a git repository initialized with `mtqg init`
 

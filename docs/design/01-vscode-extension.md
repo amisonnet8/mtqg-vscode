@@ -245,6 +245,18 @@ Memo画面（todo`01ee2706ce`）の実装中に見つかった不足。人間が
 
 5. **削除された記録が、読み取り系のコマンドすべてから完全に見えなくなる。** `mtqg delete <id>`した記録は、`log --json --events`にも一覧に出てこず（`events`にdeleteイベントも現れない）、`mtqg show <id>`も`not_found`エラーになる（実機で確認、v0.3.0）。journal.jsonl自体には削除の事実が追記されているはずだが、読み取り側からは辿れない。→ ui.mdが想定する「消すと跡が残る」（Slackの「このメッセージは削除されました」と同じ考え方）をMemo画面で実現できないため（`.claude/rules/ui.md`に注記済み）、`log --json --events`だけでも、削除された記録を`op:"delete"`のイベント付きで一覧に含めてほしい（`show`まで変える必要はない。`--events`無しの既定の`log`の挙動は変えなくてよい——変えると他の画面のstateful listの挙動に影響しうるため）。**対応内容（v0.4.0）**：依頼どおり`log --json --events`のときだけ、削除された記録を`deleted:true`＋`op:"delete"`イベント付きで返すようになった。親（質問・バグ）が削除されて隠れた回答・返信も`deleted:true`が付くが、自分自身の`delete`イベントは持たない（本体側で「隠れている」と「削除された」を区別できるようにしたもの、実装時にMemo画面側で判別に使った）。`show`・`--events`無しの`log`・各`list`は依頼どおり無変更
 
+## checkMtqgAvailabilityの配線（決定、2026-09-28、todo`239043c4c6`）
+
+bug`3fc28931b2`（パッケージング準備中に発見：`checkMtqgAvailability`がどこからも呼ばれておらず、古い版のmtqgが入っていても警告が出ない）への対応。あわせて、mtqgがv1.0.0になったのを受けて`MIN_SUPPORTED_MTQG_VERSION`を`0.4.0`から`1.0.0`に上げた（人間の指示）。goモジュールキャッシュで両版のソース差分（`internal/cli/json.go`）を確認し、`--json`出力は純追加（新しい`upgrade`コマンド自身の出力が増えただけで、既存の構造体は無変更）と確認した上でのバージョンアップ——実体はjournal形式のバージョンを0→1に上げただけ（mtqg本体`docs/design/history.md`）。
+
+配線先は`src/webview/panel.ts`の`openPanel()`——**新規にパネルを作るとき（`currentPanel`が無いとき）だけ**`checkMtqgAvailability`を呼ぶ。`reveal()`で済む再オープンでは呼び直さない（関数自身のdocコメントが謳う「一度きりの起動時チェック」の意図どおり、かつ同じ通知が開くたびに出るのを避ける）。**書き込み失敗のたびに再チェックする案（todo本文の「または呼び出し失敗時」）は採用しなかった**——mtqgが無い場合はどのみち`screens.ts`の`renderError`が個々の呼び出し失敗をそのまま表示できており、失敗のたびに`mtqg version`をもう1回起動するコストと通知の連打に見合わないと判断した。
+
+警告の見せ方は人間に確認（AskUserQuestion、q&a`831d39f081`）：VS Code標準の通知（`showWarningMessage`/`showErrorMessage`）を採用し、パネル内バナー（`shared/html.ts`・`controller.ts`の変更が要る）は見送った。`not_found`はエラー、`too_old`は警告と、`AvailabilityResult`の`reason`にそのまま対応させている（`src/mtqg/availability.ts`の新しい純粋関数`describeAvailabilityWarning`。vscode非依存のまま`node:test`で確認できる形を保ち、`panel.ts`側は届いた`severity`で呼び分けるだけにした）。
+
+version pinの3か所同期（`.claude/rules/mtqg-cli.md`「版」）：`.devcontainer/postCreate.sh`・`.github/workflows/ci.yml`の`go install .../mtqg@v0.4.0`を`@v1.0.0`に、`README.md`・`CHANGELOG.md`の「`mtqg` 0.4.0 or later」を`1.0.0 or later`に更新した。README冒頭の「mtqgにはまだ公開版が無い」という記述はそのまま残した——ここを含む本格的な書き直しはtodo`5f7b9007d1`（mtqg v1公開に合わせたREADME作り直し）の範囲。
+
+実機確認（Xvfb+CDP）：`MIN_SUPPORTED_MTQG_VERSION`を一時的に`99.0.0`にしてビルドし、`mtqg: Open`で実際に警告の通知（画面右下のトースト）が出ることをスクリーンショットで確認した上で、値を戻して再確認した。
+
 ## gitとの接点：mtqgは何もしない
 
 `.mtqg/`は普通のテキストファイルとしてコミットされるので、GitHub等のコミット画面やPRの差分には、コードの変更と、追加された記録の行がそのまま並んで表示される。コードと過程の紐づけは、gitとGitHubが最初から持っている仕組みだけで成立する。mtqg（この拡張を含む）がすることは、差分として読みやすい形で書き出すことだけ。紐づけのための機能（トレーラーの規約、gitフック、履歴の解析）は作らない。
@@ -259,5 +271,4 @@ Memo画面（todo`01ee2706ce`）の実装中に見つかった不足。人間が
 
 - **各画面の具体的なレイアウト**（列の並び、余白、詳細表示の形など）は未定（元の設計で「14章」に送られていたもの）。**画面ごとに、着手の直前で人間に確認する**（一括では決めない。決定、2026-09-26、todo`9985245ed8`）。6画面すべて確認済み（上の各節）。Bugsは「QAと同じ形」という既存の決定がそのまま答えだったため新規確認はしていない
 - npmの依存の線引きの例外が必要になった場合の判断（`.claude/rules/dependencies.md`）
-- `checkMtqgAvailability`をどこで呼ぶか（bug`3fc28931b2`、todo`239043c4c6`）
 - mtqg v1公開時のREADME作り直し（本体のREADME作り直しに合わせる、上の「パッケージング」節）

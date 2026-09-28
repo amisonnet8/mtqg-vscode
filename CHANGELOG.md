@@ -5,7 +5,7 @@ format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [0.1.0] - Unreleased
 
-Initial preview. Requires `mtqg` 0.4.0 or later.
+Initial preview. Requires `mtqg` 1.0.0 or later.
 
 ### Added
 

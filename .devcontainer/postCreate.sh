@@ -49,7 +49,12 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 # `deleted: true` and, for the delete itself, an `op:"delete"` event) --
 # `--events` off, or any other read command, is unchanged (verified before
 # bumping the pin; todo 01ee2706ce follow-up, commit 684c87d upstream).
-go install github.com/amisonnet8/mtqg/cmd/mtqg@v0.4.0
+# v1.0.0: mtqg's own v1 (journal format bumped 0->1, plus a new `mtqg
+# upgrade` command); --json is unchanged for every command this extension
+# calls (only a new `upgrade` command's own output was added -- verified via
+# the source diff between the two release tags before bumping the pin, todo
+# 239043c4c6).
+go install github.com/amisonnet8/mtqg/cmd/mtqg@v1.0.0
 
 # Wire up qsoku's shell integration (working-directory carry-back and
 # completion) for bash. Idempotent: skipped if already present, so
