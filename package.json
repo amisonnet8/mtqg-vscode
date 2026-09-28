@@ -1,9 +1,8 @@
 {
   "name": "mtqg",
   "displayName": "mtqg",
-  "description": "Record assist and process view for mtqg (memo & rules, todo, qa & bugs, glossary).",
-  "version": "0.1.0",
-  "preview": true,
+  "description": "mtqg for VS Code - browse and write your mtqg project journal (memo & rules, todo, qa & bugs, glossary) from inside the editor.",
+  "version": "1.0.0",
   "license": "MIT",
   "publisher": "amisonnet8",
   "repository": {
@@ -22,10 +21,16 @@
   ],
   "keywords": [
     "mtqg",
+    "journal",
     "memo",
     "todo",
     "qa",
-    "journal"
+    "bug",
+    "glossary",
+    "decision-log",
+    "ai-agents",
+    "git",
+    "jsonl"
   ],
   "main": "./out/src/extension.js",
   "contributes": {
