@@ -6,11 +6,17 @@
 mtqg-vscode/
 *├── CLAUDE.md
 *├── LICENSE
-*├── README.md               （Marketplaceの説明。暫定版、mtqg v1公開時に作り直す予定）
+*├── README.md               （Marketplaceの説明。英語版、正式公開向けに本格作成。mtqg本体READMEと同じ構成：中央寄せヘッダー・バッジ・デモGIF）
+*├── README_ja.md            （READMEの日本語版）
 *├── CHANGELOG.md
-*├── media/                  （このリポジトリ唯一の画像資産。mtqgパネルのタブアイコン、mtqg本体のロゴ由来）
+*├── media/                  （拡張自身が使う画像資産。mtqgパネルのタブアイコン・Marketplaceアイコン、いずれもmtqg本体のロゴ由来）
 *│   ├── tab-icon-light.svg
-*│   └── tab-icon-dark.svg
+*│   ├── tab-icon-dark.svg
+*│   └── icon.png            （Marketplaceアイコン、128×128。tab-icon-light.svgをrsvg-convertでPNG化したもの）
+*├── docs/assets/            （READMEだけが参照する画像。.vscodeignoreのdocs/**で.vsixには含めず、vsceのREADMEリンク書き換え機能でGitHub上の実体を指す——公開前にpushしておく必要がある）
+*│   ├── icon.png            （README見出し用、256×256）
+*│   ├── demo.gif
+*│   └── screenshot-*.png
 *├── .gitattributes
 *├── .gitignore
 *├── trivy.yaml

@@ -257,6 +257,23 @@ version pinの3か所同期（`.claude/rules/mtqg-cli.md`「版」）：`.devcon
 
 実機確認（Xvfb+CDP）：`MIN_SUPPORTED_MTQG_VERSION`を一時的に`99.0.0`にしてビルドし、`mtqg: Open`で実際に警告の通知（画面右下のトースト）が出ることをスクリーンショットで確認した上で、値を戻して再確認した。
 
+## README本格作成・Marketplace公開準備（決定、2026-09-28、todo`5f7b9007d1`）
+
+mtqgがv1.0.0になり、q&a`f1e2277f6a`（Marketplace公開はmtqg v1・正式公開と同時にする）の条件が揃ったのを受けて着手。「パッケージング」節（上）で暫定にしていた3点（README・アイコン・バージョン）を、正式公開向けに作り直した。作業量が多いため4ステップに分け、ステップごとにコミットした。人間に確認した4点（AskUserQuestion、2026-09-28、q&a`bed3562b8d`・`0f1c8b73fb`・`6809d2433a`・`53bd659113`）：
+
+1. **設定の節は作らない**——`contributes.configuration`が1つも無いため。ui.md「機能は足さない」と同じ判断
+2. **バージョンは`1.0.0`、`preview`を外す**——mtqg v1と揃えて正式版として出す（`package.json`・`CHANGELOG.md`）
+3. **デモはGIF1本＋静止画数枚**——この環境（Xvfb+CDP）で撮影する
+4. **`docs/design/`は`vscode-extension.md`に改名、索引`README.md`は削除**（固有内容は「着手の経緯」節へ統合。上の見出しに反映済み）
+
+**アイコン**：Marketplaceの`icon`フィールドは画像ファイル必須でSVG不可のため、既存の`media/tab-icon-light.svg`（mtqgロゴ由来の4色タイル、上の「アイコンをmtqgロゴ由来のものに更新」節）を`rsvg-convert`で128×128のPNGに書き出し`media/icon.png`とした。新しい画像を描き起こさず、タブアイコン・エディタタイトルのボタン・Marketplaceアイコンの3箇所すべてが同じロゴ由来の画像になった。README見出し用に同じSVGから256×256でも書き出し`docs/assets/icon.png`とした（`.vscodeignore`の`docs/**`で`.vsix`には含まれないが、README用の画像は`.vsix`に同梱する必要が無い——vsceがGitHub上のパスへ書き換えるため、下記参照）。
+
+**README本文**：mtqg本体のREADME（`README.md`/`README_ja.md`、中央寄せヘッダー・バッジ・目次リンク・Featuresの絵文字箇条書き・Prerequisites・Learn more、という構成）にそのまま倣った。設定の節・スクリーンショット付きの詳細レイアウト説明（列の並び等）は「レイアウトの詳細は未定」（ui.md）のためどのみち作れず、Featuresは機能の一覧に留めた。冒頭の「Work in progress」注記は削除した（正式公開のため）。
+
+**デモの撮影**：一時的なgit＋mtqg初期化リポジトリ（サンプルの「csv-importer」プロジェクト）を用意し、`.claude/rules/testing.md`のXvfb+CDP手順で拡張開発ホストを起動。**Memo画面の投稿欄への入力は、キー入力の合成ではなくDOM操作（`.composer .add-row .editable`の`textContent`を書き換えて`input`・`focusout`イベントを発火）で行った**——最初、投稿のたびに固定座標をクリックする方式を試したところ、投稿後にレイアウトが変わり同じ座標が別の要素（直前の投稿の行内編集欄）に当たってしまい、複数回分のテキストが1つの記録に混ざる不具合を自分で踏んだ（本番のUIではなく検証スクリプトの不具合)。`testing.md`が元々示していた「contenteditableのtextContentを書き換えてfocusoutを飛ばす」方式に切り替え、`#panel-<tab-id>`配下に加えて`.composer .add-row`／`.add-row[data-parent-id]`まで絞り込むセレクタにしたことで解消した——**同じ「隠れた要素を誤って掴む」教訓（todo`8b7b600827`）が、UI実装だけでなく検証スクリプトの側でも起こりうる**。`Ctrl+Shift+P`の合成キーイベントでは、CDPの`modifiers`ビット値（Alt=1・Ctrl=2・Meta=4・Shift=8）を取り違えて別のショートカット（Copilot Chatが開いた）を踏んだ誤りも1回あり、値を直して解決した。todo・question・memoを投稿→Todo画面でチェック→QA画面で展開して回答、という一連をスクリーンショットに撮り、`convert -layers Optimize`でGIF化（`docs/assets/demo.gif`、約140KB）。静止画（Memo・Todo・QA各画面、エディタ右クリックメニュー）も同じセッションから切り出した。
+
+**バージョンpinの3か所同期は済んでいる**（前節`checkMtqgAvailability`の配線で`1.0.0`に揃え済み）。GitHubのDescription・Topics設定、Marketplace公開（`vsce publish`）自体は人間が行う——手順はチャットで提示した（このファイルには残さない。実行の記録が要れば、実施後に別途memoで残す）。
+
 ## gitとの接点：mtqgは何もしない
 
 `.mtqg/`は普通のテキストファイルとしてコミットされるので、GitHub等のコミット画面やPRの差分には、コードの変更と、追加された記録の行がそのまま並んで表示される。コードと過程の紐づけは、gitとGitHubが最初から持っている仕組みだけで成立する。mtqg（この拡張を含む）がすることは、差分として読みやすい形で書き出すことだけ。紐づけのための機能（トレーラーの規約、gitフック、履歴の解析）は作らない。

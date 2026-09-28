@@ -13,6 +13,7 @@
     "url": "https://github.com/amisonnet8/mtqg-vscode/issues"
   },
   "homepage": "https://github.com/amisonnet8/mtqg-vscode#readme",
+  "icon": "media/icon.png",
   "engines": {
     "vscode": "^1.100.0"
   },
