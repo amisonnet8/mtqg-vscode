@@ -10,7 +10,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 ## 参照すべきファイル
 
-- **`docs/design/`** — 設計判断と理由の記録（日本語）。`01-vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
+- **`docs/design/`** — 設計判断と理由の記録（日本語）。`vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）。**このリポジトリに`PLAN.md`は無い。`mtqg context`が現状・今後を知るための一次情報**
 - **`.claude/rules/mtqg-cli.md`** — mtqg本体とのつながり方（子プロセス起動、`--json`、エラーの扱い）
 - **`.claude/rules/ui.md`** — UIの方針（英語・文字に頼らない、6画面、機能を足さない原則、レイアウト詳細は未定）

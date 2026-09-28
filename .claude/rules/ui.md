@@ -1,6 +1,6 @@
 # UIの方針
 
-出典：mtqg設計`docs/design/07-integrations.md` §11.4（このリポジトリの`docs/design/01-vscode-extension.md`に写しがある）。
+出典：mtqg設計`docs/design/07-integrations.md` §11.4（このリポジトリの`docs/design/vscode-extension.md`に写しがある）。
 
 ## UIを豊かにする理由
 
@@ -68,7 +68,7 @@ QAと同じ形の別画面にする（統合しない。モデル層の実装は
 
 todoはチェックボックス付きの投稿として流れ完了は控えめな行で表示、qaはスレッドになり回答は返信としてぶら下がる、bugも同じくスレッドになり返信がぶら下がる、glossaryは「Defined a term」という投稿として流れる、ruleは「Adopted a rule」という投稿として流れる。入力欄は普段はmemoとして投稿し、`/todo`・`/qa`・`/bug`・`/rule`・`/glossary`のようなスラッシュコマンドで種類を書き分ける（**並びはタブバーの順に合わせている**。決定、2026-09-26、q&a`112863a3fc43`——元の並び`/todo`・`/qa`・`/bug`・`/glossary`・`/rule`はmtqg本体の旧設計文書からの引き写しで根拠が無かったため、タブの並びに合わせ直した）。**それぞれ`/t`・`/q`・`/b`・`/r`・`/g`の1文字の短縮形も使える**（人間の指示、2026-09-26、q&a`70787501f3f3`、`src/webview/screens/composer.ts`）。
 
-**「消すと跡が残る」**（mtqg本体v0.4.0対応後、実装：todo`01ee2706ce`）。本文は完全に隠し、「Deleted a memo」のような一行＋削除した人・日時に置き換える（元の位置はそのまま）。編集・削除・チェックの操作は付けない。質問・バグが削除された場合、ぶら下がっていた回答・返信は個別に出さず件数だけ添える（例：「2 answers hidden with it」）。**削除された記録を返すのは`log --json --events`だけ**（`show`・`--events`無しの`log`・各`list`は削除されたら見えなくなる従来どおりの挙動——`.claude/rules/mtqg-cli.md`）。詳細は`docs/design/01-vscode-extension.md`「Memo画面の実装」。
+**「消すと跡が残る」**（mtqg本体v0.4.0対応後、実装：todo`01ee2706ce`）。本文は完全に隠し、「Deleted a memo」のような一行＋削除した人・日時に置き換える（元の位置はそのまま）。編集・削除・チェックの操作は付けない。質問・バグが削除された場合、ぶら下がっていた回答・返信は個別に出さず件数だけ添える（例：「2 answers hidden with it」）。**削除された記録を返すのは`log --json --events`だけ**（`show`・`--events`無しの`log`・各`list`は削除されたら見えなくなる従来どおりの挙動——`.claude/rules/mtqg-cli.md`）。詳細は`docs/design/vscode-extension.md`「Memo画面の実装」。
 
 ## レイアウトの詳細は未定
 

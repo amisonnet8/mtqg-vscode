@@ -8,7 +8,7 @@ mtqg-vscode/
 *├── LICENSE
 *├── README.md               （Marketplaceの説明。暫定版、mtqg v1公開時に作り直す予定）
 *├── CHANGELOG.md
-*├── media/                  （このリポジトリ唯一の画像資産。mtqgパネルのタブアイコン、Codicon book由来・CC BY 4.0）
+*├── media/                  （このリポジトリ唯一の画像資産。mtqgパネルのタブアイコン、mtqg本体のロゴ由来）
 *│   ├── tab-icon-light.svg
 *│   └── tab-icon-dark.svg
 *├── .gitattributes
@@ -16,7 +16,7 @@ mtqg-vscode/
 *├── trivy.yaml
 *├── .mtqg/
 *├── .mcp.json
-*├── docs/design/
+*├── docs/design/vscode-extension.md（設計判断と理由の記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
 *│   ├── devcontainer.json
 *│   └── postCreate.sh
@@ -69,7 +69,7 @@ mtqg-vscode/
 *│   ├── launch.json          （F5で拡張開発ホストを起動）
 *│   └── tasks.json           （tsc -wのバックグラウンドタスク）
 *└── .github/workflows/
-*    └── ci.yml                （check・shellcheck・trivyの3ジョブ、ubuntu-latest固定。.claude/rules/testing.md「CI」）
+*    └── ci.yml                （check・shellcheck・trivyの3ジョブ、checkは3 OS matrix。.claude/rules/testing.md「CI」）
 ```
 
 ## 配置の判断基準
@@ -84,7 +84,7 @@ mtqg-vscode/
 - **既存レコードのidに新しい子レコードをぶら下げて追加するUI（QAの回答、Bugsの返信）は、`editRecord`と区別できるマーカーを持たせる。** `renderThread`の返信入力欄は`.add-row`（idを持たない扱い）に`data-parent-id`を持たせ、`main.ts`側で「id有り→編集」より先に「`.add-row`かつ`data-parent-id`有り→新規追加（`addAnswer`/`addBugReply`をタブで出し分け）」を判定する
 - **QAとBugsのように構造が完全に同じ画面は、実装を1つに切り出し、文言だけ注入する。** `screens/thread.ts`の`renderThread(records, labels, view)`がその形（`ThreadLabels`）。**文言はnaming.mdの用語対応表（question/answer、bug/reply）どおりに書き分ける。** QA実装時に一度、回答欄にBugs用の語「Reply」を誤って使っていた（`b add 48b5d29d54a3`）。同じ構造を再利用するときほど、隣の画面の言葉が紛れ込みやすいので注意する
 - **`setStatus`のようなタブ横断の種別非依存メッセージは、タブが増えるほどネストした三項演算子ではなく`Partial<Record<TabId, {...}>>`のようなルックアップに寄せる。** `controller.ts`の`statusActions`（todo`13570d152b`）。**1つのタブに複数の記録の種類が混在する画面（Memo、todo`01ee2706ce`）では、タブだけでは振り分けられない。** `setStatus`に任意の`kind`を足し、`kind`があればそちらを優先してルックアップする（`statusActionsByKind`）。タブ由来の`statusActions`はこのルックアップの別名として組み直し、二重管理にしない
-- **読み取り側の再フェッチも、書き込み側（`runWrite`）と同じ「mtqgから毎回取り直す、DOMを推測で直さない」方針に揃える。** Memo画面（todo`01ee2706ce`）はページングに`log --before`ではなく`log --limit`を伸ばす方式を選んだ——`--before`でページを継ぎ足すと、既に読み込んだページの記録が後から編集・削除されても、そのページを再取得しない限り古いまま残ってしまうため（`docs/design/01-vscode-extension.md`「Memo画面の実装」）。表示件数（`memoLimit`）は`showAll`/`expanded`と同じくcontroller.tsが持つ表示状態で、mtqgの記録ではない
+- **読み取り側の再フェッチも、書き込み側（`runWrite`）と同じ「mtqgから毎回取り直す、DOMを推測で直さない」方針に揃える。** Memo画面（todo`01ee2706ce`）はページングに`log --before`ではなく`log --limit`を伸ばす方式を選んだ——`--before`でページを継ぎ足すと、既に読み込んだページの記録が後から編集・削除されても、そのページを再取得しない限り古いまま残ってしまうため（`docs/design/vscode-extension.md`「Memo画面の実装」）。表示件数（`memoLimit`）は`showAll`/`expanded`と同じくcontroller.tsが持つ表示状態で、mtqgの記録ではない
 - **`log --json --events`の`op:"edit"`の有無で「編集済み」を判定する。** `updated`はdone/reopen等でも進むため、`created !== updated`だけでは編集と状態変更を区別できない
 - **削除された記録を返すのは`log --json --events`だけ**（mtqg本体v0.4.0、`deleted:true`＋自分自身の`delete`イベント）。`show`・`--events`無しの`log`・各`list`は変わらず削除されたら見えなくなる。親（質問・バグ）が削除されて隠れた回答・返信も`deleted:true`が付くが、自分自身の`delete`イベントは持たない——`memos.ts`はこの2つを区別して、削除されたレコードは跡（本文を隠した一行）、親ごと隠れただけのレコードは親の跡に件数だけ足す形にしている
 - **`vscode`を触るのは`src/webview/panel.ts`と`src/commands/`の各コマンドファイル（例：`createRecordAt.ts`）だけ。** `controller.ts`・`screens.ts`・`shared/`・`src/commands/at.ts`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）。**Webview以外の新しいvscodeコマンドを足すときも、位置計算・入力解釈など純粋なロジックは`src/commands/`の別ファイルに切り出し、vscodeを触る部分（`vscode.window`・`vscode.commands.registerCommand`等）だけをコマンド登録ファイルに残す**（`src/commands/at.ts`＝pure・`createRecordAt.ts`＝vscode、todo`24f2e871d5`。`screens/`とpanel.tsの分離と同じ考え方）
