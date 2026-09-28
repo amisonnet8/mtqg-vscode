@@ -9,8 +9,8 @@
 <p align="center"><strong>mtqgのプロジェクト journal を、エディタの中から見て書く</strong></p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.mtqg"><img src="https://img.shields.io/visual-studio-marketplace/v/amisonnet8.mtqg?label=Marketplace" alt="Marketplace"></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.mtqg"><img src="https://img.shields.io/visual-studio-marketplace/i/amisonnet8.mtqg" alt="Installs"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.mtqg"><img src="https://vsmarketplacebadges.dev/version/amisonnet8.mtqg.svg" alt="Marketplace"></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=amisonnet8.mtqg"><img src="https://vsmarketplacebadges.dev/installs/amisonnet8.mtqg.svg" alt="Installs"></a>
   <a href="https://github.com/amisonnet8/mtqg-vscode/actions/workflows/ci.yml"><img src="https://github.com/amisonnet8/mtqg-vscode/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/amisonnet8/mtqg-vscode" alt="License"></a>
 </p>
