@@ -43,20 +43,9 @@
           "light": "media/tab-icon-light.svg",
           "dark": "media/tab-icon-dark.svg"
         }
-      },
-      {
-        "command": "mtqg.createAt",
-        "title": "mtqg: New Record Here"
       }
     ],
     "menus": {
-      "editor/context": [
-        {
-          "command": "mtqg.createAt",
-          "group": "mtqg",
-          "when": "workspaceFolderCount > 0"
-        }
-      ],
       "editor/title": [
         {
           "command": "mtqg.open",

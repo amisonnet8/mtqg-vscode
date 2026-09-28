@@ -32,13 +32,10 @@ mtqg-vscode/
 *├── qsokufile                （build・unit・check・test・trivy・shellcheck・package）
 *├── package.json / package-lock.json / tsconfig.json / .vscodeignore
 *├── src/
-*│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.open・mtqg.createAtの登録のみ）
+*│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録のみ）
 *│   ├── mtqg/                （mtqgを子プロセスで呼ぶコード。.claude/rules/mtqg-cli.md）
-*│   ├── commands/            （webview以外のvscodeコマンド。screens/panel.tsと同じpure/vscode分離）
-*│   │   ├── at.ts            （computeAt：エディタの選択範囲・カーソル位置からAtInfoを組み立てる。vscode非依存、node:testで確認）
-*│   │   └── createRecordAt.ts（mtqg.createAtの登録。vscodeを触る。computeAt→InputBox→parseComposer→client呼び出し）
 *│   └── webview/
-*│       ├── panel.ts        （WebviewPanelを1つ開く／revealする。vscodeを触る2箇所のうちの1つ、もう1つはsrc/commands/）
+*│       ├── panel.ts        （WebviewPanelを1つ開く／revealする。vscodeを触る唯一の場所）
 *│       ├── controller.ts   （vscode非依存。Webviewからのメッセージ→mtqg呼び出し→render送信の一連。node:testで本物のmtqgを使って確認）
 *│       ├── screens.ts      （renderScreenがタブIDで各画面の描画関数へ振り分ける。renderErrorもここ）
 *│       ├── screens/         （画面ごとの描画。vscode非依存、node:testで確認）
@@ -92,8 +89,8 @@ mtqg-vscode/
 - **読み取り側の再フェッチも、書き込み側（`runWrite`）と同じ「mtqgから毎回取り直す、DOMを推測で直さない」方針に揃える。** Memo画面（todo`01ee2706ce`）はページングに`log --before`ではなく`log --limit`を伸ばす方式を選んだ——`--before`でページを継ぎ足すと、既に読み込んだページの記録が後から編集・削除されても、そのページを再取得しない限り古いまま残ってしまうため（`docs/design/vscode-extension.md`「Memo画面の実装」）。表示件数（`memoLimit`）は`showAll`/`expanded`と同じくcontroller.tsが持つ表示状態で、mtqgの記録ではない
 - **`log --json --events`の`op:"edit"`の有無で「編集済み」を判定する。** `updated`はdone/reopen等でも進むため、`created !== updated`だけでは編集と状態変更を区別できない
 - **削除された記録を返すのは`log --json --events`だけ**（mtqg本体v0.4.0、`deleted:true`＋自分自身の`delete`イベント）。`show`・`--events`無しの`log`・各`list`は変わらず削除されたら見えなくなる。親（質問・バグ）が削除されて隠れた回答・返信も`deleted:true`が付くが、自分自身の`delete`イベントは持たない——`memos.ts`はこの2つを区別して、削除されたレコードは跡（本文を隠した一行）、親ごと隠れただけのレコードは親の跡に件数だけ足す形にしている
-- **`vscode`を触るのは`src/webview/panel.ts`と`src/commands/`の各コマンドファイル（例：`createRecordAt.ts`）だけ。** `controller.ts`・`screens.ts`・`shared/`・`src/commands/at.ts`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）。**Webview以外の新しいvscodeコマンドを足すときも、位置計算・入力解釈など純粋なロジックは`src/commands/`の別ファイルに切り出し、vscodeを触る部分（`vscode.window`・`vscode.commands.registerCommand`等）だけをコマンド登録ファイルに残す**（`src/commands/at.ts`＝pure・`createRecordAt.ts`＝vscode、todo`24f2e871d5`。`screens/`とpanel.tsの分離と同じ考え方）
+- **`vscode`を触るのは`src/webview/panel.ts`だけ。** `controller.ts`・`screens.ts`・`shared/`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）。**Webview以外の新しいvscodeコマンドを足すときは、位置計算・入力解釈など純粋なロジックをvscode非依存のファイルに切り出し、vscodeを触る部分（`vscode.window`・`vscode.commands.registerCommand`等）だけをコマンド登録側に残す**（`screens/`とpanel.tsの分離と同じ考え方。かつて`src/commands/`にこの形で置いていたが、唯一の中身だった`mtqg.createAt`を廃止したため今は無い）
 - **Webview内で実際に動くスクリプト（`src/webview/client/`）は別tsconfig。** ホスト側はCommonJS（`vscode`の型）、Webview側はDOM型・ブラウザ向けESM出力で、1つのtsconfigでは両立しない（バンドラを使わない方針、`.claude/rules/dependencies.md`）。ルートの`tsconfig.json`は`src/webview/client`を`exclude`する
-- **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`・`src/commands/`に置く
+- **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く
 - **`docs/design/`**：設計判断と理由の記録（日本語）。mtqg設計§11.4からの引き継ぎと、このリポジトリ側で新たに決めたことを書く。仕様と食い違う場合はコード（と、あれば`docs/reference/`相当の文書）が正、という考え方はmtqgと同じ
 - **`.mtqg/`の中のファイルを直接編集しない。** すべてmtqgのコマンド経由（`.claude/rules/mtqg-usage.md`）

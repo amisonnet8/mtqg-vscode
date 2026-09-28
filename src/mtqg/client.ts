@@ -1,7 +1,6 @@
 import { runMtqg, type RunMtqgResult } from './process';
 import type {
   AnswerRecord,
-  AtInfo,
   BugRecord,
   ChangedResult,
   ContextResult,
@@ -56,15 +55,6 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
     return runMtqg(root, args, binary);
   }
 
-  /** `--at <path>[:<line>]`, placed right before the free-text arguments. */
-  function atArgs(at?: AtInfo): string[] {
-    if (!at) {
-      return [];
-    }
-    const value = at.line === undefined ? at.path : `${at.path}:${at.line}`;
-    return ['--at', value];
-  }
-
   /**
    * Rejects empty/blank text before ever invoking mtqg (see class doc).
    * Returns a rejected promise rather than throwing synchronously, so every
@@ -117,14 +107,14 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
       requireText(text).then(() => run(['edit', id, text])) as Promise<Result<EditResult>>,
     delete: (id: string) => run(['delete', id]) as Promise<Result<DeleteResult>>,
 
-    memoAdd: (text: string, at?: AtInfo) =>
-      requireText(text).then(() => run(['memo', 'add', ...atArgs(at), TEXT_SEPARATOR, text])) as Promise<
+    memoAdd: (text: string) =>
+      requireText(text).then(() => run(['memo', 'add', TEXT_SEPARATOR, text])) as Promise<
         Result<AddResult<MemoRecord>>
       >,
     memoList: () => run(['memo', 'list']) as Promise<Result<ListResult<MemoRecord>>>,
 
-    todoAdd: (text: string, at?: AtInfo) =>
-      requireText(text).then(() => run(['todo', 'add', ...atArgs(at), TEXT_SEPARATOR, text])) as Promise<
+    todoAdd: (text: string) =>
+      requireText(text).then(() => run(['todo', 'add', TEXT_SEPARATOR, text])) as Promise<
         Result<AddResult<TodoRecord>>
       >,
     todoList: (opts?: ListOptions) =>
@@ -132,31 +122,31 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
     todoDone: (id: string) => run(['todo', 'done', id]) as Promise<Result<ChangedResult<TodoRecord>>>,
     todoReopen: (id: string) => run(['todo', 'reopen', id]) as Promise<Result<ChangedResult<TodoRecord>>>,
 
-    qaAsk: (question: string, at?: AtInfo) =>
-      requireText(question).then(() => run(['qa', 'add', ...atArgs(at), TEXT_SEPARATOR, question])) as Promise<
+    qaAsk: (question: string) =>
+      requireText(question).then(() => run(['qa', 'add', TEXT_SEPARATOR, question])) as Promise<
         Result<AddResult<QuestionRecord>>
       >,
     // `--` goes before the question ID, not between the ID and the answer
     // (same class of bug as glossaryAdd's, found the same way -- verified
     // against the real binary: mtqg only scans for options up to the ID's
     // position, so a `--` placed after it is not stripped).
-    qaAnswer: (questionId: string, answer: string, at?: AtInfo) =>
+    qaAnswer: (questionId: string, answer: string) =>
       requireText(answer).then(() =>
-        run(['qa', 'add', ...atArgs(at), TEXT_SEPARATOR, questionId, answer]),
+        run(['qa', 'add', TEXT_SEPARATOR, questionId, answer]),
       ) as Promise<Result<AddResult<AnswerRecord>>>,
     qaList: (opts?: ListOptions) =>
       run(['qa', 'list', ...(opts?.all ? ['--all'] : [])]) as Promise<Result<StatefulListResult<QuestionRecord>>>,
     qaDone: (id: string) => run(['qa', 'done', id]) as Promise<Result<ChangedResult<QuestionRecord>>>,
     qaReopen: (id: string) => run(['qa', 'reopen', id]) as Promise<Result<ChangedResult<QuestionRecord>>>,
 
-    bugReport: (text: string, at?: AtInfo) =>
-      requireText(text).then(() => run(['bug', 'add', ...atArgs(at), TEXT_SEPARATOR, text])) as Promise<
+    bugReport: (text: string) =>
+      requireText(text).then(() => run(['bug', 'add', TEXT_SEPARATOR, text])) as Promise<
         Result<AddResult<BugRecord>>
       >,
     // `--` before the bug ID, not after it -- same reasoning as qaAnswer above.
-    bugReply: (bugId: string, text: string, at?: AtInfo) =>
+    bugReply: (bugId: string, text: string) =>
       requireText(text).then(() =>
-        run(['bug', 'add', ...atArgs(at), TEXT_SEPARATOR, bugId, text]),
+        run(['bug', 'add', TEXT_SEPARATOR, bugId, text]),
       ) as Promise<Result<AddResult<ReplyRecord>>>,
     bugList: (opts?: ListOptions) =>
       run(['bug', 'list', ...(opts?.all ? ['--all'] : [])]) as Promise<Result<StatefulListResult<BugRecord>>>,
@@ -168,16 +158,16 @@ export function createMtqgClient(root: string, binary = 'mtqg') {
     // `--` placed after it is not stripped and becomes literal text
     // (verified against the real binary -- same class of bug as `edit`'s,
     // found via todo `daf43fc83d`'s manual check).
-    glossaryAdd: (word: string, definition: string, at?: AtInfo) =>
+    glossaryAdd: (word: string, definition: string) =>
       requireText(word)
         .then(() => requireText(definition))
-        .then(() => run(['glossary', 'add', ...atArgs(at), TEXT_SEPARATOR, word, definition])) as Promise<
+        .then(() => run(['glossary', 'add', TEXT_SEPARATOR, word, definition])) as Promise<
         Result<AddResult<GlossaryRecord>>
       >,
     glossaryList: () => run(['glossary', 'list']) as Promise<Result<GlossaryListResult>>,
 
-    ruleAdd: (text: string, at?: AtInfo) =>
-      requireText(text).then(() => run(['rule', 'add', ...atArgs(at), TEXT_SEPARATOR, text])) as Promise<
+    ruleAdd: (text: string) =>
+      requireText(text).then(() => run(['rule', 'add', TEXT_SEPARATOR, text])) as Promise<
         Result<AddResult<RuleRecord>>
       >,
     ruleList: () => run(['rule', 'list']) as Promise<Result<ListResult<RuleRecord>>>,

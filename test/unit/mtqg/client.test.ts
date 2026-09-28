@@ -138,18 +138,6 @@ test('memo: add, list', async () => {
   }
 });
 
-test('--at records where the text was written about', async () => {
-  const repo = await createTempRepo();
-  try {
-    const client = createMtqgClient(repo.root);
-    const added = await client.todoAdd('fix this', { path: 'src/lex.ts', line: 42 });
-    assert.equal(added.data.record.at?.path, 'src/lex.ts');
-    assert.equal(added.data.record.at?.line, 42);
-  } finally {
-    await repo.cleanup();
-  }
-});
-
 test('text starting with "-" is recorded literally, not parsed as an option', async () => {
   const repo = await createTempRepo();
   try {

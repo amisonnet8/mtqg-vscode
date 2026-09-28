@@ -13,13 +13,6 @@ export interface Author {
   name: string;
 }
 
-/** Present only on a record written with `--at` (schema.md `at`). */
-export interface AtInfo {
-  path: string;
-  line?: number;
-  head?: string;
-}
-
 export type RecordState = 'open' | 'done';
 
 interface RecordBase {
@@ -27,7 +20,6 @@ interface RecordBase {
   author: Author;
   created: string;
   updated: string;
-  at?: AtInfo;
 }
 
 export interface MemoRecord extends RecordBase {
@@ -104,7 +96,6 @@ export interface JournalEvent {
   basis?: number;
   word?: string;
   text?: string;
-  at?: AtInfo;
   v: number;
   ts: string;
   author: Author;

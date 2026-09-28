@@ -16,11 +16,6 @@ test('mtqg.open is registered', async () => {
   assert.ok(commands.includes('mtqg.open'));
 });
 
-test('mtqg.createAt is registered (todo 24f2e871d5)', async () => {
-  const commands = await vscode.commands.getCommands(true);
-  assert.ok(commands.includes('mtqg.createAt'));
-});
-
 test('a workspace folder with .mtqg/ is open (runTest.ts opens a temp mtqg repo)', () => {
   assert.equal(vscode.workspace.workspaceFolders?.length, 1);
 });

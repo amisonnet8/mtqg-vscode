@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { openPanel } from './webview/panel';
-import { registerCreateRecordAtCommand } from './commands/createRecordAt';
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -8,7 +7,6 @@ export function activate(context: vscode.ExtensionContext): void {
       openPanel(context.extensionUri);
     }),
   );
-  registerCreateRecordAtCommand(context);
 }
 
 export function deactivate(): void {
