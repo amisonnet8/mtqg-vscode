@@ -19,5 +19,5 @@ Initial release. Requires `mtqg` 1.0.0 or later.
 - Rule and Glossary tabs: plain tables
 - Editing and deleting a record leaves a visible trace, with undo right
   after a write
-- **mtqg: New Record Here** command (also in the editor's right-click menu),
-  creating a record at the file and line of the current selection or cursor
+- Type `@` in any input field to insert a workspace file's path into the
+  record's text, with a searchable dropdown of matches
