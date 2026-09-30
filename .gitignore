@@ -1,4 +1,23 @@
-/.claude/settings.local.json
+# Allowlist for dot entries in the repository root (and .claude/): ignore all
+# of them, then re-include only what is tracked. This also covers the dummy
+# /dev/null files that the Bash sandbox leaves in the working directory
+# (.claude/rules/testing.md). A new tracked dot entry needs a "!" line here.
+/.*
+!/.gitignore
+!/.gitattributes
+!/.vscodeignore
+!/.mcp.json
+!/.devcontainer/
+!/.github/
+!/.mtqg/
+!/.vscode/
+
+# .claude/: only the shared files (settings.local.json stays personal)
+!/.claude/
+/.claude/*
+!/.claude/settings.json
+!/.claude/rules/
+!/.claude/hooks/
 
 # npm / TypeScript build output (.claude/rules/dependencies.md, todo 97779f964e)
 node_modules/
@@ -6,4 +25,5 @@ out/
 *.vsix
 
 # @vscode/test-electron downloads and profiles a VS Code instance here
+# (also ignored by /.* above; kept explicit for clarity)
 .vscode-test/

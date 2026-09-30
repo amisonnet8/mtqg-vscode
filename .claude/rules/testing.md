@@ -33,7 +33,7 @@
 - **`check.trivy.dev`への接続（Trivyのバージョン確認機能）は、許可リストに無くても`qsoku trivy`の結果・終了コードには影響しない。** `sandbox_violations`として警告は出るが、スキャン自体（脆弱性・ライセンスのレポート）は正常に完了する。実害のない拒否なので許可リストに足すかは任意
 - **`git fetch`・`git pull`（リモートのgithub.comへの読み取り）と`gh pr create`には`github.com`・`api.github.com`への許可が要る。** この拡張の運用ルールで禁止しているのは`git push`だけなので、fetch/pullはask・denyどちらにも入らず素通りする想定だが、サンドボックスのネットワーク許可が無いと接続自体がブロックされる（`.claude/settings.json`で対処済み）
 - **このコンテナのGOPATHは`~/go`ではなく`/go`（ホームディレクトリの外）。** `go env GOPATH`で確認せずに`~/go`を`filesystem.allowWrite`に入れると、`.devcontainer/postCreate.sh`のような`go install`を伴う操作で書き込みが拒否される（`.claude/settings.json`で対処済み）
-- **サンドボックスの書き込み保護（`filesystem.write.denyWithinAllow`）が、作業ディレクトリ直下に`.bashrc`等のダミーファイルを出現させることがある。** `git status`に大量の未追跡ファイルとして見えて驚くが、`ls -la`で見ると中身が空のキャラクタデバイス（`/dev/null`相当）で、未追跡のままなのでコミットには影響しない。この拡張の実装やリポジトリの状態には起因しない、サンドボックス機構側の挙動
+- **サンドボックスの書き込み保護（`filesystem.write.denyWithinAllow`）が、作業ディレクトリ直下に`.bashrc`等のダミーファイルを出現させることがある。** `git status`に大量の未追跡ファイルとして見えて驚くが、`ls -la`で見ると中身が空のキャラクタデバイス（`/dev/null`相当）で、未追跡のままなのでコミットには影響しない。この拡張の実装やリポジトリの状態には起因しない、サンドボックス機構側の挙動。`.gitignore`はルート直下と`.claude/`直下のドット始まりをまず全部無視し、追跡するものだけ`!`で戻す許可リスト方式にしてあるので、`git status`にも出ない（新しく追跡するドット始まりのファイル・ディレクトリを足すときは`.gitignore`に`!`行が要る）
 
 ## 壊して確かめる、という考え方
 
