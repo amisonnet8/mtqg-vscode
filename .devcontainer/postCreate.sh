@@ -2,7 +2,8 @@
 set -euo pipefail
 
 # wget, gnupg,
-# lsb-release:    Adding the Trivy and GitHub CLI apt repositories below.
+# lsb-release:    Adding the Trivy apt repository below. (gh and pwsh come from
+#                 the devcontainer features in devcontainer.json.)
 # jq:             Inspecting mtqg's --json output while debugging the extension.
 # ShellCheck:     Static analysis of tracked *.sh files (.claude/rules/testing.md).
 #                 Comment lines must not start with the lowercase directive word,
@@ -22,15 +23,6 @@ wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dear
 echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/trivy.list >/dev/null
 sudo apt-get update
 sudo apt-get install -y trivy
-
-# gh: GitHub CLI, for checking issues, pull requests and Actions runs.
-# Installed from the official apt repository (same pattern as Trivy).
-sudo mkdir -p -m 755 /etc/apt/keyrings
-wget -qO - https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg >/dev/null
-sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list >/dev/null
-sudo apt-get update
-sudo apt-get install -y gh
 
 # qsoku: build/check/test entry points, once the extension's own qsokufile
 # exists (mtqg's .claude/rules/testing.md, docs/design/history.md 2026-09-23).
