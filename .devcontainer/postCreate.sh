@@ -16,6 +16,13 @@ sudo apt-get update
 sudo apt-get install -y wget gnupg lsb-release jq shellcheck \
   xvfb libnss3 libgtk-3-0 libasound2 libgbm1 libxkbfile1 libsecret-1-0 libxss1
 
+# The Bash sandbox (.claude/settings.json) only honours an allowWrite path that
+# already exists, and ~/.cache itself is read-only there. Create the cache
+# directories up front, or the first qsoku trivy / npm ci / go build in a
+# fresh container fails with "read-only file system"
+# (.claude/rules/testing.md).
+mkdir -p ~/.cache/go-build ~/.cache/trivy ~/.npm
+
 # Trivy: known vulnerabilities (CVE) and license compatibility of the npm
 # dependencies (qsoku trivy, .claude/rules/testing.md). Installed from the
 # official apt repository.
