@@ -50,6 +50,8 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 `.claude/settings.json`（人間が管理する）により、拒否・確認の設定がある。確認を求められた場合、無理に実行しようとせず、指示を仰ぐこと。
 
+**`sandbox`設定（mtqg本体の`.claude/settings.json`を参考に2026-09-30導入）**：`filesystem.allowWrite`・`network.allowedDomains`等を許可した範囲内のBashコマンド（`npm ci`・`go install`・`qsoku trivy`等）は、`autoAllowBashIfSandboxed`により確認なしで実行できる。`network.allowedDomains`を見直すときの注意点：**Trivyの脆弱性DBの実際のデフォルトdb-repositoryは`ghcr.io`ではなく`mirror.gcr.io`**（GHCRのレート制限回避用ミラー）——最初`ghcr.io`と推測して`qsoku trivy`が`sandbox_violations`で失敗し、判明した（bug`3f91787d2c`）。
+
 ビルドの自動フック（`PostToolUse`）が設定されている。`.ts`・`package.json`・`tsconfig.json`を編集すると`.claude/hooks/build.sh`が走る（拡張の雛形ができるまでは何もしない）。
 
 ## ルール・スキルの提案
