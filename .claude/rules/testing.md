@@ -29,7 +29,7 @@
 
 - **Trivyの脆弱性DBの取得先は`ghcr.io`ではなく`mirror.gcr.io`（`mirror.gcr.io/aquasec/trivy-db:2`）。** 名前から`ghcr.io`（GitHub Container Registry）を許可すればよいと思い込むと、`qsoku trivy`が`sandbox_violations`で失敗する。実際に動かして初めて分かった（bug`3f91787d2c`）
 - **Trivyの脆弱性DBは`~/.cache/trivy`に書き込む。** `filesystem.allowWrite`にこれが無いと、ネットワークを許可してもダウンロード後の書き込みで`read-only file system`になる（`.claude/settings.json`で対処済み）
-- **`filesystem.allowWrite`は、既に存在するパスしか効かない。** `~/.cache`自体は書き込み不可なので、`~/.cache/trivy`・`~/.cache/go-build`・`~/.npm`が無いまっさらなコンテナでは、最初の`qsoku trivy`・`npm ci`等が`read-only file system`で失敗する。`.devcontainer/postCreate.sh`で先に`mkdir -p`する（mtqg本体で先に見つかった落とし穴）
+- **`filesystem.allowWrite`は、既に存在するパスしか効かない。** `~/.cache`自体は書き込み不可なので、`~/.cache/trivy`・`~/.cache/go-build`・`~/.npm`が無いまっさらなコンテナでは、最初の`qsoku trivy`・`npm ci`等が`read-only file system`で失敗する。`.devcontainer/postCreate.sh`が`settings.json`の`allowWrite`を読んで全部先に`mkdir -p`する（mtqg本体で先に見つかった落とし穴。一覧を二重に持たないので、`allowWrite`を変えてもスクリプトの修正は要らない）
 - **`check.trivy.dev`への接続（Trivyのバージョン確認機能）は、許可リストに無くても`qsoku trivy`の結果・終了コードには影響しない。** `sandbox_violations`として警告は出るが、スキャン自体（脆弱性・ライセンスのレポート）は正常に完了する。実害のない拒否なので許可リストに足すかは任意
 - **`git fetch`・`git pull`（リモートのgithub.comへの読み取り）と`gh pr create`には`github.com`・`api.github.com`への許可が要る。** この拡張の運用ルールで禁止しているのは`git push`だけなので、fetch/pullはask・denyどちらにも入らず素通りする想定だが、サンドボックスのネットワーク許可が無いと接続自体がブロックされる（`.claude/settings.json`で対処済み）
 - **このコンテナのGOPATHは`~/go`ではなく`/go`（ホームディレクトリの外）。** `go env GOPATH`で確認せずに`~/go`を`filesystem.allowWrite`に入れると、`.devcontainer/postCreate.sh`のような`go install`を伴う操作で書き込みが拒否される（`.claude/settings.json`で対処済み）

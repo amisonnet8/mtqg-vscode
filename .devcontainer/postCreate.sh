@@ -17,11 +17,27 @@ sudo apt-get install -y wget gnupg lsb-release jq shellcheck \
   xvfb libnss3 libgtk-3-0 libasound2 libgbm1 libxkbfile1 libsecret-1-0 libxss1
 
 # The Bash sandbox (.claude/settings.json) only honours an allowWrite path that
-# already exists, and ~/.cache itself is read-only there. Create the cache
-# directories up front, or the first qsoku trivy / npm ci / go build in a
-# fresh container fails with "read-only file system"
-# (.claude/rules/testing.md).
-mkdir -p ~/.cache/go-build ~/.cache/trivy ~/.npm
+# already exists, and ~/.cache itself is read-only there. Create every
+# filesystem.allowWrite path up front, or the first qsoku trivy in a fresh
+# container fails with "read-only file system" (.claude/rules/testing.md).
+# The list is read from settings.json, so this block needs no change when
+# allowWrite does, and it is project-independent. "~/x" is created under the
+# home directory; other absolute paths (e.g. /go) are created if they do not
+# exist yet, and a failure only warns (no sudo is used). Relative paths and
+# the special paths /dev, /proc and /sys are left alone.
+sandbox_settings="$(dirname "$0")/../.claude/settings.json"
+tilde='~'
+if [ -f "$sandbox_settings" ]; then
+  while IFS= read -r allow_path; do
+    case "$allow_path" in
+      "$tilde/"*) allow_path="$HOME/${allow_path#"$tilde/"}" ;;
+      /dev/* | /proc/* | /sys/*) continue ;;
+      /*) ;;
+      *) continue ;;
+    esac
+    mkdir -p "$allow_path" || echo "warning: cannot create allowWrite path $allow_path" >&2
+  done < <(jq -r '.sandbox.filesystem.allowWrite[]?' "$sandbox_settings")
+fi
 
 # Trivy: known vulnerabilities (CVE) and license compatibility of the npm
 # dependencies (qsoku trivy, .claude/rules/testing.md). Installed from the
