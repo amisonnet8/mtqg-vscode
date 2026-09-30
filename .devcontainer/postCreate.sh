@@ -16,6 +16,18 @@ sudo apt-get update
 sudo apt-get install -y wget gnupg lsb-release jq shellcheck \
   xvfb libnss3 libgtk-3-0 libasound2 libgbm1 libxkbfile1 libsecret-1-0 libxss1
 
+# The Bash sandbox (.claude/settings.json "sandbox") needs bubblewrap (bwrap)
+# and socat on Linux; without them it silently stays off even with
+# "enabled": true. Install only what is missing, since some base images
+# already have them. Project-independent (.claude/rules/testing.md).
+missing_sandbox_deps=()
+command -v bwrap >/dev/null 2>&1 || missing_sandbox_deps+=(bubblewrap)
+command -v socat >/dev/null 2>&1 || missing_sandbox_deps+=(socat)
+if [ "${#missing_sandbox_deps[@]}" -gt 0 ]; then
+  sudo apt-get update
+  sudo apt-get install -y "${missing_sandbox_deps[@]}"
+fi
+
 # The Bash sandbox (.claude/settings.json) only honours an allowWrite path that
 # already exists, and ~/.cache itself is read-only there. Create every
 # filesystem.allowWrite path up front, or the first qsoku trivy in a fresh

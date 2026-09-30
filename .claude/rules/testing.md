@@ -27,6 +27,7 @@
 
 > devcontainer内でClaude Codeが実行するBashコマンドは、既定でOSレベルのサンドボックス（Linux bubblewrap）にかかる。`.claude/settings.json`の`sandbox`でファイルシステムの書き込み先とネットワーク接続先を許可リストで絞っている（2026-09-30導入、CLAUDE.md「権限・自動化について」）。ここは、その設定の下で`qsoku check`・`qsoku test`・`qsoku trivy`・`qsoku shellcheck`・`npm ci`を実際に動かして見つかった落とし穴の記録。
 
+- **Linuxでは`bubblewrap`（`bwrap`）と`socat`が無いと、`settings.json`に`sandbox.enabled: true`があってもサンドボックスは警告なしに無効のまま動く。** 許可リスト外のドメインに接続できる・ダミーの`.bashrc`等が出ない、が兆候。`.devcontainer/postCreate.sh`が、無いものだけを`apt-get install`する（ベースイメージによっては最初から入っているため、入っているか確認してから入れる。プロジェクトに依存しないブロックなので、他のリポジトリにもそのまま使える）
 - **Trivyの脆弱性DBの取得先は`ghcr.io`ではなく`mirror.gcr.io`（`mirror.gcr.io/aquasec/trivy-db:2`）。** 名前から`ghcr.io`（GitHub Container Registry）を許可すればよいと思い込むと、`qsoku trivy`が`sandbox_violations`で失敗する。実際に動かして初めて分かった（bug`3f91787d2c`）
 - **Trivyの脆弱性DBは`~/.cache/trivy`に書き込む。** `filesystem.allowWrite`にこれが無いと、ネットワークを許可してもダウンロード後の書き込みで`read-only file system`になる（`.claude/settings.json`で対処済み）
 - **`filesystem.allowWrite`は、既に存在するパスしか効かない。** `~/.cache`自体は書き込み不可なので、`~/.cache/trivy`・`~/.cache/go-build`・`~/.npm`が無いまっさらなコンテナでは、最初の`qsoku trivy`・`npm ci`等が`read-only file system`で失敗する。`.devcontainer/postCreate.sh`が`settings.json`の`allowWrite`を読んで全部先に`mkdir -p`する（mtqg本体で先に見つかった落とし穴。一覧を二重に持たないので、`allowWrite`を変えてもスクリプトの修正は要らない）
