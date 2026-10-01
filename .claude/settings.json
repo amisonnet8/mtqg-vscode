@@ -41,6 +41,7 @@
     "enableWeakerNestedSandbox": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
+    "excludedCommands": ["qsoku test", "xvfb-run *"],
     "filesystem": {
       "allowWrite": ["~/.cache/go-build", "/go", "~/.cache/trivy", "~/.npm"],
       "denyRead": ["~/.ssh", "~/.aws", "~/.config/gh"]
@@ -57,6 +58,7 @@
     }
   },
   "permissions": {
+    "allow": ["Bash(qsoku test)", "Bash(xvfb-run *)"],
     "ask": [
       "Bash(git reset --hard*)",
       "Bash(git clean*)",
