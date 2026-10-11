@@ -20,8 +20,17 @@ export interface RunMtqgResult {
  * promises one, but this layer does not assume it). On success, any warning
  * lines on stderr (mtqg-cli.md: warnings can appear even when the command
  * succeeds) are returned alongside the parsed data rather than thrown.
+ *
+ * `env` is merged over this process's own environment (e.g. `MTQG_TTY`, so
+ * the lines this extension writes are told apart from an AI agent's and
+ * `mtqg undo` only reverts the extension's own -- todo `fa41e547fd`).
  */
-export async function runMtqg(root: string, args: string[], binary = 'mtqg'): Promise<RunMtqgResult> {
+export async function runMtqg(
+  root: string,
+  args: string[],
+  binary = 'mtqg',
+  env?: Record<string, string>,
+): Promise<RunMtqgResult> {
   // -C and --json must come before the text of a record (docs/reference/cli.md
   // "Where options go"): anything after a `--` separator in `args` is free
   // text, so appending --json at the end would be swallowed into that text
@@ -31,7 +40,7 @@ export async function runMtqg(root: string, args: string[], binary = 'mtqg'): Pr
   let stdout: string;
   let stderr: string;
   try {
-    const result = await execFileAsync(binary, fullArgs);
+    const result = await execFileAsync(binary, fullArgs, env ? { env: { ...process.env, ...env } } : {});
     stdout = result.stdout;
     stderr = result.stderr;
   } catch (err) {

@@ -283,3 +283,31 @@ test('status and context reflect what was recorded', async () => {
     await repo.cleanup();
   }
 });
+
+test('a client with a tty undoes only its own lines, not another writer\'s tty-less ones (todo fa41e547fd)', async () => {
+  const repo = await createTempRepo();
+  try {
+    // Plain client: no MTQG_TTY and no terminal under execFile, i.e. what an
+    // AI agent over MCP looks like -- tty-less lines.
+    const agent = createMtqgClient(repo.root);
+    const extension = createMtqgClient(repo.root, 'mtqg', { tty: 'workspace-a' });
+
+    const agentMemo = await agent.memoAdd('written by the agent, no tty');
+    const ownMemo = await extension.memoAdd('written by the extension');
+
+    const undone = await extension.undo();
+    assert.equal(undone.data.record.id, ownMemo.data.record.id);
+
+    // The agent's line is still there.
+    const shown = await agent.show(agentMemo.data.record.id);
+    assert.equal(shown.data.record.text, 'written by the agent, no tty');
+
+    // Nothing of the extension's own is left to undo: it must not fall
+    // through to the agent's line.
+    await assert.rejects(() => extension.undo());
+    const still = await agent.show(agentMemo.data.record.id);
+    assert.equal(still.data.record.id, agentMemo.data.record.id);
+  } finally {
+    await repo.cleanup();
+  }
+});

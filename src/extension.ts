@@ -4,7 +4,7 @@ import { openPanel } from './webview/panel';
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('mtqg.open', () => {
-      openPanel(context.extensionUri);
+      openPanel(context);
     }),
   );
 }

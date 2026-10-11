@@ -50,9 +50,16 @@ export interface ListOptions {
  * blank text before mtqg is even run, both as a fast, consistent client-side
  * error and as a second line of defense.
  */
-export function createMtqgClient(root: string, binary = 'mtqg') {
+export function createMtqgClient(root: string, binary = 'mtqg', options: { tty?: string } = {}) {
+  // mtqg's `tty` is the terminal a line was written from, and `undo` only
+  // reverts the last line of this author *and* this tty. A child process of
+  // an extension host has no terminal, so without MTQG_TTY every line looks
+  // like an AI agent's tty-less one and `undo` reverts theirs too (todo
+  // `fa41e547fd`). The caller picks a stable value per workspace.
+  const env = options.tty ? { MTQG_TTY: options.tty } : undefined;
+
   function run(args: string[]): Promise<RunMtqgResult> {
-    return runMtqg(root, args, binary);
+    return runMtqg(root, args, binary, env);
   }
 
   /**

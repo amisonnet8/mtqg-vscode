@@ -10,8 +10,28 @@ let currentPanel: vscode.WebviewPanel | undefined;
 let currentController: PanelController | undefined;
 let currentWatcher: vscode.FileSystemWatcher | undefined;
 
+const TTY_STATE_KEY = 'mtqg.tty';
+
+/**
+ * The `MTQG_TTY` value this workspace's mtqg calls carry (todo
+ * `fa41e547fd`): random, created on first use and kept in `workspaceState`,
+ * so the extension's own lines stay one "terminal" across VS Code restarts
+ * (its Undo can still revert what it wrote before the restart) while an AI
+ * agent's tty-less lines never share it.
+ */
+function workspaceTty(context: vscode.ExtensionContext): string {
+  const saved = context.workspaceState.get<string>(TTY_STATE_KEY);
+  if (saved) {
+    return saved;
+  }
+  const created = crypto.randomUUID();
+  void context.workspaceState.update(TTY_STATE_KEY, created);
+  return created;
+}
+
 /** Opens the mtqg panel, or reveals it if it is already open. */
-export function openPanel(extensionUri: vscode.Uri): void {
+export function openPanel(context: vscode.ExtensionContext): void {
+  const extensionUri = context.extensionUri;
   if (currentPanel) {
     currentPanel.reveal();
     return;
@@ -60,7 +80,7 @@ export function openPanel(extensionUri: vscode.Uri): void {
       }
     });
 
-    const client = createMtqgClient(folder.uri.fsPath);
+    const client = createMtqgClient(folder.uri.fsPath, 'mtqg', { tty: workspaceTty(context) });
     const controller = createPanelController({
       client,
       post: (message: HostMessage) => {
