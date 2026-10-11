@@ -28,13 +28,16 @@ out/
 !/.claude/settings.json
 !/.claude/rules/
 !/.claude/hooks/
-# srwr (.claude/rules/srwr-usage.md). The tapes (.srwr/tapes/) are shared;
-# everything else in .srwr/ stays local (the key must never be shared).
+# srwr (.claude/rules/srwr-usage.md). The closed tapes (.srwr/tapes/*.gz) are
+# shared; everything else in .srwr/ stays local (the key must never be shared).
+# A tape that is still being written (*.tape.jsonl) is not tracked: it turns
+# into a .gz when it is closed, and tracking it would make that a delete + add.
 # The four lines at the end are what `srwr init` looks for; without them it
 # would append them again each time.
 !/.srwr/
 /.srwr/*
 !/.srwr/tapes/
+/.srwr/tapes/*.tape.jsonl
 .srwr/key
 .srwr/lock
 .srwr/active

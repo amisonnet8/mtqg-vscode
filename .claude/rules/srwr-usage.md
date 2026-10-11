@@ -39,7 +39,8 @@
 ### 終わり方
 
 - **作業のまとまりが終わったら、閉じる**：次の作業に移る前に、次の`session`を呼ぶ（前のテープを閉じて圧縮し、新しいテープを始める）。次の作業が決まっていなければ、`srwr tapes new`（Bash）で閉じる
-- **コミットの前に、`srwr tapes check`を動かす**（テープに無いのに作業場で変わったファイルが分かる）。出たものは、生成物なら`.srwrignore`に足すか、そのままでよいと判断し、手で書いたものなら理由を人間に伝える
+- **コミットの前に、テープを閉じる**：先に`srwr tapes check`を動かし、そのあと`srwr tapes new`（Bash）で閉じて圧縮してから`git add`・`git commit`する。**閉じる前のテープ（`*.tape.jsonl`）は`.gitignore`でgitの対象外**なので、閉じ忘れると、そのコミットにテープが入らない（`srwr trace`でその行が引けない）。閉じたあとの書き込みは新しいテープを始める。コミットのあとは、同じ作業が続くなら`session`で題つきの新しいテープを始める
+- `srwr tapes check`は、テープに無いのに作業場で変わったファイルを出す。出たものは、生成物なら`.srwrignore`に足すか、そのままでよいと判断し、手で書いたものなら理由を人間に伝える
 - **コミットは、テープと同じ区切りにする。** 1本のテープ＝1つか数個のコミット。コミットメッセージにテープのID（`srwr tapes`で分かる）を書くと、`git show <commit> | srwr trace`で「どの行がどの操作・理由か」を引ける
 - 何も記録しなかったテープ（`session`だけ呼んだ）は、次の`session`で消える。気にせず呼んでよい
 - 30分空くと、`session`を呼ばなくても自動で新しいテープになる（題は付かない）。**題つきで始めるのが原則**
@@ -54,7 +55,7 @@
 
 ## このリポジトリでの取り決め
 
-- **テープは共有する**（`.srwr/tapes/`をgitに入れる。`.gitignore`で`.srwr/`の中は`tapes/`だけ戻す。決定、2026-10-11）。clone先で`srwr view`・`srwr trace`が使える（圧縮したテープ`.tape.jsonl.gz`も同じ）。**鍵`.srwr/key`・ロック・`init-backup/`は入れない**。テープはファイルの全文を含むので、秘密のファイルは記録しない（`.srwrignore`と既定の対象）。今のセッションのテープは閉じるまで生のまま入る（閉じると圧縮される）
+- **テープは共有する**（閉じて圧縮したテープ`.srwr/tapes/*.tape.jsonl.gz`をgitに入れる。`.gitignore`で`.srwr/`の中は`tapes/`だけ戻し、**書き込み中の生のテープ`*.tape.jsonl`は対象外**にする。生のまま入れると、閉じたとき「生の削除＋`.gz`の追加」が差分に出る。決定、2026-10-11・10-12）。clone先で`srwr view`・`srwr trace`が使える（圧縮したテープ`.tape.jsonl.gz`も同じ）。**鍵`.srwr/key`・ロック・`init-backup/`は入れない**。テープはファイルの全文を含むので、秘密のファイルは記録しない（`.srwrignore`と既定の対象）。今のセッションのテープは閉じるまで入らない（コミットの前に`srwr tapes new`で閉じる）
 - **記録しないもの**（`.srwrignore`）：`.mtqg/`・`node_modules/`・`out/`・`.vscode-test/`。秘密の既定の対象（`.env`・`*.pem`・`*.key`など）はsrwrが元から外す
 - **srwrは`.devcontainer/postCreate.sh`で`@latest`**（qsoku・mtqgと同じ。決定、2026-10-11）。0.xの間は道具の名前や入力が変わりうるので、**コンテナを作り直したら`srwr --version`を見て、版が変わっていたら`srwr init`を1回動かす**（許可する道具の名前が`.claude/settings.json`に追従する。何も変わらなければ`Already set up. Nothing was rewritten.`と出る）
 - 厳格⇄緩いの切り替えは`srwr init`／`srwr init --lenient`。**緩いモードにするのは人間の判断**（`Write`が記録されず`external`になる）。AIが勝手に切り替えない
