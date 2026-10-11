@@ -2,6 +2,8 @@
 .devcontainer/**
 .claude/**
 .mtqg/**
+.srwr/**
+.srwrignore
 .github/**
 docs/**
 src/**
