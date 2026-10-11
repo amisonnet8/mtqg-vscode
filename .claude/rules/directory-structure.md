@@ -37,7 +37,7 @@ mtqg-vscode/
 *│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録のみ）
 *│   ├── mtqg/                （mtqgを子プロセスで呼ぶコード。.claude/rules/mtqg-cli.md）
 *│   └── webview/
-*│       ├── panel.ts        （WebviewPanelを1つ開く／revealする。vscodeを触る唯一の場所）
+*│       ├── panel.ts        （WebviewPanelを1つ開く／revealする、再起動後に復元する（WebviewPanelSerializer）。vscodeを触る唯一の場所）
 *│       ├── controller.ts   （vscode非依存。Webviewからのメッセージ→mtqg呼び出し→render送信の一連。node:testで本物のmtqgを使って確認）
 *│       ├── screens.ts      （renderScreenがタブIDで各画面の描画関数へ振り分ける。renderErrorもここ）
 *│       ├── screens/         （画面ごとの描画。vscode非依存、node:testで確認）

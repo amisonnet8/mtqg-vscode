@@ -29,19 +29,62 @@ function workspaceTty(context: vscode.ExtensionContext): string {
   return created;
 }
 
+/** The `viewType` of the panel, and of the serializer that restores it
+ * (package.json's `onWebviewPanel:mtqg` activation event must match). */
+const PANEL_VIEW_TYPE = 'mtqg';
+
+function webviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
+  return {
+    enableScripts: true,
+    localResourceRoots: [vscode.Uri.joinPath(extensionUri, 'out', 'webview')],
+  };
+}
+
 /** Opens the mtqg panel, or reveals it if it is already open. */
 export function openPanel(context: vscode.ExtensionContext): void {
-  const extensionUri = context.extensionUri;
   if (currentPanel) {
     currentPanel.reveal();
     return;
   }
 
-  const scriptDir = vscode.Uri.joinPath(extensionUri, 'out', 'webview');
-  const panel = vscode.window.createWebviewPanel('mtqg', 'mtqg', vscode.ViewColumn.Active, {
-    enableScripts: true,
-    localResourceRoots: [scriptDir],
+  const panel = vscode.window.createWebviewPanel(
+    PANEL_VIEW_TYPE,
+    'mtqg',
+    vscode.ViewColumn.Active,
+    webviewOptions(context.extensionUri),
+  );
+  setupPanel(context, panel);
+}
+
+/**
+ * Brings the panel back after VS Code restarts (todo `0822a2c167`): without
+ * a serializer, a Webview tab that was open when the window closed is simply
+ * dropped. VS Code hands back an empty panel of this `viewType` -- its html
+ * and options are not persisted -- so it goes through the same
+ * `setupPanel` as a freshly opened one. Which screen was selected comes back
+ * by itself: src/webview/client/main.ts keeps it in the Webview's own
+ * `setState`, which VS Code restores for a serialized panel.
+ */
+export function registerPanelSerializer(context: vscode.ExtensionContext): vscode.Disposable {
+  return vscode.window.registerWebviewPanelSerializer(PANEL_VIEW_TYPE, {
+    deserializeWebviewPanel(panel: vscode.WebviewPanel): Promise<void> {
+      if (currentPanel) {
+        // `mtqg: Open` ran before the restore got to this tab: one panel at a
+        // time (the module-level state below is single-instance).
+        panel.dispose();
+        return Promise.resolve();
+      }
+      panel.webview.options = webviewOptions(context.extensionUri);
+      setupPanel(context, panel);
+      return Promise.resolve();
+    },
   });
+}
+
+/** Everything a panel needs, whether it was just created or restored. */
+function setupPanel(context: vscode.ExtensionContext, panel: vscode.WebviewPanel): void {
+  const extensionUri = context.extensionUri;
+  const scriptDir = vscode.Uri.joinPath(extensionUri, 'out', 'webview');
   // Same mtqg logo mark as the editor/title button (package.json's mtqg.open
   // icon) -- both point at the same two files. WebviewPanel.iconPath does
   // not accept a Codicon reference like "$(book)" (used here before mtqg

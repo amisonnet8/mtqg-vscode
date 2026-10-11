@@ -34,6 +34,9 @@
     "jsonl"
   ],
   "main": "./out/src/extension.js",
+  "activationEvents": [
+    "onWebviewPanel:mtqg"
+  ],
   "contributes": {
     "commands": [
       {
