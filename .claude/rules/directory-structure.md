@@ -34,7 +34,7 @@ mtqg-vscode/
 *├── qsokufile                （build・unit・check・test・trivy・shellcheck・package）
 *├── package.json / package-lock.json / tsconfig.json / .vscodeignore
 *├── src/
-*│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録のみ）
+*│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録と、パネル復元シリアライザの登録のみ）
 *│   ├── mtqg/                （mtqgを子プロセスで呼ぶコード。.claude/rules/mtqg-cli.md）
 *│   └── webview/
 *│       ├── panel.ts        （WebviewPanelを1つ開く／revealする、再起動後に復元する（WebviewPanelSerializer）。vscodeを触る唯一の場所）
@@ -42,10 +42,10 @@ mtqg-vscode/
 *│       ├── screens.ts      （renderScreenがタブIDで各画面の描画関数へ振り分ける。renderErrorもここ）
 *│       ├── screens/         （画面ごとの描画。vscode非依存、node:testで確認）
 *│       │   ├── format.ts   （日付の表示整形）
-*│       │   ├── table.ts    （6画面共通の部品：タグを選べる編集可能要素・削除ボタン・IDコピーボタン・文字バッジ等）
+*│       │   ├── table.ts    （6画面共通の部品：編集可能要素・削除ボタン・短縮IDを表示して押すとコピーするIDボタン・文字バッジ等）
 *│       │   ├── rules.ts    （renderRules）
 *│       │   ├── glossary.ts （renderGlossary：重複語のバッジ付け）
-*│       │   ├── todos.ts    （renderTodos：Keep風カードのグリッド、Done見出しでの下段まとめ）
+*│       │   ├── todos.ts    （renderTodos：Keep風カードのグリッド、古い→新しい順、完了済みはDone/Open見出しで開いているカードの上にまとめ、入力欄は下端）
 *│       │   ├── thread.ts   （renderThread：QA/Bugs共通の実装。1件＝見出し行＋詳細行（返信スレッド、常時の返信欄）、AI/humanバッジ。文言はThreadLabelsで注入）
 *│       │   ├── questions.ts（renderQuestions：renderThreadにQA用のThreadLabelsを渡す薄い包み）
 *│       │   ├── bugs.ts     （renderBugs：renderThreadにBugs用のThreadLabelsを渡す薄い包み）

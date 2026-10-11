@@ -26,7 +26,7 @@
 ## Demo
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="mtqg for VS Code demo: posting a todo and a question from the Memo tab, checking the todo off, then answering the question in the QA tab" width="800">
+  <img src="docs/assets/demo.gif" alt="mtqg for VS Code demo: posting a todo and a question from the Memo tab, checking the todo off, an AI agent's answer arriving live, then replying in the QA tab" width="800">
 </p>
 
 ## Features
@@ -35,7 +35,10 @@
 - ✅ **Todo tab** -- Google Keep-style cards with a checkbox for done/reopen
 - 🧵 **QA and Bug tabs** -- threaded questions and bugs, with answers/replies always one input away
 - 📖 **Rule and Glossary tabs** -- plain tables of adopted rules and defined terms
-- 🕓 **Nothing silently disappears** -- editing and deleting a record leaves a visible trace, and every write can be undone right after it's made
+- ⌨️ **Chat-style on every tab** -- records run oldest to newest with the input field pinned at the bottom, so a new record lands right above it. The view follows the newest record only while you're at the bottom; scroll up to read and it stays put
+- 🏷️ **Short IDs, always in view** -- every record shows its 10-digit ID (the same one `mtqg context` prints); press it to copy the full ID, handy when you talk about records with an AI agent
+- ♻️ **Picks up where you left off** -- the panel reopens after VS Code restarts, on the tab you were on
+- 🕓 **Nothing silently disappears** -- editing and deleting a record leaves a visible trace, and every write can be undone right after it's made. Undo only reverts what this extension wrote, never a record an AI agent added in the meantime
 - 🤖 **Built for humans and AI agents together** -- AI- and human-authored records sit in the same timeline, each with its own badge
 - 🔗 **Type `@` to link a file** -- typing `@` in any input field opens a dropdown of workspace files; picking one inserts its path into the record's text
 
@@ -50,7 +53,9 @@ If `mtqg` is missing or older than this extension needs, a notification says so 
 
 Run **mtqg: Open** to open the mtqg panel, a chat-like view of your project's journal with six tabs (Memo, Todo, QA, Bug, Rule, Glossary). The Memo tab's input field posts a memo by default; prefix it with a slash command to record something else instead: `/todo`, `/qa`, `/bug`, `/rule`, `/glossary` (or the one-letter aliases `/t`, `/q`, `/b`, `/r`, `/g`).
 
-Type `@` in any input field -- the Memo composer, an add row, a reply field, or an existing record you're editing -- to search workspace files and insert a path into the text.
+Every record shows its short ID; press it to copy the full ID. Type `@` in any input field -- the Memo composer, an add field, a reply field, or an existing record you're editing -- to search workspace files and insert a path into the text.
+
+If VS Code is closed with the panel open, it reopens on the same tab the next time.
 
 ### Commands
 
