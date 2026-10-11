@@ -85,7 +85,7 @@ export function replyRow(reply: ThreadReply): string {
       ${badge(isAi ? 'AI' : 'human', isAi ? 'badge-ai' : 'badge-human')}
       ${editableElement('span', 'text', reply.text)}
       <span class="thread-reply-meta">${escapeHtml(authorText(reply.author))} · ${escapeHtml(dateText(reply.created))}</span>
-      ${copyIdButton()}
+      ${copyIdButton(reply.id)}
       ${deleteButton()}
     </div>`;
 }
@@ -114,7 +114,7 @@ function itemRows(record: ThreadItem, expanded: boolean, labels: ThreadLabels): 
     ${editableCell('text', record.text)}
     ${authorCell(record.author)}
     ${dateCell(record.created)}
-    ${copyIdButtonCell()}
+    ${copyIdButtonCell(record.id)}
     ${deleteButtonCell()}
   </tr>`;
 

@@ -135,12 +135,20 @@ export function renderShell(options: ShellOptions): string {
       cursor: pointer;
       opacity: 0.6;
     }
+    /* The short id itself is the button's label (todo 632bc617d7):
+       monospace so the digits read as an id. No backticks in this CSS -- it
+       sits inside a template literal. */
+    button[data-action="copy-id"] {
+      font-family: var(--vscode-editor-font-family, monospace);
+      font-size: 0.85em;
+      white-space: nowrap;
+    }
     button[data-action="delete"]:hover,
     button[data-action="copy-id"]:hover {
       opacity: 1;
     }
     /* Feedback for a successful copy (ui.md「色だけで意味を伝えない」): the
-       icon itself swaps to a checkmark for a moment, done in
+       id itself swaps to a checkmark for a moment, done in
        src/webview/client/main.ts -- .copied carries no colour of its own. */
     button[data-action="copy-id"].copied {
       opacity: 1;
@@ -271,7 +279,7 @@ export function renderShell(options: ShellOptions): string {
          delete, ~47px measured), not just one button -- a live post's text
          used to wrap right up against the buttons and visually collide with
          them (bug found by the human right after the copy-id button shipped). */
-      padding: 6px 60px 6px 4px;
+      padding: 6px 130px 6px 4px;
       border-bottom: 1px solid var(--vscode-panel-border);
     }
     .post .editable {

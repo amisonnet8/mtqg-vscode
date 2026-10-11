@@ -27,7 +27,7 @@ export function renderGlossary(records: GlossaryRecord[]): string {
         ? ' <span class="dup-badge" title="This term has more than one definition">⚠ dup</span>'
         : '';
       const wordCell = `<td class="${isDuplicate ? 'duplicate' : ''}">${escapeHtml(r.word)}${badge}</td>`;
-      return `<tr data-id="${r.id}">${wordCell}${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${copyIdButtonCell()}${deleteButtonCell()}</tr>`;
+      return `<tr data-id="${r.id}">${wordCell}${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${copyIdButtonCell(r.id)}${deleteButtonCell()}</tr>`;
     })
     .join('');
 

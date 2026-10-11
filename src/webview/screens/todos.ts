@@ -26,7 +26,7 @@ function card(record: TodoRecord): string {
       <span>${escapeHtml(authorText(record.author))}</span>
       <span>${escapeHtml(dateText(record.created))}</span>
     </div>
-    <div class="card-actions">${copyIdButton()}${deleteButton()}</div>
+    <div class="card-actions">${copyIdButton(record.id)}${deleteButton()}</div>
   </article>`;
 }
 

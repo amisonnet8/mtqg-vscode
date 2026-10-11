@@ -64,7 +64,16 @@ export function deleteButtonCell(): string {
   return `<td>${deleteButton()}</td>`;
 }
 
+/** The 10-digit form `mtqg context` prints, which is what people say aloud
+ * and what the AI will quote back (todo `632bc617d7`). The full 32 digits
+ * stay in `data-id` and are what the copy button puts on the clipboard. */
+export function shortId(id: string): string {
+  return id.slice(0, 10);
+}
+
 /**
+ * Shows the record's short id and, when pressed, copies the full id to the
+ * clipboard (todo `632bc617d7`: it used to be a 📋 icon with no id on view).
  * Copies the record's own id to the clipboard. Handled entirely in the
  * Webview's fixed script (`src/webview/client/main.ts`) via the id already
  * carried by the ancestor `[data-id]` element (same lookup `deleteButton`
@@ -75,10 +84,10 @@ export function deleteButtonCell(): string {
  * glyph in this devcontainer's font (DejaVu) and rendered as tofu -- q&a
  * `414d6889d172`'s follow-up answer.
  */
-export function copyIdButton(): string {
-  return '<button type="button" class="copy-id" data-action="copy-id" aria-label="Copy ID" title="Copy ID">📋</button>';
+export function copyIdButton(id: string): string {
+  return `<button type="button" class="copy-id" data-action="copy-id" aria-label="Copy ID ${id}" title="Copy ID ${id}">${escapeHtml(shortId(id))}</button>`;
 }
 
-export function copyIdButtonCell(): string {
-  return `<td>${copyIdButton()}</td>`;
+export function copyIdButtonCell(id: string): string {
+  return `<td>${copyIdButton(id)}</td>`;
 }

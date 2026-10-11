@@ -13,7 +13,7 @@ export function renderRules(records: RuleRecord[]): string {
   const rows = sorted
     .map(
       (r) =>
-        `<tr data-id="${r.id}">${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${copyIdButtonCell()}${deleteButtonCell()}</tr>`,
+        `<tr data-id="${r.id}">${editableCell('text', r.text)}${authorCell(r.author)}${dateCell(r.created)}${copyIdButtonCell(r.id)}${deleteButtonCell()}</tr>`,
     )
     .join('');
 
