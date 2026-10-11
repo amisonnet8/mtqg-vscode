@@ -71,7 +71,7 @@ export interface ThreadView {
 }
 
 function sortedByCreated<T extends { created: string }>(records: T[]): T[] {
-  return [...records].sort((a, b) => b.created.localeCompare(a.created));
+  return [...records].sort((a, b) => a.created.localeCompare(b.created));
 }
 
 /**
@@ -131,9 +131,12 @@ function itemRows(record: ThreadItem, expanded: boolean, labels: ThreadLabels): 
 /**
  * `qa list`/`bug list` do not guarantee any particular order (same finding
  * as `rule list`/`glossary list`/`todo list` -- `.claude/rules/mtqg-cli.md`),
- * so newest-first is built here from `created`, same as the other screens.
- * Done items, when shown, are grouped below a heading, mirroring ToDo's
- * "Done" section (todo `4e09f42a9f`) for the same toggle.
+ * so oldest-first is built here from `created`, same as the other screens
+ * (chat-style: the newest item sits right above the add field at the
+ * bottom, todo `a597ec6df2`). Done items, when shown, are grouped above the
+ * open ones under a heading, mirroring ToDo's "Done" section (todo
+ * `4e09f42a9f`) for the same toggle, so the open items stay next to the add
+ * field.
  */
 export function renderThread(records: ThreadItem[], labels: ThreadLabels, view: ThreadView = {}): string {
   const all = view.all ?? false;
@@ -145,15 +148,17 @@ export function renderThread(records: ThreadItem[], labels: ThreadLabels, view: 
   const doneRows = all
     ? `<tr class="section-heading"><td colspan="7">${labels.sectionHeading} (${done.length})</td></tr>${done
         .map((r) => itemRows(r, expanded.has(r.id), labels))
-        .join('')}`
+        .join('')}<tr class="section-heading"><td colspan="7">Open (${open.length})</td></tr>`
     : '';
 
   return `<div class="screen-toolbar">
-  <div class="add-row">${editableElement('div', 'text', '', labels.topPlaceholder)}</div>
   <label><input type="checkbox" data-action="show-all"${all ? ' checked' : ''}> ${labels.showAllLabel} (${done.length})</label>
 </div>
 <table class="mtqg-table">
   <thead><tr><th></th><th></th><th>${labels.columnHeader}</th><th>Author</th><th>Date</th><th></th><th></th></tr></thead>
-  <tbody>${openRows}${doneRows}</tbody>
-</table>`;
+  <tbody>${doneRows}${openRows}</tbody>
+</table>
+<div class="composer" data-autoscroll>
+  <div class="add-row">${editableElement('div', 'text', '', labels.topPlaceholder)}</div>
+</div>`;
 }

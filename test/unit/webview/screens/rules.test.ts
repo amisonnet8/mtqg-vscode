@@ -9,14 +9,14 @@ function rule(id: string, text: string, created: string): RuleRecord {
   return { id, kind: 'rule', text, author: { kind: 'human', name: 'test' }, created, updated: created };
 }
 
-test('renderRules sorts newest-first by created, regardless of input order', () => {
+test('renderRules sorts oldest-first by created, regardless of input order (newest next to the add field)', () => {
   const html = renderRules([
     rule('a', 'oldest', '2026-01-01T00:00:00Z'),
     rule('b', 'newest', '2026-03-01T00:00:00Z'),
     rule('c', 'middle', '2026-02-01T00:00:00Z'),
   ]);
   const order = [...html.matchAll(/data-id="(a|b|c)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['b', 'c', 'a']);
+  assert.deepEqual(order, ['a', 'c', 'b']);
 });
 
 test('renderRules escapes the text and marks the cell editable with its original value', () => {
@@ -24,10 +24,12 @@ test('renderRules escapes the text and marks the cell editable with its original
   assert.match(html, /data-field="text" data-original="&lt;b&gt;bold&lt;\/b&gt;"[^>]*>&lt;b&gt;bold&lt;\/b&gt;</);
 });
 
-test('renderRules always includes an empty add row', () => {
-  const html = renderRules([]);
+test('renderRules always includes an empty add row, below the table', () => {
+  const html = renderRules([rule('a', 'text', '2026-01-01T00:00:00Z')]);
   assert.match(html, /class="add-row"/);
   assert.match(html, /data-field="text" data-original=""/);
+  assert.ok(html.indexOf('</table>') < html.indexOf('class="add-row"'));
+  assert.match(html, /class="composer" data-autoscroll/);
 });
 
 test('renderRules gives each row a Copy ID button next to the delete button', () => {

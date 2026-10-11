@@ -25,8 +25,28 @@ declare function acquireVsCodeApi(): {
       : undefined;
   }
 
+  // Chat-style scrolling (todo `a597ec6df2`, q&a `875f5db5d2dd`): the add
+  // field sits at the bottom of every screen, so a render follows the end of
+  // the list only when the reader is already there, or has just opened the
+  // tab / added a record themselves. Someone scrolled up reading an older
+  // entry keeps their place when an edit or a journal change re-renders.
+  const scrollToEndTabs = new Set<string>();
+  let visibleTab: string | undefined;
+  const NEAR_BOTTOM_PX = 40;
+
+  function isNearBottom(): boolean {
+    const root = document.documentElement;
+    return root.scrollHeight - root.scrollTop - root.clientHeight <= NEAR_BOTTOM_PX;
+  }
+
+  function scrollToEnd(): void {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+  }
+
   function selectTab(tab: string): void {
     closeMentionDropdown(); // the open dropdown's cell is about to be hidden
+    visibleTab = tab;
+    scrollToEndTabs.add(tab);
     for (const tabButton of document.querySelectorAll<HTMLElement>('[role="tab"]')) {
       tabButton.setAttribute('aria-selected', String(tabButton.dataset.tab === tab));
     }
@@ -34,6 +54,9 @@ declare function acquireVsCodeApi(): {
       panel.hidden = panel.dataset.tab !== tab;
     }
     vscode.setState({ tab });
+    // The tab's content is already there when switching back to it; a first
+    // render still pending is handled again when its `render` message lands.
+    scrollToEnd();
   }
 
   document.querySelector('[role="tablist"]')?.addEventListener('click', (event) => {
@@ -240,6 +263,7 @@ declare function acquireVsCodeApi(): {
       if (value === '') {
         return;
       }
+      scrollToEndTabs.add(tab);
       vscode.postMessage({ type: 'addRule', tab, text: value });
     } else if (tab === 'glossary') {
       const word = row.querySelector<HTMLElement>('[data-field="word"]')?.textContent?.trim() ?? '';
@@ -247,16 +271,19 @@ declare function acquireVsCodeApi(): {
       if (!word || !text) {
         return; // wait until both cells of the new entry are filled
       }
+      scrollToEndTabs.add(tab);
       vscode.postMessage({ type: 'addGlossary', tab, word, text });
     } else if (tab === 'todos') {
       if (value === '') {
         return;
       }
+      scrollToEndTabs.add(tab);
       vscode.postMessage({ type: 'addTodo', tab, text: value });
     } else if (tab === 'memos') {
       if (value === '') {
         return;
       }
+      scrollToEndTabs.add(tab);
       vscode.postMessage({ type: 'compose', tab, text: value });
     } else if (tab === 'questions' || tab === 'bugs') {
       if (value === '') {
@@ -276,6 +303,9 @@ declare function acquireVsCodeApi(): {
             : { type: 'addBugReply', tab, id: parentId, text: value },
         );
       } else {
+        // A new question/bug lands at the end of the list; a reply (above)
+        // lands inside its own expanded row, so it does not jump to the end.
+        scrollToEndTabs.add(tab);
         vscode.postMessage(tab === 'questions' ? { type: 'addQuestion', tab, text: value } : { type: 'addBug', tab, text: value });
       }
     }
@@ -419,12 +449,21 @@ declare function acquireVsCodeApi(): {
       if (mentionState && panel.contains(mentionState.cell)) {
         closeMentionDropdown();
       }
+      // Measured before the swap: afterwards the page may already have been
+      // clamped to a different height.
+      const wasAtBottom = isNearBottom();
       panel.innerHTML = message.html ?? '';
-      // Memo screen only (todo `01ee2706ce`): scroll the composer (at the
-      // timeline's newest end) into view, unless this render is a "Load
-      // earlier" (the host omits the attribute then, so the just-prepended
-      // older posts are not immediately scrolled away).
-      panel.querySelector<HTMLElement>('[data-autoscroll]')?.scrollIntoView({ block: 'end' });
+      // A hidden tab's render only refreshes its content. And the host omits
+      // `data-autoscroll` on a render that must not move the reader (Memo's
+      // "Load earlier", so the just-prepended older posts are not scrolled
+      // away immediately; its Undo notice).
+      const mayFollow = message.tab === visibleTab && panel.querySelector('[data-autoscroll]') !== null;
+      if (mayFollow && (scrollToEndTabs.has(message.tab) || wasAtBottom)) {
+        scrollToEnd();
+      }
+      if (mayFollow) {
+        scrollToEndTabs.delete(message.tab);
+      }
     }
   });
 
@@ -434,6 +473,8 @@ declare function acquireVsCodeApi(): {
   }
   const currentTab = document.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')?.dataset.tab;
   if (currentTab) {
+    visibleTab = currentTab;
+    scrollToEndTabs.add(currentTab);
     vscode.postMessage({ type: 'ready', tab: currentTab });
   }
 })();

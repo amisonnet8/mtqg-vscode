@@ -17,14 +17,14 @@ function cardHtml(html: string, id: string): string {
   return match[0];
 }
 
-test('renderTodos sorts open todos newest-first by created', () => {
+test('renderTodos sorts open todos oldest-first by created (newest next to the add field)', () => {
   const html = renderTodos([
     todo('a', 'oldest', '2026-01-01T00:00:00Z'),
     todo('b', 'newest', '2026-03-01T00:00:00Z'),
     todo('c', 'middle', '2026-02-01T00:00:00Z'),
   ]);
   const order = [...html.matchAll(/data-id="(a|b|c)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['b', 'c', 'a']);
+  assert.deepEqual(order, ['a', 'c', 'b']);
 });
 
 test('by default, done todos are not shown at all', () => {
@@ -34,7 +34,7 @@ test('by default, done todos are not shown at all', () => {
   assert.doesNotMatch(html, /done-heading/);
 });
 
-test('with all:true, done todos are grouped under a "Done" heading below the open ones', () => {
+test('with all:true, done todos are grouped under a "Done" heading above the open ones', () => {
   const html = renderTodos(
     [todo('a', 'open one', '2026-01-01T00:00:00Z', 'open'), todo('b', 'done one', '2026-01-02T00:00:00Z', 'done')],
     { all: true },
@@ -42,10 +42,12 @@ test('with all:true, done todos are grouped under a "Done" heading below the ope
   assert.match(html, /data-id="a"/);
   assert.match(html, /data-id="b"/);
   assert.match(html, /Done \(1\)/);
-  const openIndex = html.indexOf('data-id="a"');
+  assert.match(html, /Open \(1\)/);
   const headingIndex = html.indexOf('done-heading');
   const doneIndex = html.indexOf('data-id="b"');
-  assert.ok(openIndex < headingIndex && headingIndex < doneIndex);
+  const openIndex = html.indexOf('data-id="a"');
+  const addIndex = html.indexOf('class="add-row"');
+  assert.ok(headingIndex < doneIndex && doneIndex < openIndex && openIndex < addIndex);
 });
 
 test('a done card is checked and marked .done (not colour alone)', () => {
@@ -72,10 +74,12 @@ test('the card has a Copy ID button next to the delete button', () => {
   assert.match(card, /data-action="copy-id"/);
 });
 
-test('the toolbar always includes an empty add field', () => {
-  const html = renderTodos([]);
+test('an empty add field always closes the screen, after the cards', () => {
+  const html = renderTodos([todo('a', 'text', '2026-01-01T00:00:00Z')]);
   assert.match(html, /class="add-row"/);
   assert.match(html, /data-field="text" data-original=""/);
+  assert.match(html, /class="composer" data-autoscroll/);
+  assert.ok(html.indexOf('data-id="a"') < html.indexOf('class="add-row"'));
 });
 
 test('a real todo added through mtqg renders with its author and date', async () => {

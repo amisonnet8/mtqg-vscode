@@ -33,19 +33,21 @@ function card(record: TodoRecord): string {
 /**
  * `todo list` does not guarantee any particular order (verified against
  * the real binary, same finding as `rule list`/`glossary list` --
- * `.claude/rules/mtqg-cli.md`), so newest-first (q&a `e07736f680`, reused
- * here) is built from `created`.
+ * `.claude/rules/mtqg-cli.md`), so oldest-first (chat-style: the newest card
+ * sits right above the add field, todo `a597ec6df2`) is built from `created`.
  */
 function sortedByCreated(records: TodoRecord[]): TodoRecord[] {
-  return [...records].sort((a, b) => b.created.localeCompare(a.created));
+  return [...records].sort((a, b) => a.created.localeCompare(b.created));
 }
 
 /**
- * Renders the ToDo screen: an add field, a "Show done" toggle, and a grid
- * of cards. When `all` is false (the default, ui.md), only open todos are
- * shown and the toggle reflects that no done ones are hidden-but-zero vs
- * hidden-and-some -- the count is always the true total so switching the
- * toggle never looks like it did nothing.
+ * Renders the ToDo screen: a "Show done" toggle, a grid of cards and, at the
+ * bottom, the add field (todo `a597ec6df2`). When `all` is false (the
+ * default, ui.md), only open todos are shown and the toggle reflects that no
+ * done ones are hidden-but-zero vs hidden-and-some -- the count is always the
+ * true total so switching the toggle never looks like it did nothing. Done
+ * cards, when shown, come first under their heading so the open ones (where
+ * a new todo lands) stay next to the add field.
  */
 export function renderTodos(records: TodoRecord[], view: TodosView = {}): string {
   const open = sortedByCreated(records.filter((r) => r.status === 'open'));
@@ -54,13 +56,14 @@ export function renderTodos(records: TodoRecord[], view: TodosView = {}): string
 
   const openCards = open.map(card).join('');
   const doneSection = all
-    ? `<h3 class="done-heading">Done (${done.length})</h3><div class="mtqg-cards">${done.map(card).join('')}</div>`
+    ? `<h3 class="done-heading">Done (${done.length})</h3><div class="mtqg-cards">${done.map(card).join('')}</div><h3 class="done-heading">Open (${open.length})</h3>`
     : '';
 
   return `<div class="screen-toolbar">
-  <div class="add-row">${editableElement('div', 'text', '', 'New todo…')}</div>
   <label><input type="checkbox" data-action="show-all"${all ? ' checked' : ''}> Show done (${done.length})</label>
 </div>
-<div class="mtqg-cards">${openCards}</div>
-${doneSection}`;
+${doneSection}<div class="mtqg-cards">${openCards}</div>
+<div class="composer" data-autoscroll>
+  <div class="add-row">${editableElement('div', 'text', '', 'New todo…')}</div>
+</div>`;
 }

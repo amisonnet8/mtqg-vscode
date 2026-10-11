@@ -156,15 +156,9 @@ export function renderShell(options: ShellOptions): string {
     .screen-toolbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       gap: 12px;
       margin-bottom: 12px;
-    }
-    .screen-toolbar .add-row {
-      flex: 1;
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 4px;
-      padding: 6px 10px;
     }
     .screen-toolbar label {
       white-space: nowrap;
@@ -345,12 +339,28 @@ export function renderShell(options: ShellOptions): string {
     .load-earlier:hover {
       text-decoration: underline;
     }
+    /* The add field of every screen (todo a597ec6df2): a chat-style input at
+       the bottom that stays on screen however long the list above is. */
     .composer {
       display: flex;
       align-items: flex-end;
       gap: 8px;
       border-top: 1px solid var(--vscode-panel-border);
-      padding-top: 8px;
+      padding: 8px 0;
+      position: sticky;
+      bottom: 0;
+      background-color: var(--vscode-editor-background);
+    }
+    /* Glossary's term + definition pair, side by side in one add field. */
+    .composer .add-row-pair {
+      display: flex;
+      gap: 8px;
+    }
+    .composer .add-row-pair > .editable:first-child {
+      flex: 0 0 30%;
+    }
+    .composer .add-row-pair > .editable:last-child {
+      flex: 1;
     }
     .composer .add-row {
       flex: 1;

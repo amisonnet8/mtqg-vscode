@@ -17,13 +17,13 @@ function rowHtml(html: string, id: string): string {
   return match[0];
 }
 
-test('renderGlossary sorts newest-first by created', () => {
+test('renderGlossary sorts oldest-first by created', () => {
   const html = renderGlossary([
     entry('a', 'alpha', 'first', '2026-01-01T00:00:00Z'),
     entry('b', 'beta', 'second', '2026-02-01T00:00:00Z'),
   ]);
   const order = [...html.matchAll(/data-id="(a|b)"/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['b', 'a']);
+  assert.deepEqual(order, ['a', 'b']);
 });
 
 test('renderGlossary flags every entry that shares a word with a badge, not color alone', () => {
@@ -48,11 +48,16 @@ test('renderGlossary gives each row a Copy ID button next to the delete button',
   assert.match(row, /data-action="copy-id"/);
 });
 
-test('the add row lets a new term and definition be typed', () => {
+test('the add row lets a new term and definition be typed, in one row below the table', () => {
   const html = renderGlossary([]);
-  assert.match(html, /class="add-row"/);
+  assert.match(html, /class="add-row add-row-pair"/);
   assert.match(html, /data-field="word"/);
   assert.match(html, /data-field="text"/);
+  assert.ok(html.indexOf('</table>') < html.indexOf('add-row'));
+  // Both fields share one `.add-row`, which is what the Webview script
+  // reads the word and definition from on blur.
+  const row = html.slice(html.indexOf('add-row-pair'));
+  assert.ok(row.indexOf('data-field="word"') < row.indexOf('data-field="text"'));
 });
 
 test('a real glossary entry added through mtqg renders with its word and definition', async () => {

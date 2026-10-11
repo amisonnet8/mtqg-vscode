@@ -43,13 +43,13 @@ function detailRow(html: string, id: string): string {
   return match[0];
 }
 
-test('renderThread sorts open items newest-first by created', () => {
+test('renderThread sorts open items oldest-first by created (newest next to the add field)', () => {
   const html = renderThread(
     [item('a', 'oldest', '2026-01-01T00:00:00Z'), item('b', 'newest', '2026-03-01T00:00:00Z'), item('c', 'middle', '2026-02-01T00:00:00Z')],
     LABELS,
   );
   const order = [...html.matchAll(/<tr data-id="(a|b|c)">/g)].map((m) => m[1]);
-  assert.deepEqual(order, ['b', 'c', 'a']);
+  assert.deepEqual(order, ['a', 'c', 'b']);
 });
 
 test('by default, done items are not shown at all', () => {
@@ -62,17 +62,18 @@ test('by default, done items are not shown at all', () => {
   assert.doesNotMatch(html, /section-heading/);
 });
 
-test('with all:true, done items are grouped under the section heading below the open ones', () => {
+test('with all:true, done items are grouped under the section heading above the open ones', () => {
   const html = renderThread(
     [item('a', 'open one', '2026-01-01T00:00:00Z', { status: 'open' }), item('b', 'done one', '2026-01-02T00:00:00Z', { status: 'done' })],
     LABELS,
     { all: true },
   );
   assert.match(html, /Done \(1\)/);
-  const openIndex = html.indexOf('data-id="a"');
+  assert.match(html, /Open \(1\)/);
   const headingIndex = html.indexOf('section-heading');
   const doneIndex = html.indexOf('data-id="b"');
-  assert.ok(openIndex < headingIndex && headingIndex < doneIndex);
+  const openIndex = html.indexOf('data-id="a"');
+  assert.ok(headingIndex < doneIndex && doneIndex < openIndex);
 });
 
 test('an item\'s detail row is hidden unless its id is in the expanded set', () => {
@@ -140,9 +141,11 @@ test('the exact reply text is preserved (not a substring match) and escaped', ()
   assert.doesNotMatch(detail, /<b>x<\/b>/);
 });
 
-test('the top-level add row uses the label\'s placeholder and the column header uses the label\'s noun', () => {
+test('the top-level add row, below the table, uses the label\'s placeholder and the column header uses the label\'s noun', () => {
   const html = renderThread([], LABELS);
   assert.match(html, /class="add-row">/);
+  assert.ok(html.indexOf('</table>') < html.indexOf('class="add-row"'));
+  assert.match(html, /class="composer" data-autoscroll/);
   assert.match(html, /aria-label="Add an item…"/);
   assert.match(html, /<th>Item<\/th>/);
 });
