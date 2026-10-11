@@ -14,6 +14,7 @@ out/
 /.*
 !/.gitignore
 !/.gitattributes
+!/.srwrignore
 !/.vscodeignore
 !/.mcp.json
 !/.devcontainer/
@@ -27,3 +28,14 @@ out/
 !/.claude/settings.json
 !/.claude/rules/
 !/.claude/hooks/
+# srwr (.claude/rules/srwr-usage.md). The tapes (.srwr/tapes/) are shared;
+# everything else in .srwr/ stays local (the key must never be shared).
+# The four lines at the end are what `srwr init` looks for; without them it
+# would append them again each time.
+!/.srwr/
+/.srwr/*
+!/.srwr/tapes/
+.srwr/key
+.srwr/lock
+.srwr/active
+.srwr/init-backup/

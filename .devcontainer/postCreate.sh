@@ -77,6 +77,14 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 # 2026-09-29, todo 7a072cc72a).
 go install github.com/amisonnet8/mtqg/cmd/mtqg@latest
 
+# srwr: the AI's edits go through its look / edit / new tools, each with a
+# reason (why), and are recorded on a tape (.claude/rules/srwr-usage.md).
+# @latest, like qsoku and mtqg above (decision, 2026-10-11). srwr is 0.x, so
+# after a rebuild that picked up a new version, run `srwr init` once: it makes
+# .claude/settings.json follow any change in the tools' names (srwr's
+# docs/reference/cli.md).
+go install github.com/amisonnet8/srwr/cmd/srwr@latest
+
 # Wire up qsoku's shell integration (working-directory carry-back and
 # completion) for bash. Idempotent: skipped if already present, so
 # re-running postCreate.sh does not duplicate the line. The single quotes

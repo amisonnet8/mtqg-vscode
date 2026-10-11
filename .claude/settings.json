@@ -12,7 +12,16 @@
             "type": "command"
           }
         ],
-        "matcher": "Edit|Write"
+        "matcher": "mcp__srwr__edit|mcp__srwr__new"
+      },
+      {
+        "matcher": "Read|Bash|Grep|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "srwr hook"
+          }
+        ]
       }
     ],
     "SessionStart": [
@@ -41,10 +50,22 @@
     "enableWeakerNestedSandbox": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
-    "excludedCommands": ["qsoku test", "xvfb-run *"],
+    "excludedCommands": [
+      "qsoku test",
+      "xvfb-run *"
+    ],
     "filesystem": {
-      "allowWrite": ["~/.cache/go-build", "/go", "~/.cache/trivy", "~/.npm"],
-      "denyRead": ["~/.ssh", "~/.aws", "~/.config/gh"]
+      "allowWrite": [
+        "~/.cache/go-build",
+        "/go",
+        "~/.cache/trivy",
+        "~/.npm"
+      ],
+      "denyRead": [
+        "~/.ssh",
+        "~/.aws",
+        "~/.config/gh"
+      ]
     },
     "network": {
       "allowedDomains": [
@@ -58,7 +79,14 @@
     }
   },
   "permissions": {
-    "allow": ["Bash(qsoku test)", "Bash(xvfb-run *)"],
+    "allow": [
+      "Bash(qsoku test)",
+      "Bash(xvfb-run *)",
+      "mcp__srwr__look",
+      "mcp__srwr__edit",
+      "mcp__srwr__new",
+      "mcp__srwr__session"
+    ],
     "ask": [
       "Bash(git reset --hard*)",
       "Bash(git clean*)",
@@ -69,7 +97,14 @@
       "Bash(git push*)",
       "Bash(gh pr merge*)",
       "Bash(gh release create*)",
-      "Bash(*vsce publish*)"
+      "Bash(*vsce publish*)",
+      "Edit",
+      "Write",
+      "MultiEdit",
+      "NotebookEdit"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "srwr"
+  ]
 }

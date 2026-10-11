@@ -20,7 +20,9 @@ mtqg-vscode/
 *├── .gitignore
 *├── trivy.yaml
 *├── .mtqg/
-*├── .mcp.json
+*├── .mcp.json               （mtqgとsrwrのMCPサーバー。srwrの分は`srwr init`が書く形）
+*├── .srwrignore             （srwrがテープに記録しないファイル。`.mtqg/`・`node_modules/`・`out/`・`.vscode-test/`。`.claude/rules/srwr-usage.md`）
+*├── .srwr/                  （srwrの鍵・ロック・テープ。**`tapes/`だけコミットする**。鍵・ロック・`active`・`init-backup/`は無視）
 *├── docs/design/vscode-extension.md（**現状の設計だけ**を保つ。経緯は`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
 *│   ├── devcontainer.json

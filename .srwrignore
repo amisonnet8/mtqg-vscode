@@ -1,0 +1,7 @@
+# Files srwr does not put on the tape (same format as .gitignore).
+# .mtqg/ is read and written only through the mtqg CLI (.claude/rules/mtqg-cli.md).
+# The rest is generated or downloaded, large, and never edited by hand.
+.mtqg/
+node_modules/
+out/
+.vscode-test/

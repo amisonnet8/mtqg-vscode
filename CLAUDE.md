@@ -12,6 +12,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 - **`docs/design/`** — **現状の設計**の記録（日本語）。決定に至った経緯・修正の履歴はここに書かず`.mtqg/`に記録する（決定、2026-09-28）。`vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）。**このリポジトリに`PLAN.md`は無い。`mtqg context`が現状・今後を知るための一次情報**
+- **`.claude/rules/srwr-usage.md`** — srwrの使い方（**厳格モード**）。**このリポジトリでは`Edit`・`Write`が禁止されており、ファイルの変更は`look`／`edit`／`new`（理由`why`つき）で行う。作業のまとまりごとに`session`で題つきのテープを始める。ファイルを変える前に読む**
 - **`.claude/rules/mtqg-cli.md`** — mtqg本体とのつながり方（子プロセス起動、`--json`、エラーの扱い）
 - **`.claude/rules/ui.md`** — UIの方針（英語・文字に頼らない、6画面、機能を足さない原則、レイアウト詳細は未定）
 - **`.claude/rules/dependencies.md`** — npm依存の線引き
@@ -24,6 +25,8 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 ## 開発の進め方
 
 - **`PLAN.md`は使わない。mtqgで記録する。** `mtqg context`だけでこのリポジトリの現状・次にやることが分かる状態を保つ（`.claude/rules/mtqg-usage.md`）
+- **ファイルの変更は、srwrの道具（`look`で見て`edit`、新規は`new`）で行い、すべてに理由（`why`）を添える。** 組み込みの`Edit`・`Write`は`.claude/settings.json`で禁止されている（厳格モード）。Bashでの書き換え（`sed -i`・リダイレクト）もしない
+- **作業のまとまり（todo・bug・人間の依頼・作業の種類の変わり目）ごとに、最初に`session`で題つきのテープを始める。** 1つの作業＝1本のテープ、コミットも同じ区切り（`.claude/rules/srwr-usage.md`「セッション」）
 - 実装後は`.claude/rules/testing.md`に従い、動作確認を行う
 - 依存を足すときは`.claude/rules/dependencies.md`の線引きに従う
 
@@ -52,7 +55,9 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 **`sandbox`設定（mtqg本体の`.claude/settings.json`を参考に2026-09-30導入）**：`filesystem.allowWrite`・`network.allowedDomains`等を許可した範囲内のBashコマンド（`npm ci`・`go install`・`qsoku trivy`等）は、`autoAllowBashIfSandboxed`により確認なしで実行できる。`network.allowedDomains`・`filesystem.allowWrite`を見直すときに踏んだ落とし穴は`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」にまとめてある。
 
-ビルドの自動フック（`PostToolUse`）が設定されている。`.ts`・`package.json`・`tsconfig.json`を編集すると`.claude/hooks/build.sh`が走る（拡張の雛形ができるまでは何もしない）。
+**srwrの厳格モード**（2026-10-11導入）：`permissions.deny`に`Edit`・`Write`・`MultiEdit`・`NotebookEdit`があり、`.mcp.json`にsrwrのMCPサーバー、`PostToolUse`に`srwr hook`（読み取りと外部変更の記録）がある。テープ（`.srwr/tapes/`）はgitで共有する（鍵`.srwr/key`は入れない）。許可を広げるのは人間の判断で、`.claude/settings.json`を変えたいときは差分で示す。詳細は`.claude/rules/srwr-usage.md`。
+
+ビルドの自動フック（`PostToolUse`）が設定されている。srwrの`edit`・`new`で`.ts`・`package.json`・`tsconfig.json`を変えると`.claude/hooks/build.sh`が走る（拡張の雛形ができるまでは何もしない）。
 
 ## ルール・スキルの提案
 

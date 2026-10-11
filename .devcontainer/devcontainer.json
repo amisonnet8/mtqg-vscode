@@ -14,7 +14,8 @@
         "github.vscode-github-actions",
         "timonwong.shellcheck",
         "amodio.tsl-problem-matcher",
-        "amisonnet8.mtqg"
+        "amisonnet8.mtqg",
+        "amisonnet8.srwr-view"
       ],
       "settings": {
         "editor.formatOnSave": true
