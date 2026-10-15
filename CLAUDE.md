@@ -12,7 +12,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 作業を始める前に、以下を確認すること。
 
-- **`docs/design/`** — **現状の設計**の記録（日本語）。決定に至った経緯・修正の履歴はここに書かず`.mtqg/`に記録する（決定、2026-09-28）。`vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
+- **`docs/design/`** — **今の設計**の記録（日本語）。経緯は、前のやり方に戻すと同じ問題がまた起きるものだけを書き、それ以外は`.mtqg/`に記録する（`.claude/rules/documentation.md`）。`vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
 - **`.claude/rules/bcuz-usage.md`** — bcuzの使い方。**Bashで実行するコマンドは、必ず`bcuz "理由" コマンド…`の形で打つ**（フックが、そうでないものを断る）。理由は「なぜ」を書く。**コマンドを打つ前に読む**
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）。**このリポジトリに`PLAN.md`は無い。`mtqg context`が現状・今後を知るための一次情報**
 - **`.claude/rules/srwr-usage.md`** — srwrの使い方（**厳格モード**）。**このリポジトリでは`Edit`・`Write`が禁止されており、ファイルの変更は`look`／`edit`／`new`（理由`why`つき）で行う。作業のまとまりごとに`session`で題つきのテープを始め、コミットの前にテープを閉じる。ファイルを変える前に読む**
@@ -66,7 +66,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 `.claude/settings.json`（人間が管理する）により、次の設定になっている。
 
 - 拒否（deny）：`git push`、`gh pr merge`、`gh release create`、`vsce publish`
-- **`bcuz`を通さないBashコマンドの拒否**：`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が、`bcuz`で始まらないコマンド（`git commit`を除く。逆に`bcuz`を通した`git commit`を断る）と、後ろに別のコマンドをつなぐもの（`&&`・`||`・`;`・`&`・改行・コマンド置換）を、実行前に断る。直し方は断りのメッセージと`.claude/rules/bcuz-usage.md`に書いてある
+- **`bcuz`を通さないBashコマンドの拒否**：`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が、`bcuz`で始まらないコマンド（`git commit`を除く。逆に`bcuz`を通した`git commit`を断る）と、後ろに別のコマンドをつなぐもの（`&&`・`||`・`;`・`&`・改行・単一引用符の外のコマンド置換）を、実行前に断る。直し方は断りのメッセージと`.claude/rules/bcuz-usage.md`に書いてある
 - 実行前に確認（ask）：`git reset --hard`、`git clean`、`sudo`、`gh pr create`
 - **Bashコマンドは既定でOSレベルのサンドボックス（Linux bubblewrap）内で実行される。** ファイルシステムの書き込み先とネットワーク接続先は許可リストで絞られている。この範囲内なら`curl`・`wget`・`npm ci`・`go install`などは確認なしに実行できる。リストに無い宛先・書き込み先は`sandbox_violations`として拒否される。そのときは、`.claude/rules/working-with-human.md` 2章の形（原因と、`.claude/settings.json` のどこに何を足すか）で**短く頼む**（許可を広げるかは人間が判断する）。落とし穴は`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」参照
 

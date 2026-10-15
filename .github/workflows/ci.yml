@@ -104,6 +104,6 @@ jobs:
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - uses: aquasecurity/setup-trivy@v0.3.1
         with:
-          version: v0.71.2
+          version: latest
       - name: qsoku trivy
         run: qsoku trivy
