@@ -2,7 +2,7 @@
   "name": "mtqg",
   "displayName": "mtqg",
   "description": "mtqg for VS Code - browse and write your mtqg project journal (memo & rules, todo, qa & bugs, glossary) from inside the editor.",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "license": "MIT",
   "publisher": "amisonnet8",
   "repository": {

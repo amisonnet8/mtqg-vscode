@@ -3,6 +3,17 @@
 All notable changes to the mtqg VS Code extension are documented here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.1] - 2026-10-16
+
+Requires `mtqg` 1.0.0 or later (unchanged).
+
+### Changed
+
+- Records are ordered by the moment they were created rather than by the
+  text of their timestamp, so a timestamp written with an offset or with
+  fractional seconds still sorts in the right place. With the timestamps
+  mtqg writes today, the order you see is the same as in 1.1.0
+
 ## [1.1.0] - 2026-10-12
 
 Requires `mtqg` 1.0.0 or later (unchanged).
