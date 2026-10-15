@@ -50,6 +50,8 @@
 
 - **期待値（件数・ID・桁など）は、手で書かず、実際の出力を読んで正しいと確かめてから固定する。** 手で数えた件数や写し間違えたIDは、正しい実装の出力と食い違い、実装を疑う遠回りになる。テストが落ちたときは、実装と期待値のどちらが誤りかを先に確かめる
 - **gitを使うテスト（`test/helpers/tempRepo.ts`の一時リポジトリなど）は、開発者の設定の影響を受けないようにする。** `HOME`と`GIT_CONFIG_GLOBAL`を一時ディレクトリに向け、`user.name`・`user.email`はテストの中で決める（子プロセスに渡す`env`で）
+  - このPJでは`test/helpers/tempRepo.ts`が、読み込まれたときにテストのプロセスの`process.env`をその場で書き換える（`HOME`・`GIT_CONFIG_GLOBAL`は一時ディレクトリ、`GIT_CONFIG_NOSYSTEM=1`、`user.name`・`user.email`は`GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_n`/`GIT_CONFIG_VALUE_n`）。テストするコード（`src/mtqg/process.ts`）がmtqgを`process.env`のまま起動するため、子に個別に渡すのでなく、テストのプロセスごと切り替えている。`test/vscode/runTest.ts`から起動するVS Codeも同じ`env`を引き継ぐ
+  - **`MTQG_AUTHOR_KIND`・`MTQG_AUTHOR_NAME`・`MTQG_TTY`も消す。** Claude Codeの中では`.claude/settings.json`の`env`で`ai`/`claude-code`が立っており、残すとAIの中とCIで記録者が変わる（mtqgは`MTQG_AUTHOR_NAME`が無いとき、gitの`user.name`を使う）。`test/unit/helpers/tempRepo.test.ts`が、記録者が`test`（human）になることを確かめる
 - **ソースに、見えない文字（ゼロ幅、U+2028・U+2029、文字の向きを変える制御文字、そのほかの制御文字）をそのまま書かない。** エスケープ（`\u200b`・`\x00`など）で書く。書き込みの途中で本物の文字に置き換わると、見た目では気づけない不具合になる
 
 ## この開発環境（devcontainer）固有の落とし穴

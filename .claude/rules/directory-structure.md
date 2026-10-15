@@ -26,7 +26,7 @@ mtqg-vscode/
 *├── .srwrignore             （srwrがテープに記録しないファイル。`.mtqg/`・`node_modules/`・`out/`・`.vscode-test/`。`.claude/rules/srwr-usage.md`）
 *├── .srwr/                  （srwrの鍵・ロック・テープ。**`tapes/`だけコミットする**。鍵・ロック・`active`・`init-backup/`は無視）
 ├── .bcuz/                  （bcuzの記録`history.jsonl`。`postCreate.sh`が`bcuz --init`で作る。**コミットする**（`merge=union`）。`.claude/rules/bcuz-usage.md`）
-*├── docs/design/vscode-extension.md（**現状の設計だけ**を保つ。経緯は`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
+*├── docs/design/vscode-extension.md（**今の設計**を保つ。経緯は、戻すと同じ問題が起きるものだけ。ほかは`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
 *│   ├── devcontainer.json
 *│   ├── devcontainer-lock.json（コンテナのビルドで自動で作られる。**コミットする**）
@@ -69,7 +69,7 @@ mtqg-vscode/
 *│   │   ├── mtqg/
 *│   │   └── webview/
 *│   │       └── screens/
-*│   ├── helpers/tempRepo.ts  （git init＋mtqg initした一時リポジトリ）
+*│   ├── helpers/tempRepo.ts  （git init＋mtqg initした一時リポジトリ。読み込むと、テストのプロセスのenvを開発者の設定から切り離す。testing.md「テストの書き方」）
 *│   └── vscode/              （@vscode/test-electronで拡張開発ホストを起動するテスト。.claude/rules/testing.md）
 *│       ├── runTest.ts      （一時mtqgリポジトリをワークスペースとして開く）
 *│       └── suite/
@@ -98,7 +98,7 @@ mtqg-vscode/
 - **`vscode`を触るのは`src/webview/panel.ts`だけ。** `controller.ts`・`screens.ts`・`shared/`はvscode非依存にし、本物のmtqgバイナリを使う`node:test`で試す（`.claude/rules/testing.md`）。**Webview以外の新しいvscodeコマンドを足すときは、位置計算・入力解釈など純粋なロジックをvscode非依存のファイルに切り出し、vscodeを触る部分（`vscode.window`・`vscode.commands.registerCommand`等）だけをコマンド登録側に残す**（`screens/`とpanel.tsの分離と同じ考え方。かつて`src/commands/`にこの形で置いていたが、唯一の中身だった`mtqg.createAt`を廃止したため今は無い）
 - **Webview内で実際に動くスクリプト（`src/webview/client/`）は別tsconfig。** ホスト側はCommonJS（`vscode`の型）、Webview側はDOM型・ブラウザ向けESM出力で、1つのtsconfigでは両立しない（バンドラを使わない方針、`.claude/rules/dependencies.md`）。ルートの`tsconfig.json`は`src/webview/client`を`exclude`する
 - **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く
-- **`docs/design/`**：**現状の設計だけ**を保つ記録（日本語）。決定に至った経緯・修正の履歴はここに書かず`.mtqg/`に記録する（`.claude/rules/mtqg-usage.md`「docs/design/との役割分担」）。仕様と食い違う場合はコード（と、あれば`docs/reference/`相当の文書）が正、という考え方はmtqgと同じ
+- **`docs/design/`**：**今の設計**を保つ記録（日本語）。経緯は、前のやり方に戻すと同じ問題がまた起きるものだけを書き、それ以外は`.mtqg/`に記録する（`.claude/rules/documentation.md`、`.claude/rules/mtqg-usage.md`「docs/design/との役割分担」）。仕様と食い違う場合はコード（と、あれば`docs/reference/`相当の文書）が正、という考え方はmtqgと同じ
 - **`.mtqg/`の中のファイルを直接編集しない。** すべてmtqgのコマンド経由（`.claude/rules/mtqg-usage.md`）
 
 ## 各ファイル・ディレクトリの補足
