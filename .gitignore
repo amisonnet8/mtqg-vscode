@@ -21,12 +21,16 @@ out/
 !/.github/
 !/.mtqg/
 !/.vscode/
+# bcuz's record of the commands run (.claude/rules/bcuz-usage.md). Shared, like
+# .mtqg/; .gitattributes merges it with merge=union.
+!/.bcuz/
 
 # .claude/: only the shared files (settings.local.json stays personal)
 !/.claude/
 /.claude/*
 !/.claude/settings.json
 !/.claude/rules/
+!/.claude/skills/
 !/.claude/hooks/
 # srwr (.claude/rules/srwr-usage.md). The closed tapes (.srwr/tapes/*.gz) are
 # shared; everything else in .srwr/ stays local (the key must never be shared).

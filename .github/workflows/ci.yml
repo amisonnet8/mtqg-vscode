@@ -17,13 +17,17 @@ jobs:
   # PowerShell対応（人間から確認済み）を受けて、ubuntu-latest固定から拡張
   # した。mtqg本体のci.yml（check jobの3 OS matrix、goモジュールキャッシュの
   # github.com/amisonnet8/mtqg@v0.4.0で実物を確認）に倣う。
+  # mtqg is tried at both ends: the floor this extension declares
+  # (src/mtqg/availability.ts's MIN_SUPPORTED_MTQG_VERSION; raise both
+  # together) and @latest (.claude/rules/mtqg-usage.md, 2026-10-15).
   check:
-    name: check (${{ matrix.os }})
+    name: check (${{ matrix.os }}, mtqg ${{ matrix.mtqg }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+        mtqg: [v1.0.0, latest]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -45,11 +49,8 @@ jobs:
       # 段階のため。mtqg本体のci.ymlも同じ）
       - name: Install qsoku
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
-      # v1.0.0はこの拡張が前提とする最低版（src/mtqg/availability.tsの
-      # MIN_SUPPORTED_MTQG_VERSION）に合わせている。上げたら両方揃える
-      # （.devcontainer/postCreate.shのmtqgは@latestで別枠、.claude/rules/mtqg-cli.md「版」）
-      - name: Install mtqg
-        run: go install github.com/amisonnet8/mtqg/cmd/mtqg@v1.0.0
+      - name: Install mtqg (${{ matrix.mtqg }})
+        run: go install github.com/amisonnet8/mtqg/cmd/mtqg@${{ matrix.mtqg }}
       # xvfb一式：qsoku test（拡張開発ホストで実物VS Codeを起動する。
       # .claude/rules/testing.md）に必要。.devcontainer/postCreate.shと同じ
       # パッケージ一覧（動作確認済みの組み合わせ）がベースだが、`ubuntu-latest`
@@ -86,6 +87,10 @@ jobs:
         run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
       - name: qsoku shellcheck
         run: qsoku shellcheck
+      # The decision table of .claude/hooks/require-bcuz.sh (needs jq, which
+      # ubuntu-latest has).
+      - name: qsoku hook
+        run: qsoku hook
 
   trivy:
     runs-on: ubuntu-latest

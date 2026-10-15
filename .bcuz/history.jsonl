@@ -1,0 +1,36 @@
+{"v":1,"ts":"2026-10-15T06:35:36.613Z","why":"共通化で変わったルールの差分を把握するため","cmd":["git","diff","--stat"],"dir":".","exit":0,"ms":7}
+{"v":1,"ts":"2026-10-15T06:35:36.935Z","why":"未追跡のbcuz関連ファイルの状態を把握するため","cmd":["git","status","--short"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-15T06:35:39.873Z","why":"ルール本文以外（設定・スクリプト）の変更内容を確かめるため","cmd":["git","diff","--",".claude/settings.json",".devcontainer/postCreate.sh",".gitattributes",".gitignore",".srwrignore","qsokufile"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-15T06:35:40.019Z","why":"ルール文書・CLAUDE.mdの変更点を把握するため","cmd":["git","diff","--","CLAUDE.md",".claude/rules/"],"dir":".","exit":0,"ms":4}
+{"v":1,"ts":"2026-10-15T06:35:57.013Z","why":"CIがmtqgの最低版と@latestの両方で試すか、道具の版を固定していないか確かめるため","cmd":["cat",".github/workflows/ci.yml"],"dir":".","exit":0,"ms":0}
+{"v":1,"ts":"2026-10-15T06:35:57.161Z","why":".bcuz/等の新しい作業用ディレクトリがvsixから除外されているか確かめるため","cmd":["cat",".vscodeignore","test/unit/vscodeignore.test.ts"],"dir":".","exit":0,"ms":0}
+{"v":1,"ts":"2026-10-15T06:35:57.304Z","why":"日時の表示・比較がdatetime.mdに沿っているか確かめるため","cmd":["cat","src/webview/screens/format.ts"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:35:57.454Z","why":"最低版の定義を確かめるため","cmd":["grep","-rn","MIN_SUPPORTED_MTQG_VERSION\\|v0\\.[0-9]\\.[0-9]","src/mtqg/availability.ts",".devcontainer/postCreate.sh","README.md","README_ja.md","docs/design/vscode-extension.md"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:36:14.340Z","why":"postCreate.shのmtqg版に関するコメントがルールと合っているか確かめるため","cmd":["sed","-n","60,100p",".devcontainer/postCreate.sh"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:36:14.486Z","why":"日時を文字列比較・現在時刻直読みしている箇所がないか確かめるため","cmd":["grep","-rnE","Date\\.now|new Date\\(\\)|toLocale|\\.created *[<>]|\\.updated *[<>]|localeCompare\\(.*(created|updated)","src","test"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-15T06:36:14.607Z","why":"devcontainer-lock.jsonの有無と追跡状況、READMEの開発手順の記述を確かめるため","cmd":["git","ls-files",".devcontainer",".claude","docs","README.md","README_ja.md","CHANGELOG.md"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:36:20.307Z","why":"日時文字列の等値比較など、瞬間で比べていない箇所を洗い出すため","cmd":["grep","-rnE","(created|updated|at)\\b[^;]*(===|!==|<|>)|sort\\(","src","--include=*.ts"],"dir":".","exit":0,"ms":2}
+{"v":1,"ts":"2026-10-15T06:36:20.431Z","why":"日付表示のテストがTZを変えて確かめているか見るため","cmd":["grep","-rln","formatDate\\|TZ","test","qsokufile"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:36:23.283Z","why":"formatDateのテストがTZ=UTC/Asia/Tokyoの両方を確かめているか見るため","cmd":["cat","test/unit/webview/format.test.ts"],"dir":".","exit":0,"ms":0}
+{"v":1,"ts":"2026-10-15T06:36:23.391Z","why":"memos.tsの並べ替え・編集判定で日時をどう扱うか見るため","cmd":["grep","-nE","created|updated|\\bat\\b","src/webview/screens/memos.ts"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:36:34.339Z","why":"追加されたbcuz強制フックの判定表が通るか確かめるため","cmd":["qsoku","hook"],"dir":".","exit":0,"ms":1733}
+{"v":1,"ts":"2026-10-15T06:36:36.180Z","why":"未追跡でqsoku shellcheckの対象外の新しいフックを先に検査するため","cmd":["shellcheck",".claude/hooks/require-bcuz.sh",".claude/hooks/require-bcuz.test.sh",".devcontainer/postCreate.sh"],"dir":".","exit":0,"ms":108}
+{"v":1,"ts":"2026-10-15T06:36:36.393Z","why":"CIで@latestを試す前に、今の最新版で拡張が動くか見るため","cmd":["mtqg","--version"],"dir":".","exit":2,"ms":2}
+{"v":1,"ts":"2026-10-15T06:36:38.149Z","why":"手元のmtqgの版を確かめるため","cmd":["mtqg","version"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-15T06:37:05.647Z","why":".vscodeignoreの変更後にビルドと単体テストが通るか確かめるため","cmd":["qsoku","check"],"dir":".","exit":0,"ms":3077}
+{"v":1,"ts":"2026-10-15T06:37:08.838Z","why":".bcuz/が実際にパッケージ対象から外れたか目で確かめるため","cmd":["npx","vsce","ls"],"dir":".","exit":0,"ms":847}
+{"v":1,"ts":"2026-10-15T06:37:18.806Z","why":"各画面がformatDateをどこから取り込んでいるか確かめ、並べ替え関数の置き場所を決めるため","cmd":["grep","-rn","import","src/webview/screens/rules.ts","src/webview/screens/glossary.ts","src/webview/screens/todos.ts","src/webview/screens/thread.ts","src/webview/screens/memos.ts"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:37:51.818Z","why":"日時比較を瞬間に変えた後、ビルドと新しいTZテストが通るか確かめるため","cmd":["qsoku","check"],"dir":".","exit":0,"ms":3007}
+{"v":1,"ts":"2026-10-15T06:37:59.244Z","why":"タイムゾーンに関わる変更なので、手元とCIの両方の想定で単体テストが通るか確かめるため","cmd":["env","TZ=Asia/Tokyo","qsoku","unit"],"dir":".","exit":0,"ms":2352}
+{"v":1,"ts":"2026-10-15T06:38:01.706Z","why":"タイムゾーンに関わる変更なので、CIと同じUTCでも単体テストが通るか確かめるため","cmd":["env","TZ=UTC","qsoku","unit"],"dir":".","exit":0,"ms":2289}
+{"v":1,"ts":"2026-10-15T06:38:45.896Z","why":"mtqg-cli.md「版」の残りの行がCIの固定版に触れていないか確かめるため","cmd":["grep","-n","CI",".claude/rules/mtqg-cli.md"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:38:46.037Z","why":"postCreate.shのコメント変更後もShellCheckが通るか確かめるため","cmd":["qsoku","shellcheck"],"dir":".","exit":0,"ms":64}
+{"v":1,"ts":"2026-10-15T06:38:46.227Z","why":"matrix化したci.ymlがYAMLとして壊れていないか確かめるため","cmd":["node","-e","const s=require('fs').readFileSync('.github/workflows/ci.yml','utf8');console.log(/mtqg: \\[v1\\.0\\.0, latest\\]/.test(s), (s.match(/matrix\\.mtqg/g)||[]).length)"],"dir":".","exit":0,"ms":19}
+{"v":1,"ts":"2026-10-15T06:38:52.673Z","why":"画面の並べ替えを変えたので拡張開発ホストでの動作も念のため確かめるため","cmd":["qsoku","test"],"dir":".","exit":0,"ms":11942}
+{"v":1,"ts":"2026-10-15T06:39:16.024Z","why":"テープに無いのに変わったファイルが無いか、作業の終わりに確かめるため","cmd":["srwr","tapes","check"],"dir":".","exit":1,"ms":10}
+{"v":1,"ts":"2026-10-15T06:45:20.213Z","why":"コミット前に作者のメールが本来のnoreplyか確かめるため（CLAUDE.md）","cmd":["git","config","user.email"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-15T06:45:20.355Z","why":"コミット前にテープに無い変更を確かめるため（srwr-usage.md）","cmd":["srwr","tapes","check"],"dir":".","exit":1,"ms":11}
+{"v":1,"ts":"2026-10-15T06:45:24.338Z","why":"コミットにテープを含めるため、今のテープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":13}
+{"v":1,"ts":"2026-10-15T06:45:24.491Z","why":"今回の作業のテープIDをコミットメッセージに書くため","cmd":["srwr","tapes"],"dir":".","exit":0,"ms":23}
+{"v":1,"ts":"2026-10-15T06:45:29.252Z","why":"ルール共通化とそれに伴う修正、テープ・mtqg・bcuzの記録をパスを指定してステージするため","cmd":["git","add","CLAUDE.md",".claude/rules",".claude/hooks",".claude/settings.json",".devcontainer/postCreate.sh",".gitattributes",".gitignore",".srwrignore",".vscodeignore","qsokufile",".github/workflows/ci.yml","docs/design/vscode-extension.md","src/webview/screens","test/unit",".mtqg/journal.jsonl",".srwr/tapes",".bcuz/history.jsonl"],"dir":".","exit":0,"ms":8}
+{"v":1,"ts":"2026-10-15T06:45:29.397Z","why":"コミットに入るものと残るものを確かめるため","cmd":["git","status","--short"],"dir":".","exit":0,"ms":4}

@@ -1,5 +1,7 @@
 # ディレクトリ構成
 
+新しいファイルを追加する際は、どこに置くかをここで確かめる。**構成を変えたら、この文書も同じ変更の中で直す。**
+
 `*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）・エディタからの記録作成コマンド（todo`24f2e871d5`）・CI（todo`53cbaa3265`）・パッケージング準備（todo`2f60eb9fb1`）で作ったもの。6画面と主な操作、CI、Marketplace向けのREADME・CHANGELOGが揃った。それ以外は、後続のtodoで足す予定のもの。
 
 ```
@@ -23,15 +25,17 @@ mtqg-vscode/
 *├── .mcp.json               （mtqgとsrwrのMCPサーバー。srwrの分は`srwr init`が書く形）
 *├── .srwrignore             （srwrがテープに記録しないファイル。`.mtqg/`・`node_modules/`・`out/`・`.vscode-test/`。`.claude/rules/srwr-usage.md`）
 *├── .srwr/                  （srwrの鍵・ロック・テープ。**`tapes/`だけコミットする**。鍵・ロック・`active`・`init-backup/`は無視）
+├── .bcuz/                  （bcuzの記録`history.jsonl`。`postCreate.sh`が`bcuz --init`で作る。**コミットする**（`merge=union`）。`.claude/rules/bcuz-usage.md`）
 *├── docs/design/vscode-extension.md（**現状の設計だけ**を保つ。経緯は`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
 *│   ├── devcontainer.json
+*│   ├── devcontainer-lock.json（コンテナのビルドで自動で作られる。**コミットする**）
 *│   └── postCreate.sh
 *├── .claude/
 *│   ├── rules/
-*│   ├── hooks/
+*│   ├── hooks/               （build.sh、require-bcuz.sh とそのテスト）
 *│   └── settings.json
-*├── qsokufile                （build・unit・check・test・trivy・shellcheck・package）
+*├── qsokufile                （build・unit・check・test・trivy・shellcheck・hook・package）
 *├── package.json / package-lock.json / tsconfig.json / .vscodeignore
 *├── src/
 *│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録と、パネル復元シリアライザの登録のみ）
@@ -96,3 +100,15 @@ mtqg-vscode/
 - **`src/extension.ts`は薄く保つ。** コマンドの登録とWebviewパネルの起動だけを行い、ロジックは`src/mtqg/`・`src/webview/`に置く
 - **`docs/design/`**：**現状の設計だけ**を保つ記録（日本語）。決定に至った経緯・修正の履歴はここに書かず`.mtqg/`に記録する（`.claude/rules/mtqg-usage.md`「docs/design/との役割分担」）。仕様と食い違う場合はコード（と、あれば`docs/reference/`相当の文書）が正、という考え方はmtqgと同じ
 - **`.mtqg/`の中のファイルを直接編集しない。** すべてmtqgのコマンド経由（`.claude/rules/mtqg-usage.md`）
+
+## 各ファイル・ディレクトリの補足
+
+- **`.bcuz/`**: bcuzが`.bcuz/history.jsonl`に追記する、コマンドの実行の記録（`.claude/rules/bcuz-usage.md`）。**コミットする**（`.gitignore`の`!/.bcuz/`）。行を足すだけなので、`.gitattributes`の`merge=union`で、マージしても両側の行が残る。コミットの前に`git add .bcuz/history.jsonl`する（`git commit`は`bcuz`を通さない）。秘密をコマンドに書かない（記録に残る）。中のファイルは直接編集しない。`.srwrignore`でテープにも載せず、`.vscodeignore`で公開物にも入れない
+- **`.claude/hooks/require-bcuz.sh`**: Bashツールのコマンドを、`bcuz`を通っていなければ実行前に断る`PreToolUse`フック。判定の表は`require-bcuz.test.sh`（`bash .claude/hooks/require-bcuz.test.sh`）。判定を変えたら、テストの表も同じ変更の中で直す
+- **`.devcontainer/devcontainer-lock.json`**: コンテナのビルドで自動で作られる。**コミットする**（この版のfeatureでテストなどが通った証明になる）。featureを新しくしたいときは、lockを消してビルドし直し、新しいlockをコミットする
+- **`.srwr/`**: 最初のhook・MCPの呼び出しで、srwrが作る（`srwr init`でも作られる。鍵`key`・`lock`・`active`・`tapes/`・`init-backup/`）。**コミットするのは閉じて圧縮したテープ`tapes/*.tape.jsonl.gz`だけ**。書き込み中の生のテープ`*.tape.jsonl`は`.gitignore`で対象外（閉じると`.gz`に置き換わり、生のままコミットすると「削除＋追加」の差分が出るため）。鍵は共有しない。リポジトリには鍵を入れない（鍵をプロジェクトごとに別にするため）
+- **`.srwrignore`**: テープに記録しないファイル（`.gitignore`と同じ書き方）。生成物や巨大なファイルはここに足す。`.env`・`*.pem`・`*.key`などはsrwrが元から外す
+- **`.gitattributes`**: `* text=auto eol=lf`。Windowsランナーでの改行コード変換による誤検知を防ぐ（`.claude/rules/testing.md`）。`.mtqg/`の中の`.gitattributes`は`mtqg init`が置くもので、別物
+- **`.gitignore`のドットファイル**: ルート直下のドットファイル・ドットディレクトリは**許可リスト方式**（`/.*`を無視し、追跡するものだけ`!`で戻す。`.claude/`の中は`/.claude/*`を無視して`settings.json`・`rules/`・`skills/`・`hooks/`だけ戻す）。サンドボックスが作業ディレクトリ直下に出すダミーファイルを`git add -A`で混ぜないため（`.claude/rules/testing.md`）。**追跡するドットファイルを新しく足すときは、`.gitignore`に`!`の行を足すこと**。足さないと`git add`が無視する
+- **配布物（`.vsix`）**: リポジトリにコミットしない（`.gitignore`の`*.vsix`）。公開物に入るものは`.vscodeignore`で決める（`.claude/rules/distribution.md`）
+- **シェルスクリプト**: 最小限にする。追跡中のものは`qsoku shellcheck`の対象になる（`.claude/rules/testing.md`）

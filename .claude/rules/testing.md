@@ -1,10 +1,38 @@
 # テスト方針
 
+## 開発環境の前提
+
+開発者の手元環境は**Linux（devcontainer）のみ**。Windows・macOSでの動作確認は手元では行わず、GitHub Actionsのホステッドランナーに委ねる（`.github/workflows/ci.yml`の3OSマトリクス）。
+
+## 実装後の動作確認
+
+実装したら、ビルド確認に加えて実際の動作確認を行うこと。ロジック上正しそうに見えても、動かして初めて見つかる不具合はある（下の「動かして確かめる」）。
+
+- `qsoku check`（ビルド・単体テスト）は作業の区切りで必ず通す
+- 拡張開発ホストに関わる変更は`qsoku test`も通す（サンドボックスの外で動かす。下の「Bashサンドボックスの落とし穴」）
+- 依存を足したら`qsoku trivy`（既知の脆弱性・ライセンス）を通す
+- シェルスクリプトを足したら`qsoku shellcheck`を通す（`git add`してから走らせる。追跡中のものだけが対象）
+
 ## 使うツール（mtqgと同じ）
 
 - **qsoku**：`qsokufile`ができたら、build・check・test・trivy・shellcheckの入口をmtqgと同じ形で用意する（`qsokufile`はコマンドの近道であり、シェルではなく`sh`で毎回同じに動く。詳細はqsoku自身のドキュメント）
 - **Trivy**（`trivy.yaml`）：npmの依存の既知の脆弱性とライセンスを検査する。依存を足すたび・`package-lock.json`が変わるたびに通す
-- **ShellCheck**：追跡中の`.sh`（`.devcontainer/postCreate.sh`、`.claude/hooks/`）にかける
+- **ShellCheck**：追跡中の`.sh`（`.devcontainer/postCreate.sh`、`.claude/hooks/`）にかける（下の「ShellCheck」）
+- **`qsoku hook`**：bcuzを強制するフックの判定の表（`.claude/hooks/require-bcuz.test.sh`）。`require-bcuz.sh`を変えたら通す
+
+## ShellCheck：シェルスクリプト
+
+- シェルスクリプトは最小限にする
+- `qsoku shellcheck`は`git ls-files '*.sh' '*.bash'`で追跡中のものを列挙してShellCheckにかける（`git add`してから走らせる）
+- シェルスクリプト中のコメントを、行頭が小文字の`# shellcheck`で始まる文にしてはいけない（ShellCheckがインラインディレクティブとして誤解釈し、SC1072/SC1073でパースエラーになる）。「ShellCheck」のように大文字を混ぜて書く
+- **`postCreate.sh`の中で`. /etc/os-release`をsourceしない。** ShellCheckのSC1091（追えない形で指定されたファイル）が情報の水準で報告され、終了コードが0でなくなる。ディストリビューションの版は`lsb_release -rs`で取る
+
+## Trivy：既知の脆弱性とライセンス
+
+- `trivy fs`で、npmの依存の既知の脆弱性（CVE）とライセンスを検査する（`qsoku trivy`）
+- 何を失敗とみなすか（深刻度、禁止するライセンスの種類）は`trivy.yaml`で固定する
+- `npm install`で依存を足したら、必ずTrivyを通す
+- Trivyは脆弱性データベースの取得に通信が要る（下の「Bashサンドボックスの落とし穴」）
 
 ## 拡張自身のテスト
 
@@ -18,6 +46,12 @@
 - **`test/vscode/runTest.ts`は、`.mtqg/`を初期化した一時リポジトリをワークスペースとして開く**（`--disable-workspace-trust`と併用。信頼ダイアログがヘッドレス実行を止めないため）。ワークスペースが無いと`vscode.workspace.workspaceFolders`が空になり、`openPanel`（`src/webview/panel.ts`）の`FileSystemWatcher`・`controller`を作る分岐がテストで一度も通らない（todo`b9caf0b88c`で発見。それまでの`test/vscode/`はワークスペース無しで動いていた）
 - **プレーンな`tsc`（`--build`/`composite`を使わない今の構成）は、削除済みのソースに対応する出力を消さない。** テストファイルを削除しても、古い`out/`の`.js`がそのまま残り`node --test`に拾われ続け、存在しないはずのテストが通り続ける（不具合：`mtqg.createAt`廃止で`test/unit/commands/at.test.ts`を消したのに、`qsoku unit`のテスト数がその後もしばらく減らなかった）。`qsokufile`の`build`は`rm -rf out`してから`tsc`する
 
+## テストの書き方
+
+- **期待値（件数・ID・桁など）は、手で書かず、実際の出力を読んで正しいと確かめてから固定する。** 手で数えた件数や写し間違えたIDは、正しい実装の出力と食い違い、実装を疑う遠回りになる。テストが落ちたときは、実装と期待値のどちらが誤りかを先に確かめる
+- **gitを使うテスト（`test/helpers/tempRepo.ts`の一時リポジトリなど）は、開発者の設定の影響を受けないようにする。** `HOME`と`GIT_CONFIG_GLOBAL`を一時ディレクトリに向け、`user.name`・`user.email`はテストの中で決める（子プロセスに渡す`env`で）
+- **ソースに、見えない文字（ゼロ幅、U+2028・U+2029、文字の向きを変える制御文字、そのほかの制御文字）をそのまま書かない。** エスケープ（`\u200b`・`\x00`など）で書く。書き込みの途中で本物の文字に置き換わると、見た目では気づけない不具合になる
+
 ## この開発環境（devcontainer）固有の落とし穴
 
 - **`ELECTRON_RUN_AS_NODE=1`がコンテナ全体の環境変数として立っている**（remote-cliの`code`シム用）。`@vscode/test-electron`がダウンロードするVS Code本体にこれが継承されると、そのElectronバイナリが素のNodeとして起動してしまい、`--extensionDevelopmentPath`などのCLIフラグがすべて「bad option」で失敗する。`qsokufile`の`test`ターゲットで`env -u ELECTRON_RUN_AS_NODE`を付けて対処している（不具合、todo`97779f964e`）
@@ -28,14 +62,16 @@
 > devcontainer内でClaude Codeが実行するBashコマンドは、既定でOSレベルのサンドボックス（Linux bubblewrap）にかかる。`.claude/settings.json`の`sandbox`でファイルシステムの書き込み先とネットワーク接続先を許可リストで絞っている（2026-09-30導入、CLAUDE.md「権限・自動化について」）。ここは、その設定の下で`qsoku check`・`qsoku test`・`qsoku trivy`・`qsoku shellcheck`・`npm ci`を実際に動かして見つかった落とし穴の記録。
 
 - **Linuxでは`bubblewrap`（`bwrap`）と`socat`が無いと、`settings.json`に`sandbox.enabled: true`があってもサンドボックスは警告なしに無効のまま動く。** 許可リスト外のドメインに接続できる・ダミーの`.bashrc`等が出ない、が兆候。`.devcontainer/postCreate.sh`が、無いものだけを`apt-get install`する（ベースイメージによっては最初から入っているため、入っているか確認してから入れる。プロジェクトに依存しないブロックなので、他のリポジトリにもそのまま使える）
-- **Xvfbを使うもの（`qsoku test`＝`xvfb-run`＋実VS Code、「動かして確かめる」のスクリーンショット手順）は、Linuxのサンドボックスの中では動かない。** Xvfbはunixドメインソケットで待ち受けるが、LinuxのサンドボックスはネットワークネームスペースでUnixソケットを全部使えなくしており（`$TMPDIR`でも`listen`が`EPERM`）、`allowUnixSockets`・`allowAllUnixSockets`はLinuxでは効果がない（公式ドキュメント）。症状は、`xvfb-run -a`が`:99`、`:100`、…と延々失敗して`DISPLAY`だけ割り当て、VS Codeが`Missing X server or $DISPLAY`で`SIGTRAP`になる（bug`2d4ad01d30`。`qsoku check`・`trivy`・`shellcheck`・`npm ci`は影響を受けない）。`allowWrite`で`/tmp/.X11-unix`や`/tmp`を許可しても解決しない（途中の`Could not create lock file`が消えるだけ）。**対処は`sandbox.excludedCommands`に`qsoku test`・`xvfb-run *`を入れ、サンドボックスの外で動かす**（確認ダイアログが出ないよう`permissions.allow`にも同じ2つを入れる）。**`excludedCommands`に一致するのは、そのコマンド単体で実行したときだけ。** `qsoku test > log 2>&1; ...`のようにリダイレクトや`;`でつなぐと一致せず、サンドボックスの中で動いて同じ`SIGTRAP`になる。ログを取りたいときも`qsoku test`単体で実行する。付随して出る`~/.vscode/argv.json`のEROFS警告・`update.code.visualstudio.com`の名前解決失敗（インストール済みの版にフォールバック）・Fontconfigのキャッシュ警告は、テストの結果に影響しない
+- **Xvfbを使うもの（`qsoku test`＝`xvfb-run`＋実VS Code、「動かして確かめる」のスクリーンショット手順）は、Linuxのサンドボックスの中では動かない。** Xvfbはunixドメインソケットで待ち受けるが、LinuxのサンドボックスはネットワークネームスペースでUnixソケットを全部使えなくしており（`$TMPDIR`でも`listen`が`EPERM`）、`allowUnixSockets`・`allowAllUnixSockets`はLinuxでは効果がない（公式ドキュメント）。症状は、`xvfb-run -a`が`:99`、`:100`、…と延々失敗して`DISPLAY`だけ割り当て、VS Codeが`Missing X server or $DISPLAY`で`SIGTRAP`になる（bug`2d4ad01d30`。`qsoku check`・`trivy`・`shellcheck`・`npm ci`は影響を受けない）。`allowWrite`で`/tmp/.X11-unix`や`/tmp`を許可しても解決しない（途中の`Could not create lock file`が消えるだけ）。**対処は`sandbox.excludedCommands`に`qsoku test`・`xvfb-run *`を入れ、サンドボックスの外で動かす**（確認ダイアログが出ないよう`permissions.allow`にも同じ2つを入れる）。**Bashのコマンドは`bcuz`を通す**（`.claude/rules/bcuz-usage.md`）ので、`excludedCommands`・`permissions.allow`には、`bcuz`付きの形（`bcuz * qsoku test`・`bcuz * xvfb-run *`）も入れる（2026-10-15。`bcuz "…" qsoku test`がサンドボックスの外で通ることを確かめた）。**`excludedCommands`に一致するのは、そのコマンド単体で実行したときだけ。** `qsoku test > log 2>&1; ...`のようにリダイレクトや`;`でつなぐと一致せず、サンドボックスの中で動いて同じ`SIGTRAP`になる。ログを取りたいときも`qsoku test`単体で実行する。付随して出る`~/.vscode/argv.json`のEROFS警告・`update.code.visualstudio.com`の名前解決失敗（インストール済みの版にフォールバック）・Fontconfigのキャッシュ警告は、テストの結果に影響しない
 - **Trivyの脆弱性DBの取得先は`ghcr.io`ではなく`mirror.gcr.io`（`mirror.gcr.io/aquasec/trivy-db:2`）。** 名前から`ghcr.io`（GitHub Container Registry）を許可すればよいと思い込むと、`qsoku trivy`が`sandbox_violations`で失敗する。実際に動かして初めて分かった（bug`3f91787d2c`）
 - **Trivyの脆弱性DBは`~/.cache/trivy`に書き込む。** `filesystem.allowWrite`にこれが無いと、ネットワークを許可してもダウンロード後の書き込みで`read-only file system`になる（`.claude/settings.json`で対処済み）
 - **`filesystem.allowWrite`は、既に存在するパスしか効かない。** `~/.cache`自体は書き込み不可なので、`~/.cache/trivy`・`~/.cache/go-build`・`~/.npm`が無いまっさらなコンテナでは、最初の`qsoku trivy`・`npm ci`等が`read-only file system`で失敗する。`.devcontainer/postCreate.sh`が`settings.json`の`allowWrite`を読んで全部先に`mkdir -p`する（mtqg本体で先に見つかった落とし穴。一覧を二重に持たないので、`allowWrite`を変えてもスクリプトの修正は要らない）
 - **`check.trivy.dev`への接続（Trivyのバージョン確認機能）は、許可リストに無くても`qsoku trivy`の結果・終了コードには影響しない。** `sandbox_violations`として警告は出るが、スキャン自体（脆弱性・ライセンスのレポート）は正常に完了する。実害のない拒否なので許可リストに足すかは任意
 - **`git fetch`・`git pull`（リモートのgithub.comへの読み取り）と`gh pr create`には`github.com`・`api.github.com`への許可が要る。** この拡張の運用ルールで禁止しているのは`git push`だけなので、fetch/pullはask・denyどちらにも入らず素通りする想定だが、サンドボックスのネットワーク許可が無いと接続自体がブロックされる（`.claude/settings.json`で対処済み）
+- **許可リストに無いものに当たったら、自分で回り道を探し続けない。** `.claude/rules/working-with-human.md` 2章の形で、何をどこに足すかを短く頼む
+- **`sudo`は、サンドボックスの中では承認しても失敗する。** サンドボックスのuidの付け替え（特権の無いユーザー名前空間）で、本来rootが持つファイルがnobodyの持ち物に見え、`sudo`自身の所有者の確認に落ちる。`sudo`が要るときは、人間のターミナルで動かすよう頼む（`.claude/rules/working-with-human.md` 2章）
 - **このコンテナのGOPATHは`~/go`ではなく`/go`（ホームディレクトリの外）。** `go env GOPATH`で確認せずに`~/go`を`filesystem.allowWrite`に入れると、`.devcontainer/postCreate.sh`のような`go install`を伴う操作で書き込みが拒否される（`.claude/settings.json`で対処済み）
-- **srwrの`srwr init`は、サンドボックスの中では`.mcp.json`・`.claude/settings.json`を置き換えられない**（一時ファイルを`rename`する先が書き込み保護で、`device or resource busy`。`.srwr/`の鍵だけが先にできる）。人間のターミナルで動かすか、一時的な作業場にコピーして動かした結果を書き戻す（`.claude/rules/srwr-usage.md`「落とし穴」）。`srwr view`は`~/.cache/srwr`に書くので、サンドボックスの中では動かさず、人間のターミナルで動かす
+- **`srwr init`は、書き換えるものがあるときは、サンドボックスの中では`.mcp.json`・`.claude/settings.json`を置き換えられない（書き換えが無ければ動く。そもそもテンプレートから作ったプロジェクトでは動かさなくてよい）**（一時ファイルを`rename`する先が書き込み保護で、`device or resource busy`。`.srwr/`の鍵だけが先にできる）。人間のターミナルで動かす（`.claude/rules/srwr-usage.md`「落とし穴」）。`srwr view`は`~/.cache/srwr`に書くので、同じく人間のターミナルで動かす
 - **サンドボックスの書き込み保護（`filesystem.write.denyWithinAllow`）が、作業ディレクトリ直下に`.bashrc`等のダミーファイルを出現させることがある。** `git status`に大量の未追跡ファイルとして見えて驚くが、`ls -la`で見ると中身が空のキャラクタデバイス（`/dev/null`相当）で、未追跡のままなのでコミットには影響しない。この拡張の実装やリポジトリの状態には起因しない、サンドボックス機構側の挙動。`.gitignore`はルート直下と`.claude/`直下のドット始まりをまず全部無視し、追跡するものだけ`!`で戻す許可リスト方式にしてあるので、`git status`にも出ない（新しく追跡するドット始まりのファイル・ディレクトリを足すときは`.gitignore`に`!`行が要る）
 
 - **`qsoku package`（`vsce package`）は、サンドボックスの中では失敗する。** 作業ディレクトリ直下のダミーファイル（`.bash_profile`・`.bashrc`等、上の項目）をvsceのsecretlintが読もうとして`EACCES`になる。中身の確認だけなら`npx vsce ls`が通る（ダミーの点ファイルが一覧に混じるが、実際のリポジトリにはなく、無視してよい）。実際の`.vsix`づくりは、サンドボックスの外の人間のターミナルで行う
@@ -67,9 +103,14 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
 ## CI（`.github/workflows/ci.yml`、todo`53cbaa3265`）
 
 - **`check`ジョブは3 OS matrix（`ubuntu-latest`・`macos-latest`・`windows-latest`、`fail-fast: false`）。** CIを作った時点（2026-09-27）は**qsoku自体がまだWindows/PowerShellに正式対応していない**（人間から聞いたロードマップ：①qsokuのWindows/PowerShell対応→②そこで出た問題対応→③mtqg v1・正式公開）ため、`ubuntu-latest`固定だった（q&a`82fd9fe8fff2`）。①が済んだ（人間から確認、2026-09-27）ことでtodo`b7fe931ffa`にてmatrix拡張した。**mtqg本体のci.yml**（`github.com/amisonnet8/mtqg`、goモジュールキャッシュ`/go/pkg/mod/github.com/amisonnet8/mtqg@v0.4.0/.github/workflows/ci.yml`で実物を確認できる）に倣い、`qsoku check`・`qsoku test`のstepだけ`shell: bash`を明示している（Linux/macOSは元から既定がbashで無害、Windowsは既定のpwshではなくGit Bashを使わせる）。この拡張のコード自体にOS依存の分岐は無い（`mtqg`実行ファイルの解決はNode.jsの`execFile`のPATH解決に任せる設計、`.claude/rules/mtqg-cli.md`）
-- 3ジョブ：`check`（`npm ci`→`qsoku`・`mtqg`をインストール→`qsoku check`→`qsoku test`、3 OS matrix）・`shellcheck`（`qsoku shellcheck`、`ubuntu-latest`のみ）・`trivy`（`qsoku trivy`、`ubuntu-latest`のみ）。`shellcheck`・`trivy`は静的解析でOS依存の結果差が無いためmatrix化していない。いずれも`qsokufile`をそのまま呼ぶだけで、CI固有のロジックを持たない（ローカルの`qsoku check`等と同じコマンドが通ることがCIが通ることの前提になる）
-- `mtqg`のインストール版（`go install .../mtqg@v0.4.0`）は`.devcontainer/postCreate.sh`・`src/mtqg/availability.ts`の`MIN_SUPPORTED_MTQG_VERSION`と3か所そろえる（`.claude/rules/mtqg-cli.md`「版」）
+- 3ジョブ：`check`（`npm ci`→`qsoku`・`mtqg`をインストール→`qsoku check`→`qsoku test`、3 OS matrix）・`shellcheck`（`qsoku shellcheck`と`qsoku hook`、`ubuntu-latest`のみ）・`trivy`（`qsoku trivy`、`ubuntu-latest`のみ）。`shellcheck`・`trivy`は静的解析でOS依存の結果差が無いためmatrix化していない。いずれも`qsokufile`をそのまま呼ぶだけで、CI固有のロジックを持たない（ローカルの`qsoku check`等と同じコマンドが通ることがCIが通ることの前提になる）
+- `check`ジョブは`mtqg`もmatrixにし、最低版と`latest`の両方で試す（OS 3つ×mtqg 2つ）。最低版は`src/mtqg/availability.ts`の`MIN_SUPPORTED_MTQG_VERSION`とそろえる（`.claude/rules/mtqg-cli.md`「版」）。`.devcontainer/postCreate.sh`の`mtqg`は`@latest`で、これとは別物
 - **`qsokufile`の`test:`エントリは`xvfb-run`の有無で分岐する**（todo`b7fe931ffa`）。`command -v xvfb-run`がある（このdevcontainerとCIの`ubuntu-latest`）ときだけ`env -u ELECTRON_RUN_AS_NODE xvfb-run -a`で包み、無い（`macos-latest`・`windows-latest`。元から実ディスプレイを持つランナーでXvfbが要らない）ときは`node`を直接呼ぶ。`uname`の文字列判定（Windows/MSYSでの表記揺れがある）ではなく、実際に使えるかどうかで判定している
 - `qsoku test`（拡張開発ホストで実物VS Codeを起動）に必要なXvfb一式（`libnss3`等）は`.devcontainer/postCreate.sh`と同じ、動作確認済みのパッケージ一覧をそのまま`apt-get install`する。CIのci.ymlでは、このstepに`if: matrix.os == 'ubuntu-latest'`を付けている（Windows/macOSには`apt-get`が無い上、そもそも不要）
 - `actions/checkout`・`actions/setup-go`の版・`go-version`はmtqg本体のci.ymlとそろえる（版の食い違いで「手元は通るがCIは落ちる」を避ける）
 - **このLinux devcontainerからは、Windows/macOSのCI matrixそのものはローカルで実行・確認できない。** `qsoku test`のローカル実行で確かめられるのは常に`xvfb-run`分岐（Linux側）だけで、Windows/macOSでの成功は実際にpushしてGitHub Actions上で確認するしかない
+- **`/dev/stderr`等のUnix固有のパスはWindows（Git Bash）で壊れる。** `tee /dev/stderr`などを使わず、標準のリダイレクトだけで書く
+- **Windowsのcheckoutで改行がCRLFになると、整形や文字列の比較が全ファイルで食い違う。** ルートの`.gitattributes`（`* text=auto eol=lf`）で防ぐ
+- **`uses: owner/repo@TAG`はタグ名と厳密に一致しないと失敗する。** `v`の有無を見落としやすい。書く前に実際のタグ名を確かめる
+- **出力に出るパスと比べるテストは、一時ディレクトリを`fs.realpathSync`で解決してから比べる。** 同じディレクトリでも、macOSは`/var`→`/private/var`のシンボリックリンク、Windowsは8.3の短縮名（`RUNNER~1`）と長い名前が食い違う。`os.tmpdir()`・`fs.mkdtempSync`の値のまま比べると、macOS・WindowsのCIだけで落ちる
+- **Windowsでは、開いたままのファイルを置き換え（`rename`）られないことがあり、開いたハンドルのあるディレクトリは消せない。** 一時ファイル経由の置き換えや、後片付け（`fs.rmSync`）の前に、先にファイルを閉じ、子プロセスの終了を待つ。Windowsのランナーでだけ落ちる

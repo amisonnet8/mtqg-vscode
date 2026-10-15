@@ -2,6 +2,7 @@ import type { Author, JournalEvent, MtqgRecord, RecordState } from '../../mtqg/t
 import { escapeHtml } from '../shared/escape';
 import { replyRow } from './thread';
 import { authorText, badge, copyIdButton, dateText, deleteButton, editableElement } from './table';
+import { byCreated } from './format';
 
 /** One `log --events` entry: any mtqg record, plus its own event history
  * (used to tell "edited" apart -- ui.md「訂正の事実を追記し、直したことを見せる」
@@ -172,7 +173,7 @@ function threadPost(
   options: ThreadPostOptions,
 ): string {
   const done = record.status === 'done';
-  const sortedReplies = [...replies].sort((a, b) => a.created.localeCompare(b.created));
+  const sortedReplies = [...replies].sort(byCreated);
   const rows = sortedReplies.map((r) => (r.deleted ? deletedReplyRow(r) : replyRow(r))).join('');
   const hiddenLine = hiddenCount
     ? `<p class="post-hidden-count">${escapeHtml(describeHiddenCount(hiddenCount, options.kind))}</p>`

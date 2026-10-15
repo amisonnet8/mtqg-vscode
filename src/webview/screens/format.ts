@@ -16,3 +16,13 @@ export function formatDate(iso: string): string {
   const pad = (n: number): string => String(n).padStart(2, '0');
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+/**
+ * Orders records oldest first by `created`, comparing instants rather than
+ * strings (.claude/rules/datetime.md): the same moment can be written with
+ * `Z` or an offset, or with and without fractional seconds, and those
+ * strings do not sort the way the moments do.
+ */
+export function byCreated(a: { created: string }, b: { created: string }): number {
+  return Date.parse(a.created) - Date.parse(b.created);
+}

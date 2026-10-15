@@ -4,7 +4,8 @@ set -euo pipefail
 # wget, gnupg,
 # lsb-release:    Adding the Trivy apt repository below. (gh and pwsh come from
 #                 the devcontainer features in devcontainer.json.)
-# jq:             Inspecting mtqg's --json output while debugging the extension.
+# jq:             Used by .claude/hooks/ (build.sh, require-bcuz.sh) and for
+#                 inspecting mtqg's --json output while debugging the extension.
 # ShellCheck:     Static analysis of tracked *.sh files (.claude/rules/testing.md).
 #                 Comment lines must not start with the lowercase directive word,
 #                 or ShellCheck parses them as directives (SC1072/SC1073).
@@ -33,10 +34,10 @@ fi
 # filesystem.allowWrite path up front, or the first qsoku trivy in a fresh
 # container fails with "read-only file system" (.claude/rules/testing.md).
 # The list is read from settings.json, so this block needs no change when
-# allowWrite does, and it is project-independent. "~/x" is created under the
-# home directory; other absolute paths (e.g. /go) are created if they do not
-# exist yet, and a failure only warns (no sudo is used). Relative paths and
-# the special paths /dev, /proc and /sys are left alone.
+# allowWrite does, and it is project-independent. "~/x" and "$HOME/x" are created
+# under the home directory; other absolute paths (e.g. /go) are created if they do
+# not exist yet, and a failure only warns (no sudo is used). Relative paths, "."
+# and $TMPDIR, and the special paths /dev, /proc and /sys are left alone.
 sandbox_settings="$(dirname "$0")/../.claude/settings.json"
 tilde='~'
 if [ -f "$sandbox_settings" ]; then
@@ -70,11 +71,10 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 # @latest here, same as qsoku above -- this container is for day-to-day
 # development, where always having the newest mtqg is more useful than a
 # pinned version. This is *not* the version this extension declares as its
-# floor: `src/mtqg/availability.ts`'s MIN_SUPPORTED_MTQG_VERSION and CI's own
-# `go install ...@v1.0.0` (.github/workflows/ci.yml) stay pinned on purpose,
-# so the extension's actual minimum stays a deliberately verified, stable
-# version regardless of what this container happens to install (decision,
-# 2026-09-29, todo 7a072cc72a).
+# floor: `src/mtqg/availability.ts`'s MIN_SUPPORTED_MTQG_VERSION stays pinned
+# on purpose, and CI (.github/workflows/ci.yml) tries both that floor and
+# @latest, so the extension's actual minimum stays a deliberately verified
+# version regardless of what this container happens to install.
 go install github.com/amisonnet8/mtqg/cmd/mtqg@latest
 
 # srwr: the AI's edits go through its look / edit / new tools, each with a
@@ -84,6 +84,16 @@ go install github.com/amisonnet8/mtqg/cmd/mtqg@latest
 # .claude/settings.json follow any change in the tools' names (srwr's
 # docs/reference/cli.md).
 go install github.com/amisonnet8/srwr/cmd/srwr@latest
+
+# bcuz: every command Claude Code runs through the Bash tool goes through
+# `bcuz "<reason>" <command>`, which records when / why / what / result in
+# .bcuz/history.jsonl (.claude/rules/bcuz-usage.md; enforced by the PreToolUse
+# hook .claude/hooks/require-bcuz.sh). @latest, like the tools above.
+go install github.com/amisonnet8/bcuz/cmd/bcuz@latest
+
+# Create .bcuz/ at the repository root (idempotent: prints "already exists"
+# and succeeds if it is there). Without it, commands still run but are not recorded.
+(cd "$(dirname "$0")/.." && bcuz --init)
 
 # Wire up qsoku's shell integration (working-directory carry-back and
 # completion) for bash. Idempotent: skipped if already present, so

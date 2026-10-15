@@ -13,6 +13,7 @@ import {
   editableCell,
   editableElement,
 } from './table';
+import { byCreated } from './format';
 
 /**
  * QA and Bugs share one shape (ui.md「Bugsは QAと同じ形」, todo
@@ -71,7 +72,7 @@ export interface ThreadView {
 }
 
 function sortedByCreated<T extends { created: string }>(records: T[]): T[] {
-  return [...records].sort((a, b) => a.created.localeCompare(b.created));
+  return [...records].sort(byCreated);
 }
 
 /**
@@ -102,7 +103,7 @@ export function replyRow(reply: ThreadReply): string {
  */
 function itemRows(record: ThreadItem, expanded: boolean, labels: ThreadLabels): string {
   const done = record.status === 'done';
-  const replies = [...(record.replies ?? [])].sort((a, b) => a.created.localeCompare(b.created));
+  const replies = [...(record.replies ?? [])].sort(byCreated);
 
   // A visible "<Noun> (n)" label, not just the ▸/▾ glyph: a human tester
   // found the icon-only button too subtle to notice (todo `8b7b600827`,

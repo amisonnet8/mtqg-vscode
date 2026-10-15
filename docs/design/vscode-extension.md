@@ -75,7 +75,7 @@
 
 ## checkMtqgAvailability
 
-`openPanel()`が新規にパネルを作るとき（`currentPanel`が無いとき）だけ、`mtqg`の有無・最低版（`MIN_SUPPORTED_MTQG_VERSION`、`.claude/rules/mtqg-cli.md`「版」で3か所同期）を確認する。無ければエラー、最低版より古ければ警告を、VS Code標準の通知（`showWarningMessage`/`showErrorMessage`）で1回だけ出す。`reveal()`で済む再オープン時や、個々の書き込み失敗のたびには再チェックしない——各画面の`renderError`が失敗をその場に表示できるため。判定ロジックは`src/mtqg/availability.ts`（vscode非依存の`checkMtqgAvailability`・`describeAvailabilityWarning`）に置き、`panel.ts`は届いた`severity`で通知を出し分けるだけにする。
+`openPanel()`が新規にパネルを作るとき（`currentPanel`が無いとき）だけ、`mtqg`の有無・最低版（`MIN_SUPPORTED_MTQG_VERSION`、CIの`matrix.mtqg`の最低版と同期。`.claude/rules/mtqg-cli.md`「版」）を確認する。無ければエラー、最低版より古ければ警告を、VS Code標準の通知（`showWarningMessage`/`showErrorMessage`）で1回だけ出す。`reveal()`で済む再オープン時や、個々の書き込み失敗のたびには再チェックしない——各画面の`renderError`が失敗をその場に表示できるため。判定ロジックは`src/mtqg/availability.ts`（vscode非依存の`checkMtqgAvailability`・`describeAvailabilityWarning`）に置き、`panel.ts`は届いた`severity`で通知を出し分けるだけにする。
 
 ## ドキュメント
 

@@ -1,6 +1,7 @@
 import type { TodoRecord } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
 import { authorText, copyIdButton, dateText, deleteButton, editableElement } from './table';
+import { byCreated } from './format';
 
 export interface TodosView {
   /** "Show done" checkbox state (ui.md: default is open-only). */
@@ -37,7 +38,7 @@ function card(record: TodoRecord): string {
  * sits right above the add field, todo `a597ec6df2`) is built from `created`.
  */
 function sortedByCreated(records: TodoRecord[]): TodoRecord[] {
-  return [...records].sort((a, b) => a.created.localeCompare(b.created));
+  return [...records].sort(byCreated);
 }
 
 /**

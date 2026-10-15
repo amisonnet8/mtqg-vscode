@@ -1,5 +1,6 @@
 import type { RuleRecord } from '../../mtqg/types';
 import { authorCell, copyIdButtonCell, dateCell, deleteButtonCell, editableCell, editableElement } from './table';
+import { byCreated } from './format';
 
 /**
  * `rule list` does not guarantee any particular order (verified against the
@@ -9,7 +10,7 @@ import { authorCell, copyIdButtonCell, dateCell, deleteButtonCell, editableCell,
  * built here from `created`, not inherited from mtqg's own response.
  */
 export function renderRules(records: RuleRecord[]): string {
-  const sorted = [...records].sort((a, b) => a.created.localeCompare(b.created));
+  const sorted = [...records].sort(byCreated);
   const rows = sorted
     .map(
       (r) =>

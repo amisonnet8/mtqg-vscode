@@ -1,6 +1,7 @@
 import type { GlossaryRecord } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
 import { authorCell, copyIdButtonCell, dateCell, deleteButtonCell, editableCell, editableElement } from './table';
+import { byCreated } from './format';
 
 /**
  * `edit` can change a glossary entry's definition but never its word
@@ -16,7 +17,7 @@ import { authorCell, copyIdButtonCell, dateCell, deleteButtonCell, editableCell,
  * (ui.md) is done visually instead.
  */
 export function renderGlossary(records: GlossaryRecord[]): string {
-  const sorted = [...records].sort((a, b) => a.created.localeCompare(b.created));
+  const sorted = [...records].sort(byCreated);
   const wordCounts = new Map<string, number>();
   for (const record of sorted) {
     wordCounts.set(record.word, (wordCounts.get(record.word) ?? 0) + 1);
