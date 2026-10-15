@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { runTests } from '@vscode/test-electron';
-import { createTempRepo } from '../helpers/tempRepo';
+import { createTempRepo, developerHomeEnv } from '../helpers/tempRepo';
 
 async function main(): Promise<void> {
   // out/test/vscode/runTest.js -> repository root is three levels up.
@@ -25,6 +25,12 @@ async function main(): Promise<void> {
       // --disable-workspace-trust: a folder is now opened below, and the
       // trust prompt would otherwise block this headless run.
       launchArgs: [repo.root, '--disable-extensions', '--disable-gpu', '--disable-workspace-trust'],
+      // tempRepo.ts points HOME at a throwaway directory for the whole test
+      // process; VS Code itself hung on macOS with that HOME (bug
+      // 7290a04665), so it gets the developer's own home back. The git
+      // identity and the removal of MTQG_AUTHOR_* still apply to the mtqg it
+      // runs.
+      extensionTestsEnv: { ...developerHomeEnv },
     });
   } catch (err) {
     await repo.cleanup();

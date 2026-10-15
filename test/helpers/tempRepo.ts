@@ -40,6 +40,18 @@ function isolateEnv(home: string): void {
   delete process.env.MTQG_TTY;
 }
 
+/**
+ * The developer's own home variables, as they were before isolateEnv ran
+ * (undefined where unset). A real VS Code started from test/vscode/runTest.ts
+ * needs them back: on macOS it hung when started with the throwaway HOME
+ * (bug 7290a04665), so only the git and mtqg variables stay isolated there.
+ */
+export const developerHomeEnv: Readonly<Record<'HOME' | 'USERPROFILE' | 'XDG_CONFIG_HOME', string | undefined>> = {
+  HOME: process.env.HOME,
+  USERPROFILE: process.env.USERPROFILE,
+  XDG_CONFIG_HOME: process.env.XDG_CONFIG_HOME,
+};
+
 const testHome = fsSync.mkdtempSync(path.join(os.tmpdir(), 'mtqg-vscode-home-'));
 process.on('exit', () => fsSync.rmSync(testHome, { recursive: true, force: true }));
 isolateEnv(testHome);
