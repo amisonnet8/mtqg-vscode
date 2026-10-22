@@ -1,0 +1,139 @@
+.bcuz/	bcuz を通して動かしたコマンドの記録（コミットする）
+	history.jsonl	1コマンド1行の JSON：いつ・なぜ・何を・終了コード
+.claude/	リポジトリで共有する Claude Code の設定
+	hooks/	Claude Code が道具の前後に動かすフック
+		build.sh	srwr の edit・new で .ts・package.json・tsconfig.json を変えたあと qsoku build を動かし、失敗を知らせる
+		crube-untracked.sh	srwr の new でファイルを作ったあと、説明の無いパスを言語ごとに Claude に知らせる
+		require-bcuz.sh	bcuz を通さない Bash のコマンドを断る PreToolUse フック
+		require-bcuz.test.sh	require-bcuz.sh が通す・断るコマンドの表（qsoku hook）
+	rules/	このリポジトリで作業するときのルール（日本語）。いつ読むかは CLAUDE.md にある
+		bcuz-usage.md	Bash のコマンドを bcuz で動かす方法と、秘密をコマンドに書かないこと
+		crube-usage.md	crube の使い方：MCP と CLI、場所の探し方、両方の言語の説明の保ち方
+		datetime.md	日時の扱い：UTC で持ち、表示だけ利用者のタイムゾーンに直す
+		dependencies.md	npm の依存の線引き：実行時は0、開発時は Microsoft 公式と TypeScript だけ
+		directory-structure.md	ファイルの置き場所と、リポジトリの構成
+		distribution.md	配布：タグの push で .vsix つきの GitHub Release ができる。Marketplace への公開は人間
+		documentation.md	文書の書き方：例の値は道具で求める、docs/design/ に書く経緯の線引き
+		mtqg-cli.md	拡張から mtqg の CLI を呼ぶ方法：execFile、--json、エラー、MTQG_TTY、版
+		mtqg-usage.md	mtqg でメモ・todo・質問・不具合・決まり事を記録する方法
+		naming.md	命名：mtqg の用語を、コードと UI でそのまま使う
+		qsoku-usage.md	ビルド・テスト・lint の qsoku の名前と呼び方
+		srwr-usage.md	ファイルは srwr だけで変える（厳格モード）こと、テープの閉じ方
+		testing.md	テスト方針と、サンドボックス・OS ごとの CI の落とし穴
+		ui.md	UI の方針：英語、文字に頼らない、6画面、機能を足さない
+		working-with-human.md	人間への頼み方：小さなつまずき、確認、見え方の了承
+	settings.json	Claude Code の許可・サンドボックス・フック（人間が管理する）
+	skills/	Claude Code のスキル
+		commit-with-tape/	スキル：srwr のテープを閉じてコミットする
+			SKILL.md	スキルの手順
+.devcontainer/	開発用のコンテナ
+	devcontainer-lock.json	コンテナを作ったときの feature の版
+	devcontainer.json	コンテナの定義と VS Code の設定
+	postCreate.sh	コンテナを作ったあとに1回動く：道具（qsoku・mtqg・srwr・bcuz・crube・Trivy）と補完を入れる
+.github/	GitHub の設定
+	workflows/	GitHub Actions のワークフロー
+		ci.yml	CI：3つの OS と2つの mtqg の版で qsoku check・test、ShellCheck、Trivy。release.yml からも呼ばれる
+		release.yml	タグの push で動く：版を確かめ、ci.yml を通し、.vsix を作って GitHub Release を公開する
+.mtqg/	mtqg の作業記録：メモ・todo・質問・不具合・用語・決まり事
+	.gitattributes	journal.jsonl を merge=union でマージする
+	.gitignore	.local/ を git に入れない
+	SCHEMA.md	journal.jsonl のデータ形式
+	journal.jsonl	記録そのもの。1件1行の JSON（mtqg からだけ書く）
+	version	mtqg のデータ形式の版
+.srwr/	srwr：AI によるファイル編集のテープ（操作ごとに理由つき）
+	tapes/	閉じたテープ（コミットする）。srwr view で再生できる
+		| 作業のまとまりごとに1本のテープ（圧縮済みの *.tape.jsonl.gz）。
+		| テープは .crube/ignore で crube の対象から外してあり、説明は要らない。
+.vscode/	拡張を開発するための VS Code の設定
+	launch.json	拡張を拡張開発ホストで動かす（F5）
+	tasks.json	launch.json が始める、tsc の watch のバックグラウンドタスク
+docs/	プロジェクトの文書
+	assets/	README.md だけが使う画像（.vsix には入れない）
+		demo.gif	README のデモのアニメーション
+		icon.png	README の見出しのアイコン（256×256）
+	design/	今の設計（日本語）
+		vscode-extension.md	拡張の設計：mtqg 設計 11.4 の写しと、拡張固有の決定
+media/	拡張自身が使う画像
+	icon.png	Marketplace のアイコン（128×128）
+	tab-icon-dark.svg	mtqg パネルのタブのアイコン（暗いテーマ用）
+	tab-icon-light.svg	mtqg パネルのタブのアイコン（明るいテーマ用）
+src/	拡張のソース（TypeScript）
+	extension.ts	エントリポイント：コマンド mtqg.open と、パネルを復元するシリアライザを登録する
+	mtqg/	mtqg の CLI を子プロセスで呼び、--json の出力に型を付ける
+		availability.ts	mtqg が PATH にあり、版が足りているか（MIN_SUPPORTED_MTQG_VERSION）を確かめる
+		client.ts	拡張が使う mtqg のコマンドごとの、型つきの関数
+		errors.ts	mtqg が標準エラーに出す --json の行から読んだエラーと警告
+		index.ts	src/mtqg/ が外に出すもの
+		process.ts	mtqg を execFile と --json で動かし、出力を読む
+		types.ts	拡張が読む、mtqg の --json の出力の型
+	webview/	mtqg パネル：6つのタブを持つ Webview
+		client/	Webview の中で動くスクリプト（DOM の型、ブラウザ向け ES モジュール、別の tsconfig）
+			main.ts	ホストから届いた HTML を差し込み、クリックと入力をホストへ送る
+			tsconfig.json	Webview のスクリプトのコンパイラ設定
+		controller.ts	Webview のメッセージ→mtqg の呼び出し→描画。表示の状態を持つ（vscode 非依存）
+		panel.ts	WebviewPanel を開く・前に出す・復元する。ここで vscode を触る唯一のファイル
+		screens.ts	renderScreen がタブごとの描画へ振り分ける。renderError もここ
+		screens/	画面ごとの HTML をホスト側で組む（vscode 非依存）
+			bugs.ts	Bug 画面：bug・reply の文言で renderThread を呼ぶ
+			composer.ts	Memo の入力欄のスラッシュコマンド（/todo・/t など）を解釈する
+			format.ts	日付を利用者のタイムゾーンで表示用に整える
+			glossary.ts	Glossary 画面：表。同じ語が複数回定義されていたら目立たせる
+			memos.ts	Memo 画面：log --events から、全種類の記録のタイムラインを描く
+			questions.ts	QA 画面：question・answer の文言で renderThread を呼ぶ
+			rules.ts	Rule 画面：ただの表
+			table.ts	画面に共通の部品：編集できる文字、削除と ID のボタン、バッジ
+			thread.ts	QA と Bug に共通のスレッドの画面：返信つきの行と、返信欄
+			todos.ts	Todo 画面：Keep 風のカード。完了したものは開いているものの上に
+		shared/	6画面に共通（vscode 非依存）
+			escape.ts	HTML に差し込む前のエスケープ
+			html.ts	renderShell：CSP・タブバー・各画面を包むタブパネル
+			messages.ts	ホストと Webview の間のメッセージの型と検証
+			tabs.ts	6つのタブの ID・ラベル・既定のタブ
+test/	テスト（node:test）
+	helpers/	テストが共有する道具
+		tempRepo.ts	git init と mtqg init をした一時リポジトリ。テストを開発者の git・mtqg の設定から切り離す
+	unit/	VS Code API の要らないテスト（qsoku unit）
+		helpers/	test/helpers/ のテスト
+			tempRepo.test.ts	一時リポジトリと、その記録者のテスト
+		html.test.ts	renderShell のテスト
+		mtqg/	本物の mtqg を使う、src/mtqg/ のテスト
+			availability.test.ts	mtqg の有無と版の確かめのテスト
+			client.test.ts	client の mtqg のコマンドごとのテスト（記録の本文は完全一致で見る）
+			process.test.ts	mtqg の起動と、出力・エラーの読み取りのテスト
+		vscodeignore.test.ts	.vscodeignore が作業用のディレクトリを .vsix から外しているかを確かめる
+		webview/	src/webview/ のテスト
+			controller.test.ts	本物の mtqg を使う controller のテスト
+			escape.test.ts	HTML のエスケープのテスト
+			format.test.ts	日付の整形のテスト
+			messages.test.ts	メッセージの検証のテスト
+			screens/	画面ごとの描画のテスト
+				bugs.test.ts	Bug 画面のテスト
+				composer.test.ts	Memo の入力欄のスラッシュコマンドのテスト
+				glossary.test.ts	Glossary 画面のテスト
+				memos.test.ts	Memo のタイムラインのテスト
+				questions.test.ts	QA 画面のテスト
+				rules.test.ts	Rule 画面のテスト
+				table.test.ts	画面に共通の部品のテスト
+				thread.test.ts	共通のスレッドの画面のテスト
+				todos.test.ts	Todo 画面のテスト
+			tabs.test.ts	タブの定義のテスト
+	vscode/	本物の VS Code（拡張開発ホスト）でのテスト（qsoku test）
+		runTest.ts	VS Code を取ってきて、一時 mtqg リポジトリを開いて起動する
+		suite/	拡張開発ホストの中で動くテスト
+			extension.test.ts	本物の VS Code の中での拡張のテスト
+			index.ts	ホストの中で node:test の run() を呼び、テストが終わるのを待つ
+.gitattributes	改行（すべて LF）と、記録のファイルの merge=union
+.gitignore	git に入れないもの。ルート直下のドットで始まる名前は許可リスト方式
+.mcp.json	Claude Code に mtqg・srwr と、crube（英語・日本語）の MCP サーバーをつなぐ設定
+.srwrignore	srwr がテープに記録しないファイル
+.vscodeignore	パッケージ（.vsix）に入れないファイル
+CHANGELOG.md	版ごとの変更。GitHub Release の本文にもなる
+CLAUDE.md	このリポジトリでの Claude Code のルールと、読むべきルールファイルの案内
+LICENSE	MIT ライセンス
+README.md	Marketplace に出る拡張の説明（英語）
+README_ja.md	README.md の日本語版
+package-lock.json	npm の開発用の依存の、確定した版
+package.json	拡張のマニフェスト：版、コマンド、メニュー、開発用の依存
+qsokufile	ビルド・テスト・lint の名前つきコマンド（qsoku）
+trivy.yaml	Trivy の設定：何を脆弱性・ライセンスの失敗とみなすか
+tsconfig.json	拡張のホスト側とテストのコンパイラ設定

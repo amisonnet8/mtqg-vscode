@@ -19,7 +19,7 @@ function vscodeignoreLines(): string[] {
 // package that way before v1.1.0 was released (todo `77f9e71300`), found
 // only by reading `vsce ls` -- so each of the repository's own working
 // directories is asserted here instead of relying on someone looking.
-for (const entry of ['.claude/**', '.mtqg/**', '.srwr/**', '.srwrignore', '.bcuz/**', '.devcontainer/**', '.github/**', 'src/**', 'test/**', 'docs/**']) {
+for (const entry of ['.claude/**', '.mtqg/**', '.srwr/**', '.srwrignore', '.bcuz/**', '.crube/**', '.devcontainer/**', '.github/**', 'src/**', 'test/**', 'docs/**']) {
   test(`.vscodeignore keeps ${entry} out of the package`, () => {
     assert.ok(vscodeignoreLines().includes(entry), `${entry} is missing from .vscodeignore`);
   });

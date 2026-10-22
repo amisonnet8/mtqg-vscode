@@ -1,0 +1,100 @@
+name: Release
+
+# A tag pushed by a person (v1.2.0) is all a release takes
+# (.claude/rules/distribution.md): this checks that the tag is the extension's
+# version, runs the checks of ci.yml, packages the .vsix (qsoku package),
+# attaches it to a draft Release whose notes are the version's section of
+# CHANGELOG.md, and then publishes it. The Marketplace gets the .vsix by hand.
+# A run that fails on the way leaves at most a draft, which the next run for
+# the tag replaces. A tag whose Release is already published is left alone,
+# and the run fails.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  # A tag that is not v<the extension's version> makes nothing. This is checked
+  # first, before the long checks.
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Stop if the extension's version is not the tag's
+        run: |
+          version=$(jq -r .version package.json)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::package.json says $version, but the tag is $GITHUB_REF_NAME. Set the extension's version to the tag's, commit, and tag that commit."
+            exit 1
+          fi
+
+  checks:
+    needs: version
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to make and publish the Release
+    steps:
+      - name: Stop if the Release of this tag is published
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)" = false ]; then
+            echo "::error::The Release of $GITHUB_REF_NAME is already published; it is left as it is. Release a new tag."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+      # cache: false, as in ci.yml: this repository has no go.mod.
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27'
+          cache: false
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Install qsoku
+        run: go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
+      - name: qsoku package
+        shell: bash
+        run: qsoku package
+      # The notes are the section "## [X.Y.Z] - date" of CHANGELOG.md, without
+      # its heading. A Release shows each line break, so the wrapped lines of a
+      # paragraph or a list item are joined into one line.
+      - name: Take the notes from CHANGELOG.md
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" '
+            /^## \[/ { if (on) exit; on = index($0, "## [" v "]") == 1; next }
+            !on { next }
+            /^[[:space:]]*$/ { if (line != "") print line; line = ""; print ""; next }
+            /^#/ || /^- / { if (line != "") print line; line = $0; next }
+            { sub(/^[[:space:]]+/, ""); line = (line == "" ? $0 : line " " $0) }
+            END { if (line != "") print line }
+          ' CHANGELOG.md | sed -e '/./,$!d' | cat -s >"$RUNNER_TEMP/notes.md"
+          if ! grep -q . "$RUNNER_TEMP/notes.md"; then
+            echo "::error::CHANGELOG.md has no section for ${GITHUB_REF_NAME#v}. Add it, commit, and tag that commit."
+            exit 1
+          fi
+      # A draft left by a failed run for this tag is replaced, not added to.
+      - name: Attach the .vsix to a draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)" = true ]; then
+            gh release delete "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --yes
+          fi
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md" ./*.vsix
+      # Last, once the .vsix is attached: a person never sees a published
+      # Release without it.
+      - name: Publish the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false

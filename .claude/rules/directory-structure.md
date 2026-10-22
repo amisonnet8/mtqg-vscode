@@ -2,6 +2,8 @@
 
 新しいファイルを追加する際は、どこに置くかをここで確かめる。**構成を変えたら、この文書も同じ変更の中で直す。**
 
+**このリポジトリの説明（`.crube/`）も保つ。** ファイル・ディレクトリを足す・動かす・消すときは、同じ変更の中で英語と日本語の説明を直し、コミットの前に両方の言語で`crube status --require all`を通す。やり方（MCPとCLI、`.crube/ignore`の保ち方）は`.claude/rules/crube-usage.md`
+
 `*`は初期構成（2026-09-26）・拡張の雛形（todo`97779f964e`）・CLI層（todo`cd0d242c55`）・Webviewの土台（todo`b9caf0b88c`）・Rules/Glossary画面（todo`daf43fc83d`）・ToDo画面（todo`4e09f42a9f`）・QA画面（todo`8b7b600827`）・Bugs画面（todo`13570d152b`）・Memo画面（todo`01ee2706ce`）・エディタからの記録作成コマンド（todo`24f2e871d5`）・CI（todo`53cbaa3265`）・パッケージング準備（todo`2f60eb9fb1`）で作ったもの。6画面と主な操作、CI、Marketplace向けのREADME・CHANGELOGが揃った。それ以外は、後続のtodoで足す予定のもの。
 
 ```
@@ -22,9 +24,10 @@ mtqg-vscode/
 *├── .gitignore
 *├── trivy.yaml
 *├── .mtqg/
-*├── .mcp.json               （mtqgとsrwrのMCPサーバー。srwrの分は`srwr init`が書く形）
+*├── .mcp.json               （mtqg・srwrとcrube（英語の`crube`・日本語の`crube-ja`）のMCPサーバー。srwrの分は`srwr init`が書く形）
 *├── .srwrignore             （srwrがテープに記録しないファイル。`.mtqg/`・`node_modules/`・`out/`・`.vscode-test/`。`.claude/rules/srwr-usage.md`）
 *├── .srwr/                  （srwrの鍵・ロック・テープ。**`tapes/`だけコミットする**。鍵・ロック・`active`・`init-backup/`は無視）
+├── .crube/                 （このリポジトリのファイルの説明。crube。`structure.txt`は英語、`structure_ja.txt`は日本語、`ignore`は`.gitignore`に合わせて手で保つ。**コミットする**。`.claude/rules/crube-usage.md`）
 ├── .bcuz/                  （bcuzの記録`history.jsonl`。`postCreate.sh`が`bcuz --init`で作る。**コミットする**（`merge=union`）。`.claude/rules/bcuz-usage.md`）
 *├── docs/design/vscode-extension.md（**今の設計**を保つ。経緯は、戻すと同じ問題が起きるものだけ。ほかは`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
@@ -33,7 +36,8 @@ mtqg-vscode/
 *│   └── postCreate.sh
 *├── .claude/
 *│   ├── rules/
-*│   ├── hooks/               （build.sh、require-bcuz.sh とそのテスト）
+*│   ├── skills/              （commit-with-tape：テープを閉じてコミットする手順）
+*│   ├── hooks/               （build.sh、require-bcuz.sh とそのテスト、crube-untracked.sh：srwr の new のあとに未説明を知らせる）
 *│   └── settings.json
 *├── qsokufile                （build・unit・check・test・trivy・shellcheck・hook・package）
 *├── package.json / package-lock.json / tsconfig.json / .vscodeignore
@@ -77,7 +81,8 @@ mtqg-vscode/
 *│   ├── launch.json          （F5で拡張開発ホストを起動）
 *│   └── tasks.json           （tsc -wのバックグラウンドタスク）
 *└── .github/workflows/
-*    └── ci.yml                （check・shellcheck・trivyの3ジョブ、checkは3 OS matrix。.claude/rules/testing.md「CI」）
+*    ├── ci.yml                （check・shellcheck・trivyの3ジョブ、checkは3 OS matrix。.claude/rules/testing.md「CI」。release.ymlから`workflow_call`でも呼ばれる）
+    └── release.yml           （タグで動くリリース。版の確認→ci.yml→`qsoku package`→`.vsix`を添付した Release を公開する。.claude/rules/distribution.md）
 ```
 
 ## 配置の判断基準
@@ -105,6 +110,8 @@ mtqg-vscode/
 
 - **`.bcuz/`**: bcuzが`.bcuz/history.jsonl`に追記する、コマンドの実行の記録（`.claude/rules/bcuz-usage.md`）。**コミットする**（`.gitignore`の`!/.bcuz/`）。行を足すだけなので、`.gitattributes`の`merge=union`で、マージしても両側の行が残る。コミットの前に`git add .bcuz/history.jsonl`する（`git commit`は`bcuz`を通さない）。秘密をコマンドに書かない（記録に残る）。中のファイルは直接編集しない。`.srwrignore`でテープにも載せず、`.vscodeignore`で公開物にも入れない
 - **`.claude/hooks/require-bcuz.sh`**: Bashツールのコマンドを、`bcuz`を通っていなければ実行前に断る`PreToolUse`フック。判定の表は`require-bcuz.test.sh`（`bash .claude/hooks/require-bcuz.test.sh`）。判定を変えたら、テストの表も同じ変更の中で直す
+- **`.mcp.json`**: `mtqg mcp`と`srwr mcp`（MCPサーバー）の配線。`mtqg init --agent claude-code`・`srwr init`が書くものと同じ。その後ろに、crubeのMCPサーバー（`crube mcp --allow-write`。`crube-ja`は`CRUBE_LANG=ja`）を手で足している（`.claude/rules/crube-usage.md`）
+- **`.crube/`**: このリポジトリのファイルとディレクトリの説明（`.claude/rules/crube-usage.md`）。**コミットする**（`.gitignore`の`!/.crube/`）。閉じたテープ（`*.tape.jsonl.gz`）は、説明を付けず`.crube/ignore`で外す（パターンのエントリにすると、最初のテープを閉じるまで何にも当たらず`orphan`になり、無ければ新しいテープが`untracked`になるため）。`ignore`は`.gitignore`を手で写したもの（crube は`.gitignore`を読まない）
 - **`.devcontainer/devcontainer-lock.json`**: コンテナのビルドで自動で作られる。**コミットする**（この版のfeatureでテストなどが通った証明になる）。featureを新しくしたいときは、lockを消してビルドし直し、新しいlockをコミットする
 - **`.srwr/`**: 最初のhook・MCPの呼び出しで、srwrが作る（`srwr init`でも作られる。鍵`key`・`lock`・`active`・`tapes/`・`init-backup/`）。**コミットするのは閉じて圧縮したテープ`tapes/*.tape.jsonl.gz`だけ**。書き込み中の生のテープ`*.tape.jsonl`は`.gitignore`で対象外（閉じると`.gz`に置き換わり、生のままコミットすると「削除＋追加」の差分が出るため）。鍵は共有しない。リポジトリには鍵を入れない（鍵をプロジェクトごとに別にするため）
 - **`.srwrignore`**: テープに記録しないファイル（`.gitignore`と同じ書き方）。生成物や巨大なファイルはここに足す。`.env`・`*.pem`・`*.key`などはsrwrが元から外す

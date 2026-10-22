@@ -26,6 +26,15 @@
         "matcher": "mcp__srwr__edit|mcp__srwr__new"
       },
       {
+        "hooks": [
+          {
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/crube-untracked.sh",
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__srwr__new"
+      },
+      {
         "matcher": "Read|Bash|Grep|Edit",
         "hooks": [
           {
@@ -100,7 +109,9 @@
       "mcp__srwr__look",
       "mcp__srwr__edit",
       "mcp__srwr__new",
-      "mcp__srwr__session"
+      "mcp__srwr__session",
+      "mcp__crube",
+      "mcp__crube-ja"
     ],
     "ask": [
       "Bash(git reset --hard*)",
@@ -121,6 +132,8 @@
   },
   "enabledMcpjsonServers": [
     "mtqg",
-    "srwr"
+    "srwr",
+    "crube",
+    "crube-ja"
   ]
 }

@@ -26,6 +26,7 @@
 - `qsoku shellcheck`は`git ls-files '*.sh' '*.bash'`で追跡中のものを列挙してShellCheckにかける（`git add`してから走らせる）
 - シェルスクリプト中のコメントを、行頭が小文字の`# shellcheck`で始まる文にしてはいけない（ShellCheckがインラインディレクティブとして誤解釈し、SC1072/SC1073でパースエラーになる）。「ShellCheck」のように大文字を混ぜて書く
 - **`postCreate.sh`の中で`. /etc/os-release`をsourceしない。** ShellCheckのSC1091（追えない形で指定されたファイル）が情報の水準で報告され、終了コードが0でなくなる。ディストリビューションの版は`lsb_release -rs`で取る
+- `# shellcheck disable=…`は、`case`の枝の前には置けない（SC1124 のパースエラー）。`case`の文の前に置くと、全部の枝に効く
 
 ## Trivy：既知の脆弱性とライセンス
 
@@ -33,6 +34,12 @@
 - 何を失敗とみなすか（深刻度、禁止するライセンスの種類）は`trivy.yaml`で固定する
 - `npm install`で依存を足したら、必ずTrivyを通す
 - Trivyは脆弱性データベースの取得に通信が要る（下の「Bashサンドボックスの落とし穴」）
+
+## シェル向けのもの：補完のスクリプト・シェルとの連携
+
+- devcontainer のシェルは、`postCreate.sh`の`shells`で決める。初めは`(bash)`だけ
+- 補完のスクリプトなど、自分のシェル向けのものを配るプロジェクトは、**本物のシェルで動かして確かめる**。`shells`を`(bash zsh fish pwsh)`にし、`devcontainer.json`の`features`に`"ghcr.io/devcontainers/features/powershell:2.0.3": {}`を足して、コンテナを作り直す（bash・zsh はベースイメージ、fish は`postCreate.sh`の apt、pwsh は feature）。`pwsh`を挙げて feature が無いと、`postCreate.sh`が止まる
+- テストは、入っていないシェルを飛ばす（CI のランナーにあるのは bash と`pwsh`）。飛んだときは、コンテナを作り直したかを確かめる。何を候補にするかは単体テストで見て、本物のシェルのテストは「スクリプトがシェルとつながること」だけを見る
 
 ## 拡張自身のテスト
 
@@ -48,11 +55,18 @@
 
 ## テストの書き方
 
-- **期待値（件数・ID・桁など）は、手で書かず、実際の出力を読んで正しいと確かめてから固定する。** 手で数えた件数や写し間違えたIDは、正しい実装の出力と食い違い、実装を疑う遠回りになる。テストが落ちたときは、実装と期待値のどちらが誤りかを先に確かめる
+- **期待値は、テストを書く前に決める。** 推測で埋めて、落ちてから直す、をしない
+  - **計算で決まる値**（ハッシュ・表示幅・日時の書式など）は、実装とは別の道具（`sha256sum`など）で求めて書く。実装の出力を写すだけでは、実装の誤りを固定してしまう
+  - **動かして決まる値**（走査・照合の結果など）は、先に実装を動かして出力を読み、1件ずつ正しいと確かめてから貼る
+  - **件数より中身で比べる**（名前の一覧など）。件数は数え間違えても気づきにくく、落ちたときに何が違うか分からない
+  - テストが落ちたときは、実装と期待値のどちらが誤りかを先に確かめる
+  - 「〇〇と同じ書式・動き」と仕様にあるものは、その本家を道具として使って期待値を求める（gitignore の書式なら`git check-ignore`。パスに末尾の`/`を付けて聞くと、ディレクトリそのものの判定が本来と変わることがある。付けずに聞く）
 - **gitを使うテスト（`test/helpers/tempRepo.ts`の一時リポジトリなど）は、開発者の設定の影響を受けないようにする。** `HOME`と`GIT_CONFIG_GLOBAL`を一時ディレクトリに向け、`user.name`・`user.email`はテストの中で決める（子プロセスに渡す`env`で）
   - このPJでは`test/helpers/tempRepo.ts`が、読み込まれたときにテストのプロセスの`process.env`をその場で書き換える（`HOME`・`GIT_CONFIG_GLOBAL`は一時ディレクトリ、`GIT_CONFIG_NOSYSTEM=1`、`user.name`・`user.email`は`GIT_CONFIG_COUNT`/`GIT_CONFIG_KEY_n`/`GIT_CONFIG_VALUE_n`）。テストするコード（`src/mtqg/process.ts`）がmtqgを`process.env`のまま起動するため、子に個別に渡すのでなく、テストのプロセスごと切り替えている。**ただし、`test/vscode/runTest.ts`から起動する本物のVS Codeには、`HOME`・`USERPROFILE`・`XDG_CONFIG_HOME`だけ開発者のもとの値を渡す**（`tempRepo.ts`の`developerHomeEnv`を`runTests`の`extensionTestsEnv`で）。偽の`HOME`のまま起動すると、macOSのCIで`qsoku test`が終わらなくなった（bug`7290a04665`。LinuxとWindowsは通るので、手元では気づけない）。gitの`user.*`の指定と`MTQG_AUTHOR_*`の削除は、VS Codeが動かすmtqgにもそのまま効く
   - **`MTQG_AUTHOR_KIND`・`MTQG_AUTHOR_NAME`・`MTQG_TTY`も消す。** Claude Codeの中では`.claude/settings.json`の`env`で`ai`/`claude-code`が立っており、残すとAIの中とCIで記録者が変わる（mtqgは`MTQG_AUTHOR_NAME`が無いとき、gitの`user.name`を使う）。`test/unit/helpers/tempRepo.test.ts`が、記録者が`test`（human）になることを確かめる
-- **ソースに、見えない文字（ゼロ幅、U+2028・U+2029、文字の向きを変える制御文字、そのほかの制御文字）をそのまま書かない。** エスケープ（`\u200b`・`\x00`など）で書く。書き込みの途中で本物の文字に置き換わると、見た目では気づけない不具合になる
+- **ソースに、見えない文字（ゼロ幅、U+2028・U+2029、結合文字、文字の向きを変える制御文字、そのほかの制御文字）をそのまま書かない。** エスケープ（`\u200b`・`\x00`など）で書く。書き込みの途中で本物の文字に置き換わると、見た目では気づけない不具合になる
+  - srwrの`edit`・`new`の引数はJSONで渡るので、バックスラッシュと`u`で始まるエスケープは、引数の段階で本物の文字になって届くことがある（Go のソースで、U+2028・U+2029・U+0301・U+200Dで実測）。何の文字かは、コメントかテストの名前に残す
+  - 書いたあとに`grep -P '[\x{2028}\x{2029}\x{200D}\x{0301}]'`で、本物の文字が無いことを確かめる
 
 ## この開発環境（devcontainer）固有の落とし穴
 
@@ -73,6 +87,7 @@
 - **許可リストに無いものに当たったら、自分で回り道を探し続けない。** `.claude/rules/working-with-human.md` 2章の形で、何をどこに足すかを短く頼む
 - **`sudo`は、サンドボックスの中では承認しても失敗する。** サンドボックスのuidの付け替え（特権の無いユーザー名前空間）で、本来rootが持つファイルがnobodyの持ち物に見え、`sudo`自身の所有者の確認に落ちる。`sudo`が要るときは、人間のターミナルで動かすよう頼む（`.claude/rules/working-with-human.md` 2章）
 - **このコンテナのGOPATHは`~/go`ではなく`/go`（ホームディレクトリの外）。** `go env GOPATH`で確認せずに`~/go`を`filesystem.allowWrite`に入れると、`.devcontainer/postCreate.sh`のような`go install`を伴う操作で書き込みが拒否される（`.claude/settings.json`で対処済み）
+- **道具のリリースのタグが打たれた直後にコンテナを作り直すと、前の版が入ることがある**（srwr の v0.3.0 で起きた）。Go のモジュールプロキシは`@latest`の答えをしばらく覚えているので、`postCreate.sh`の`go install …@latest`が前の版を入れ、その版に無い補完も警告を出して飛ばす。作り直したら、新しく出た道具の`--version`を見る。古ければ`go install github.com/amisonnet8/<道具>/cmd/<道具>@<新しい版>`で入れ直し（`proxy.golang.org`・`sum.golang.org`・`storage.googleapis.com`への接続が要る）、補完は人間のターミナルで入れ直す（書き先がサンドボックスの外）
 - **`srwr init`は、書き換えるものがあるときは、サンドボックスの中では`.mcp.json`・`.claude/settings.json`を置き換えられない（書き換えが無ければ動く。そもそもテンプレートから作ったプロジェクトでは動かさなくてよい）**（一時ファイルを`rename`する先が書き込み保護で、`device or resource busy`。`.srwr/`の鍵だけが先にできる）。人間のターミナルで動かす（`.claude/rules/srwr-usage.md`「落とし穴」）。`srwr view`は`~/.cache/srwr`に書くので、同じく人間のターミナルで動かす
 - **サンドボックスの書き込み保護（`filesystem.write.denyWithinAllow`）が、作業ディレクトリ直下に`.bashrc`等のダミーファイルを出現させることがある。** `git status`に大量の未追跡ファイルとして見えて驚くが、`ls -la`で見ると中身が空のキャラクタデバイス（`/dev/null`相当）で、未追跡のままなのでコミットには影響しない。この拡張の実装やリポジトリの状態には起因しない、サンドボックス機構側の挙動。`.gitignore`はルート直下と`.claude/`直下のドット始まりをまず全部無視し、追跡するものだけ`!`で戻す許可リスト方式にしてあるので、`git status`にも出ない（新しく追跡するドット始まりのファイル・ディレクトリを足すときは`.gitignore`に`!`行が要る）
 
@@ -106,6 +121,7 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
 
 - **`check`ジョブは3 OS matrix（`ubuntu-latest`・`macos-latest`・`windows-latest`、`fail-fast: false`）。** CIを作った時点（2026-09-27）は**qsoku自体がまだWindows/PowerShellに正式対応していない**（人間から聞いたロードマップ：①qsokuのWindows/PowerShell対応→②そこで出た問題対応→③mtqg v1・正式公開）ため、`ubuntu-latest`固定だった（q&a`82fd9fe8fff2`）。①が済んだ（人間から確認、2026-09-27）ことでtodo`b7fe931ffa`にてmatrix拡張した。**mtqg本体のci.yml**（`github.com/amisonnet8/mtqg`、goモジュールキャッシュ`/go/pkg/mod/github.com/amisonnet8/mtqg@v0.4.0/.github/workflows/ci.yml`で実物を確認できる）に倣い、`qsoku check`・`qsoku test`のstepだけ`shell: bash`を明示している（Linux/macOSは元から既定がbashで無害、Windowsは既定のpwshではなくGit Bashを使わせる）。この拡張のコード自体にOS依存の分岐は無い（`mtqg`実行ファイルの解決はNode.jsの`execFile`のPATH解決に任せる設計、`.claude/rules/mtqg-cli.md`）
 - 3ジョブ：`check`（`npm ci`→`qsoku`・`mtqg`をインストール→`qsoku check`→`qsoku test`、3 OS matrix）・`shellcheck`（`qsoku shellcheck`と`qsoku hook`、`ubuntu-latest`のみ）・`trivy`（`qsoku trivy`、`ubuntu-latest`のみ）。`shellcheck`・`trivy`は静的解析でOS依存の結果差が無いためmatrix化していない。いずれも`qsokufile`をそのまま呼ぶだけで、CI固有のロジックを持たない（ローカルの`qsoku check`等と同じコマンドが通ることがCIが通ることの前提になる）
+- **`ci.yml`は、`release.yml`からも`workflow_call`で呼ばれる**（タグの push で、リリースの前に同じ検査を通す。`.claude/rules/distribution.md`）。`ci.yml`を変えると、リリースの検査も変わる。`on:`の`workflow_call`を消すと、リリースが動かなくなる
 - `check`ジョブは`mtqg`もmatrixにし、最低版と`latest`の両方で試す（OS 3つ×mtqg 2つ）。最低版は`src/mtqg/availability.ts`の`MIN_SUPPORTED_MTQG_VERSION`とそろえる（`.claude/rules/mtqg-cli.md`「版」）。`.devcontainer/postCreate.sh`の`mtqg`は`@latest`で、これとは別物
 - **`qsokufile`の`test:`エントリは`xvfb-run`の有無で分岐する**（todo`b7fe931ffa`）。`command -v xvfb-run`がある（このdevcontainerとCIの`ubuntu-latest`）ときだけ`env -u ELECTRON_RUN_AS_NODE xvfb-run -a`で包み、無い（`macos-latest`・`windows-latest`。元から実ディスプレイを持つランナーでXvfbが要らない）ときは`node`を直接呼ぶ。`uname`の文字列判定（Windows/MSYSでの表記揺れがある）ではなく、実際に使えるかどうかで判定している
 - `qsoku test`（拡張開発ホストで実物VS Codeを起動）に必要なXvfb一式（`libnss3`等）は`.devcontainer/postCreate.sh`と同じ、動作確認済みのパッケージ一覧をそのまま`apt-get install`する。CIのci.ymlでは、このstepに`if: matrix.os == 'ubuntu-latest'`を付けている（Windows/macOSには`apt-get`が無い上、そもそも不要）

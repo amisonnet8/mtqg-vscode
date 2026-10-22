@@ -103,3 +103,26 @@
 {"v":1,"ts":"2026-10-15T23:18:58.645Z","why":"コミットにテープを入れるため、今のテープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":10}
 {"v":1,"ts":"2026-10-15T23:18:58.791Z","why":"コミットに入れるファイル（閉じたテープを含む）を確かめるため","cmd":["git","status","--short","--untracked-files=all"],"dir":".","exit":0,"ms":3}
 {"v":1,"ts":"2026-10-15T23:18:58.955Z","why":"コミット前に、このリポジトリで使うべきメールアドレスになっているか確かめるため","cmd":["git","config","user.email"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-22T19:13:19.981Z","why":"コンテナ作り直し後にcrubeが入っているか確かめる","cmd":["crube","--version"],"dir":".","exit":0,"ms":3}
+{"v":1,"ts":"2026-10-22T19:13:20.365Z","why":"ルール共通化の未コミットの変更を把握する","cmd":["git","diff","--stat"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-22T19:13:22.579Z","why":"ルール共通化の変更の中身を読む","cmd":["git","diff","--",".claude","CLAUDE.md",".gitignore",".mcp.json",".vscodeignore","test",".github",".devcontainer/devcontainer.json"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-22T19:13:28.663Z","why":"未追跡のskill・crubeファイルの一覧を把握する","cmd":["git","ls-files","--others","--exclude-standard"],"dir":".","exit":0,"ms":2}
+{"v":1,"ts":"2026-10-22T19:13:28.853Z","why":"postCreate.shの変更内容を確かめる","cmd":["git","diff","--",".devcontainer/postCreate.sh",".devcontainer/devcontainer-lock.json"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-22T19:13:32.624Z","why":"説明の漏れ（英語）を確かめる","cmd":["crube","status","--require","all"],"dir":".","exit":1,"ms":4}
+{"v":1,"ts":"2026-10-22T19:13:32.771Z","why":"説明の漏れ（日本語）を確かめる","cmd":["env","CRUBE_LANG=ja","crube","status","--require","all"],"dir":".","exit":1,"ms":4}
+{"v":1,"ts":"2026-10-22T19:13:39.232Z","why":"テストやCIが参照するファイルの一覧を把握する","cmd":["git","ls-files"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-22T19:13:56.861Z","why":"lockの版とpackage.jsonの版がそろっているか見る","cmd":["grep","-n","-m3","\"version\"","package.json","package-lock.json"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-22T19:14:11.000Z","why":"ルール変更で古くなった記述が他に残っていないか探す","cmd":["git","grep","-n","-I","-E","Releases|release\\.yml|0\\.0\\.1|powershell|pwsh|手で作る|lock.*版","--",".",":!package-lock.json",":!.mtqg",":!.bcuz",":!.srwr"],"dir":".","exit":0,"ms":4}
+{"v":1,"ts":"2026-10-22T19:14:11.221Z","why":"release.ymlのCHANGELOG抜き出しが今の書き方で動くか、1.1.1で試す","cmd":["sh","-c","GITHUB_REF_NAME=v1.1.1; awk -v v=\"${GITHUB_REF_NAME#v}\" \"$(sed -n \"/awk -v v=/,/CHANGELOG.md |/p\" .github/workflows/release.yml | sed -e \"1s/.*'//\" -e \"\\$d\")\" CHANGELOG.md | sed -e \"/./,\\$!d\" | cat -s"],"dir":".","exit":0,"ms":4}
+{"v":1,"ts":"2026-10-22T19:14:16.962Z","why":"新しいフックがShellCheckを通るか、追跡前に直接確かめる","cmd":["shellcheck",".claude/hooks/crube-untracked.sh",".devcontainer/postCreate.sh"],"dir":".","exit":0,"ms":75}
+{"v":1,"ts":"2026-10-22T19:14:31.249Z","why":"crubeの説明を書くため、各ソースの冒頭コメントで役割を確かめる","cmd":["sh","-c","for f in src/mtqg/*.ts src/extension.ts test/vscode/suite/*.ts test/vscode/runTest.ts test/unit/html.test.ts .vscode/*.json; do echo \"== $f\"; head -n 6 \"$f\"; done"],"dir":".","exit":0,"ms":10}
+{"v":1,"ts":"2026-10-22T19:16:49.066Z","why":"英語の説明を足したあと、漏れが無くなったか確かめる","cmd":["crube","status","--require","all"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-22T19:16:49.270Z","why":"日本語の説明を足したあと、漏れが無くなったか確かめる","cmd":["env","CRUBE_LANG=ja","crube","status","--require","all"],"dir":".","exit":0,"ms":5}
+{"v":1,"ts":"2026-10-22T19:16:56.439Z","why":"crube-untracked.shが説明済みのファイルでは何も出さず正常終了するか確かめる","cmd":["sh","-c","echo \"{\\\"tool_input\\\":{\\\"file\\\":\\\"/workspaces/mtqg-vscode/src/extension.ts\\\"}}\" | CLAUDE_PROJECT_DIR=/workspaces/mtqg-vscode bash .claude/hooks/crube-untracked.sh; echo \"exit=$?\""],"dir":".","exit":0,"ms":89}
+{"v":1,"ts":"2026-10-22T19:16:56.716Z","why":"vscodeignoreのテストに.crubeが足されたので、ビルドと単体テストを通す","cmd":["qsoku","check"],"dir":".","exit":0,"ms":3064}
+{"v":1,"ts":"2026-10-22T19:16:59.919Z","why":"フックの判定表が今のrequire-bcuz.shで通るか確かめる","cmd":["qsoku","hook"],"dir":".","exit":0,"ms":1881}
+{"v":1,"ts":"2026-10-22T19:17:04.735Z","why":"qsoku checkの結果の集計だけを見る","cmd":["tail","-n","9","/home/node/.claude/projects/-workspaces-mtqg-vscode/fdfd307c-a7d7-4395-8c51-38a733546baa/tool-results/b1uvf9s3e.txt"],"dir":".","exit":0,"ms":0}
+{"v":1,"ts":"2026-10-22T19:17:24.592Z","why":"コミットの前に、作者のメールが本来のnoreplyか確かめる","cmd":["git","config","user.email"],"dir":".","exit":0,"ms":1}
+{"v":1,"ts":"2026-10-22T19:17:26.658Z","why":"ルール共通化の追従のコミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":1,"ms":11}
+{"v":1,"ts":"2026-10-22T19:17:32.750Z","why":"ルール共通化の追従のコミットに入れるため、テープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":16}
+{"v":1,"ts":"2026-10-22T19:17:34.635Z","why":"コミットに入るものを確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":4}

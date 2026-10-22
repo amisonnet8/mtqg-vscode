@@ -1,0 +1,139 @@
+.bcuz/	Record of the commands run through bcuz (committed)
+	history.jsonl	One JSON line per command: when, why, what and the exit code
+.claude/	Claude Code settings shared in the repository
+	hooks/	Hooks that Claude Code runs around its tools
+		build.sh	After srwr edit or new changes a .ts, package.json or tsconfig.json, runs qsoku build and reports a failure
+		crube-untracked.sh	After srwr new creates a file, tells Claude which of its paths have no description, per language
+		require-bcuz.sh	PreToolUse hook that refuses Bash commands not run through bcuz
+		require-bcuz.test.sh	Table of the commands require-bcuz.sh allows and refuses (qsoku hook)
+	rules/	Rules for working in this repository (Japanese); CLAUDE.md says when to read each
+		bcuz-usage.md	How to run Bash commands through bcuz, and keeping secrets out of them
+		crube-usage.md	Using crube: MCP and the CLI, finding places, keeping descriptions in both languages
+		datetime.md	Dates and times: keep UTC, show in the local time zone
+		dependencies.md	npm dependencies: none at run time; only Microsoft's and TypeScript for development
+		directory-structure.md	Where each file goes, and the layout of the repository
+		distribution.md	Releases: a pushed tag makes the GitHub Release with the .vsix; people publish to the Marketplace
+		documentation.md	How to write documents: example values from tools, what history goes in docs/design/
+		mtqg-cli.md	How the extension calls the mtqg CLI: execFile, --json, errors, MTQG_TTY, versions
+		mtqg-usage.md	How to record memos, todos, questions, bugs and rules with mtqg
+		naming.md	Names: mtqg's terms as they are, in the code and the UI
+		qsoku-usage.md	The qsoku names for build, test and lint, and how to call them
+		srwr-usage.md	Editing files only through srwr (strict mode), and closing tapes
+		testing.md	Test policy, and pitfalls of the sandbox and of CI on each OS
+		ui.md	UI policy: English, not relying on text, six screens, no new features
+		working-with-human.md	How to ask people: small blockers, checks, and approval of what users see
+	settings.json	Permissions, sandbox and hooks of Claude Code (managed by people)
+	skills/	Skills of Claude Code
+		commit-with-tape/	Skill: close the srwr tape and commit
+			SKILL.md	The steps of the skill
+.devcontainer/	Development container
+	devcontainer-lock.json	Versions of the features the container was built with
+	devcontainer.json	Container definition and VS Code settings
+	postCreate.sh	Runs once the container is made: installs the tools (qsoku, mtqg, srwr, bcuz, crube, Trivy) and their shell completion
+.github/	GitHub settings
+	workflows/	GitHub Actions workflows
+		ci.yml	CI: qsoku check and test on three OSes and two mtqg versions, ShellCheck and Trivy; also called by release.yml
+		release.yml	On a pushed tag: checks the version, runs ci.yml, packages the .vsix and publishes the GitHub Release
+.mtqg/	Process record kept with mtqg: memos, todos, questions, bugs, glossary and rules
+	.gitattributes	Merges journal.jsonl with merge=union
+	.gitignore	Keeps .local/ out of git
+	SCHEMA.md	Data format of journal.jsonl
+	journal.jsonl	The records, one JSON line each (written only through mtqg)
+	version	Version of the mtqg data format
+.srwr/	srwr: tapes of the file edits made by AI, each with its reason
+	tapes/	Closed tapes (committed); replay them with srwr view
+		| One compressed tape (*.tape.jsonl.gz) for each unit of work.
+		| The tapes are left out by .crube/ignore, so that they need no description.
+.vscode/	VS Code settings for developing the extension
+	launch.json	Runs the extension in an extension development host (F5)
+	tasks.json	Background tsc watch task that launch.json starts
+docs/	Documents of the project
+	assets/	Images only README.md uses (kept out of the .vsix)
+		demo.gif	Demo animation in the README
+		icon.png	Icon in the README heading (256x256)
+	design/	The current design (Japanese)
+		vscode-extension.md	Design of the extension: a copy of mtqg design 11.4 and the extension's own decisions
+media/	Images the extension itself ships
+	icon.png	Marketplace icon (128x128)
+	tab-icon-dark.svg	Icon of the mtqg panel's tab, for dark themes
+	tab-icon-light.svg	Icon of the mtqg panel's tab, for light themes
+src/	Source of the extension (TypeScript)
+	extension.ts	Entry point: registers the mtqg.open command and the panel serializer
+	mtqg/	Calls the mtqg CLI as a child process and types its --json output
+		availability.ts	Checks that mtqg is on PATH and new enough (MIN_SUPPORTED_MTQG_VERSION)
+		client.ts	One typed function for each mtqg command the extension uses
+		errors.ts	Errors and warnings parsed from mtqg's --json lines on standard error
+		index.ts	What src/mtqg/ exports
+		process.ts	Runs mtqg with execFile and --json, and parses its output
+		types.ts	Types of the --json output of mtqg that the extension reads
+	webview/	The mtqg panel: a Webview with six tabs
+		client/	Script that runs inside the Webview (DOM types, browser ES modules, its own tsconfig)
+			main.ts	Puts the HTML from the host in place and sends clicks and input back to the host
+			tsconfig.json	Compiler settings for the Webview script
+		controller.ts	Webview message to mtqg call to render; keeps the view state (no vscode)
+		panel.ts	Opens, reveals and restores the WebviewPanel; the only file here that touches vscode
+		screens.ts	renderScreen sends each tab to its renderer; renderError
+		screens/	HTML of each screen, built on the host (no vscode)
+			bugs.ts	Bug screen: renderThread with the bug and reply labels
+			composer.ts	Parses the slash commands of the Memo input (/todo, /t and the others)
+			format.ts	Formats dates for display in the user's time zone
+			glossary.ts	Glossary screen: a table, with words defined more than once marked
+			memos.ts	Memo screen: the timeline of every kind of record, from log --events
+			questions.ts	QA screen: renderThread with the question and answer labels
+			rules.ts	Rule screen: a plain table
+			table.ts	Parts the screens share: editable text, delete and ID buttons, badges
+			thread.ts	Thread screen shared by QA and Bug: rows with their replies, and a reply box
+			todos.ts	Todo screen: Keep-like cards, done ones above the open ones
+		shared/	Shared by the six screens (no vscode)
+			escape.ts	Escapes text before it goes into HTML
+			html.ts	renderShell: CSP, tab bar and the tab panels around the screens
+			messages.ts	Types and validation of the messages between the host and the Webview
+			tabs.ts	IDs, labels and the default of the six tabs
+test/	Tests (node:test)
+	helpers/	Helpers the tests share
+		tempRepo.ts	Temporary git repository with mtqg init; cuts the tests off from the developer's git and mtqg settings
+	unit/	Tests that need no VS Code API (qsoku unit)
+		helpers/	Tests of test/helpers/
+			tempRepo.test.ts	Tests of the temporary repository and the author it records as
+		html.test.ts	Tests of renderShell
+		mtqg/	Tests of src/mtqg/ with the real mtqg
+			availability.test.ts	Tests of the mtqg availability and version check
+			client.test.ts	Tests of each mtqg command of the client, with the exact text recorded
+			process.test.ts	Tests of running mtqg and parsing its output and errors
+		vscodeignore.test.ts	Checks that .vscodeignore keeps the working directories out of the .vsix
+		webview/	Tests of src/webview/
+			controller.test.ts	Tests of the controller with the real mtqg
+			escape.test.ts	Tests of the HTML escaping
+			format.test.ts	Tests of the date formatting
+			messages.test.ts	Tests of the message validation
+			screens/	Tests of each screen's renderer
+				bugs.test.ts	Tests of the Bug screen
+				composer.test.ts	Tests of the slash commands of the Memo input
+				glossary.test.ts	Tests of the Glossary screen
+				memos.test.ts	Tests of the Memo timeline
+				questions.test.ts	Tests of the QA screen
+				rules.test.ts	Tests of the Rule screen
+				table.test.ts	Tests of the shared screen parts
+				thread.test.ts	Tests of the shared thread screen
+				todos.test.ts	Tests of the Todo screen
+			tabs.test.ts	Tests of the tab definitions
+	vscode/	Tests in a real VS Code, an extension development host (qsoku test)
+		runTest.ts	Downloads VS Code and opens a temporary mtqg repository in it
+		suite/	Tests that run inside the extension development host
+			extension.test.ts	Tests of the extension inside the real VS Code
+			index.ts	Runs node:test's run() inside the host and waits for the tests to end
+.gitattributes	Line endings (LF everywhere) and merge=union for the record files
+.gitignore	Files kept out of git; dot entries in the root are an allowlist
+.mcp.json	MCP servers for Claude Code: mtqg, srwr, and crube in English and Japanese
+.srwrignore	Files srwr does not put on its tapes
+.vscodeignore	Files kept out of the packaged .vsix
+CHANGELOG.md	Changes of each version; also the notes of its GitHub Release
+CLAUDE.md	Rules for Claude Code in this repository, and the rule files to read
+LICENSE	MIT license
+README.md	Description of the extension on the Marketplace (English)
+README_ja.md	Japanese version of README.md
+package-lock.json	Exact versions of the npm development dependencies
+package.json	Extension manifest: version, commands, menus and development dependencies
+qsokufile	Named commands for build, test and lint (qsoku)
+trivy.yaml	Trivy settings: what counts as a vulnerability or license failure
+tsconfig.json	Compiler settings for the extension host and the tests
