@@ -126,3 +126,7 @@
 {"v":1,"ts":"2026-10-22T19:17:26.658Z","why":"ルール共通化の追従のコミットの前に、テープに無い変更が無いか確かめる","cmd":["srwr","tapes","check"],"dir":".","exit":1,"ms":11}
 {"v":1,"ts":"2026-10-22T19:17:32.750Z","why":"ルール共通化の追従のコミットに入れるため、テープを閉じて圧縮する","cmd":["srwr","tapes","new"],"dir":".","exit":0,"ms":16}
 {"v":1,"ts":"2026-10-22T19:17:34.635Z","why":"コミットに入るものを確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":4}
+{"v":1,"ts":"2026-10-22T19:17:37.486Z","why":"ルール共通化とその追従の変更・記録・テープをコミット対象にする","cmd":["git","add",".bcuz/history.jsonl",".mtqg/journal.jsonl",".srwr/tapes",".claude/rules",".claude/settings.json",".claude/hooks/crube-untracked.sh",".claude/skills",".crube",".devcontainer",".github/workflows",".gitignore",".mcp.json",".vscodeignore","CLAUDE.md","test/unit/vscodeignore.test.ts"],"dir":".","exit":0,"ms":6}
+{"v":1,"ts":"2026-10-22T19:17:39.472Z","why":"足したあと、入るものに漏れや余計なものが無いか確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":4}
+{"v":1,"ts":"2026-10-22T19:17:47.983Z","why":"crube-untracked.shが追跡に入ったので、追跡中の全シェルスクリプトを検査する","cmd":["qsoku","shellcheck"],"dir":".","exit":0,"ms":243}
+{"v":1,"ts":"2026-10-22T19:24:01.589Z","why":"README不要の判断の記録をコミットする前に、入るものを確かめる","cmd":["git","status","--short"],"dir":".","exit":0,"ms":3}
