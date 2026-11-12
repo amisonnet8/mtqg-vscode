@@ -26,7 +26,7 @@
 ## Demo
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="mtqg for VS Code demo: posting a todo and a question from the Memo tab, checking the todo off, an AI agent's answer arriving live, then replying in the QA tab" width="800">
+  <img src="docs/assets/demo.gif" alt="mtqg for VS Code demo: posting a todo and a question from the Memo tab, checking the todo off, an AI agent's answer arriving live, then answering in the QA tab" width="800">
 </p>
 
 ## Features

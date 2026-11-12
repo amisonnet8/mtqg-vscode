@@ -26,7 +26,7 @@
 ## Demo
 
 <p align="center">
-  <img src="docs/assets/demo.gif" alt="mtqg for VS Code のデモ：Memo画面からtodoと質問を投稿し、todoにチェックを入れ、AIエージェントの回答がその場で届き、QA画面で返信する" width="800">
+  <img src="docs/assets/demo.gif" alt="mtqg for VS Code のデモ：Memo画面からtodoと質問を投稿し、todoにチェックを入れ、AIエージェントの回答がその場で届き、QA画面で回答する" width="800">
 </p>
 
 ## Features

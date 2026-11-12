@@ -1,0 +1,10 @@
+# README のデモと設計の文書を、新しいトグルと返信欄に合わせる
+.mtqg/
+	journal.jsonl	回答済みの質問を閉じ、glossary 3件、CI のメモ、todo aafc33bcdd（完了）とそのメモ、q&a 8a600e96f3 を追加
+docs/
+	design/
+		vscode-extension.md	@メンションの節で、欄の呼び方を glossary にそろえ、ドロップダウンを上に開く条件を書いた
+	assets/
+		demo.gif	同じ流れで撮り直した：前の GIF は、上端のトグルと薄い一行の回答欄のままだった
+README.md	デモの alt 文を、QA の言葉どおり answering にした
+README_ja.md	デモの alt 文を、QA の言葉どおり 回答する にした

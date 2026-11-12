@@ -1,0 +1,10 @@
+# Bring the README demo and the design doc up to date with the new toggle and reply field
+.mtqg/
+	journal.jsonl	Closed the answered questions, added three glossary terms, the CI memo, todo aafc33bcdd (done) with its memo, and q&a 8a600e96f3
+docs/
+	design/
+		vscode-extension.md	The @-mention section uses the glossary's names for the fields, and says when the dropdown opens upward
+	assets/
+		demo.gif	Re-recorded with the same storyboard: the old one showed the toggle at the top and the faint answer line
+README.md	The demo's alt text says answering in the QA tab, QA's own word
+README_ja.md	The demo's alt text says 回答する in the QA tab, QA's own word
