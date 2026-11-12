@@ -3,6 +3,24 @@
 All notable changes to the mtqg VS Code extension are documented here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.1.2] - 2026-11-13
+
+Requires `mtqg` 1.0.0 or later (unchanged).
+
+### Changed
+
+- On QA and Bug, the field that answers a question or replies to a bug is
+  a bordered input marked with ↳ right under its thread, and says what it
+  is for ("Answer this question…", "Reply to this bug…"). The field at the
+  bottom says "Ask a new question…" / "Report a new bug…", so the two are
+  no longer mixed up
+
+### Fixed
+
+- The "Show done" / "Show answered" / "Show closed" toggle on Todo, QA and
+  Bug sits next to the input field at the bottom of the screen. At the top,
+  a long list scrolled it out of view
+
 ## [1.1.1] - 2026-10-16
 
 Requires `mtqg` 1.0.0 or later (unchanged).

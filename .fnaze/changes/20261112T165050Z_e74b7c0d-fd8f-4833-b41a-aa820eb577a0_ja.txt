@@ -1,0 +1,6 @@
+# 版を 1.1.2 に上げる
+.mtqg/
+	journal.jsonl	CI が通ったので bug d35dc02c50 を閉じ、todo 6585f3e0f5 のメモを足して完了にした
+CHANGELOG.md	1.1.2 を足した：QA・Bug の回答・返信欄と、見え続ける Show done のトグル
+package-lock.json	2か所の版を、package.json に合わせて 1.1.2 にした
+package.json	版を 1.1.2 にした：v1.1.1 から .vsix に入るコードが変わったため

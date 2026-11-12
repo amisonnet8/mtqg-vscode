@@ -1,0 +1,6 @@
+# Bump the version to 1.1.2
+.mtqg/
+	journal.jsonl	Closed bug d35dc02c50 after CI passed, added the memo for todo 6585f3e0f5 and closed it
+CHANGELOG.md	Added 1.1.2: the answer and reply fields of QA and Bug, and the Show done toggle kept in view
+package-lock.json	The version in both places, 1.1.2, to match package.json
+package.json	Version 1.1.2: the code in the .vsix changed since v1.1.1
