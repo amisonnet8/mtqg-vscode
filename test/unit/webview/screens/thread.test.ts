@@ -12,6 +12,21 @@ const LABELS: ThreadLabels = {
   sectionHeading: 'Done',
 };
 
+// q&a 9b26cf359a: at the top of the screen the toggle was out of view on a
+// long list, since the screen scrolls to the bottom when opened.
+test('the show-done toggle is in the bottom composer, after the add field, and the table comes first', () => {
+  const html = renderThread(
+    [item('a', 'open one', '2026-01-01T00:00:00Z'), item('b', 'done one', '2026-01-02T00:00:00Z', { status: 'done' })],
+    LABELS,
+  );
+  const composer = html.match(/<div class="composer"[\s\S]*<\/div>\s*$/);
+  assert.ok(composer, `no composer at the end of:\n${html}`);
+  assert.match(composer[0], /class="add-row"[\s\S]*data-action="show-all"/);
+  assert.match(composer[0], /Show done \(1\)/);
+  assert.equal(html.match(/data-action="show-all"/g)?.length, 1);
+  assert.ok(html.startsWith('<table class="mtqg-table">'), `expected the table first:\n${html}`);
+});
+
 function reply(id: string, text: string, created: string, kind: 'ai' | 'human' = 'ai'): ThreadReply {
   return { id, text, author: { kind, name: 'test' }, created };
 }

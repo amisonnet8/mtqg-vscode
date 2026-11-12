@@ -153,16 +153,6 @@ export function renderShell(options: ShellOptions): string {
     button[data-action="copy-id"].copied {
       opacity: 1;
     }
-    .screen-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .screen-toolbar label {
-      white-space: nowrap;
-    }
     .done-heading {
       color: var(--vscode-descriptionForeground);
       font-size: 0.9em;
@@ -367,6 +357,10 @@ export function renderShell(options: ShellOptions): string {
       border: 1px solid var(--vscode-panel-border);
       border-radius: 4px;
       padding: 6px 10px;
+    }
+    .composer .show-all {
+      align-self: center;
+      white-space: nowrap;
     }
     .composer button[data-action="undo"] {
       font-family: inherit;

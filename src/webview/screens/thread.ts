@@ -12,6 +12,7 @@ import {
   deleteButtonCell,
   editableCell,
   editableElement,
+  showAllToggle,
 } from './table';
 import { byCreated } from './format';
 
@@ -152,14 +153,12 @@ export function renderThread(records: ThreadItem[], labels: ThreadLabels, view: 
         .join('')}<tr class="section-heading"><td colspan="7">Open (${open.length})</td></tr>`
     : '';
 
-  return `<div class="screen-toolbar">
-  <label><input type="checkbox" data-action="show-all"${all ? ' checked' : ''}> ${labels.showAllLabel} (${done.length})</label>
-</div>
-<table class="mtqg-table">
+  return `<table class="mtqg-table">
   <thead><tr><th></th><th></th><th>${labels.columnHeader}</th><th>Author</th><th>Date</th><th></th><th></th></tr></thead>
   <tbody>${doneRows}${openRows}</tbody>
 </table>
 <div class="composer" data-autoscroll>
   <div class="add-row">${editableElement('div', 'text', '', labels.topPlaceholder)}</div>
+  ${showAllToggle(labels.showAllLabel, all, done.length)}
 </div>`;
 }

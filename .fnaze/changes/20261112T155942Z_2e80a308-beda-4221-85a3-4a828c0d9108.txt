@@ -1,0 +1,20 @@
+# Keep the Show done toggle in view: move it beside the bottom add field
+.mtqg/
+	journal.jsonl	Added the CI reply to bug 66bfacaf9b, todos 8ba7ccc8b6 (done), 238f146038 and 6585f3e0f5, q&a 9b26cf359a and memo ed9ad2f5f1
+docs/
+	design/
+		vscode-extension.md	Added where the show-done toggle sits and why it is not at the top
+src/
+	webview/
+		screens/
+			table.ts	Added showAllToggle, the toggle shared by Todo, QA and Bug
+			thread.ts	QA and Bug put the toggle in the bottom composer instead of a toolbar at the top, where a long list hid it
+			todos.ts	Todo puts the toggle in the bottom composer instead of a toolbar at the top, where a long list hid it
+		shared/
+			html.ts	Styles the toggle in the composer; removed the unused .screen-toolbar
+test/
+	unit/
+		webview/
+			screens/
+				thread.test.ts	Checks that the toggle is in the composer after the add field, once, with the table first
+				todos.test.ts	Checks that the toggle is in the composer after the add field, once, with the cards first

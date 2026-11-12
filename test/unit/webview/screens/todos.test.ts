@@ -17,6 +17,18 @@ function cardHtml(html: string, id: string): string {
   return match[0];
 }
 
+// q&a 9b26cf359a: at the top of the screen the toggle was out of view on a
+// long list, since the screen scrolls to the bottom when opened.
+test('the Show done toggle is in the bottom composer, after the add field, and nothing precedes the cards', () => {
+  const html = renderTodos([todo('a', 'open one', '2026-01-01T00:00:00Z'), todo('b', 'done one', '2026-01-02T00:00:00Z', 'done')]);
+  const composer = html.match(/<div class="composer"[\s\S]*<\/div>\s*$/);
+  assert.ok(composer, `no composer at the end of:\n${html}`);
+  assert.match(composer[0], /class="add-row"[\s\S]*data-action="show-all"/);
+  assert.match(composer[0], /Show done \(1\)/);
+  assert.equal(html.match(/data-action="show-all"/g)?.length, 1);
+  assert.ok(html.startsWith('<div class="mtqg-cards">'), `expected the cards first:\n${html}`);
+});
+
 test('renderTodos sorts open todos oldest-first by created (newest next to the add field)', () => {
   const html = renderTodos([
     todo('a', 'oldest', '2026-01-01T00:00:00Z'),

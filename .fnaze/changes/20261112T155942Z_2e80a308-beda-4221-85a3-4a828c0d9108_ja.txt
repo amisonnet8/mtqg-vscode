@@ -1,0 +1,20 @@
+# Show done のトグルをいつも見えるようにする：下端の入力欄の右へ移す
+.mtqg/
+	journal.jsonl	bug 66bfacaf9b への CI の返信、todo 8ba7ccc8b6（完了）・238f146038・6585f3e0f5、q&a 9b26cf359a、memo ed9ad2f5f1 を追加
+docs/
+	design/
+		vscode-extension.md	完了済みの表示の切り替えの置き場所と、上端に置かない理由を足した
+src/
+	webview/
+		screens/
+			table.ts	Todo・QA・Bug で共通のトグル showAllToggle を足した
+			thread.ts	QA・Bug のトグルを、長い一覧で隠れていた上端から、下端の入力欄の中へ移した
+			todos.ts	Todo のトグルを、長い一覧で隠れていた上端から、下端の入力欄の中へ移した
+		shared/
+			html.ts	入力欄の中のトグルの見た目を足し、使わなくなった .screen-toolbar を消した
+test/
+	unit/
+		webview/
+			screens/
+				thread.test.ts	トグルが入力欄の中の追加欄の後に1つだけあり、表が先頭に来ることを確かめる
+				todos.test.ts	トグルが入力欄の中の追加欄の後に1つだけあり、カードが先頭に来ることを確かめる

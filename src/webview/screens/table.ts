@@ -88,6 +88,17 @@ export function copyIdButton(id: string): string {
   return `<button type="button" class="copy-id" data-action="copy-id" aria-label="Copy ID ${id}" title="Copy ID ${id}">${escapeHtml(shortId(id))}</button>`;
 }
 
+/**
+ * The "Show done"-style checkbox of Todo/QA/Bug. It sits in the bottom
+ * `.composer`, which is sticky: the screens scroll to the bottom when opened
+ * (chat-style), so a toggle at the top was out of view whenever the list was
+ * longer than the panel. `count` is always the true number of done records,
+ * so switching it never looks like it did nothing.
+ */
+export function showAllToggle(label: string, checked: boolean, count: number): string {
+  return `<label class="show-all"><input type="checkbox" data-action="show-all"${checked ? ' checked' : ''}> ${escapeHtml(label)} (${count})</label>`;
+}
+
 export function copyIdButtonCell(id: string): string {
   return `<td>${copyIdButton(id)}</td>`;
 }

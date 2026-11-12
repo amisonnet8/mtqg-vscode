@@ -1,6 +1,6 @@
 import type { TodoRecord } from '../../mtqg/types';
 import { escapeHtml } from '../shared/escape';
-import { authorText, copyIdButton, dateText, deleteButton, editableElement } from './table';
+import { authorText, copyIdButton, dateText, deleteButton, editableElement, showAllToggle } from './table';
 import { byCreated } from './format';
 
 export interface TodosView {
@@ -42,8 +42,9 @@ function sortedByCreated(records: TodoRecord[]): TodoRecord[] {
 }
 
 /**
- * Renders the ToDo screen: a "Show done" toggle, a grid of cards and, at the
- * bottom, the add field (todo `a597ec6df2`). When `all` is false (the
+ * Renders the ToDo screen: a grid of cards and, at the bottom, the add field
+ * (todo `a597ec6df2`) with the "Show done" toggle beside it (q&a
+ * `9b26cf359a`: at the top it was out of view on a long list). When `all` is false (the
  * default, ui.md), only open todos are shown and the toggle reflects that no
  * done ones are hidden-but-zero vs hidden-and-some -- the count is always the
  * true total so switching the toggle never looks like it did nothing. Done
@@ -60,11 +61,9 @@ export function renderTodos(records: TodoRecord[], view: TodosView = {}): string
     ? `<h3 class="done-heading">Done (${done.length})</h3><div class="mtqg-cards">${done.map(card).join('')}</div><h3 class="done-heading">Open (${open.length})</h3>`
     : '';
 
-  return `<div class="screen-toolbar">
-  <label><input type="checkbox" data-action="show-all"${all ? ' checked' : ''}> Show done (${done.length})</label>
-</div>
-${doneSection}<div class="mtqg-cards">${openCards}</div>
+  return `${doneSection}<div class="mtqg-cards">${openCards}</div>
 <div class="composer" data-autoscroll>
   <div class="add-row">${editableElement('div', 'text', '', 'New todo…')}</div>
+  ${showAllToggle('Show done', all, done.length)}
 </div>`;
 }
