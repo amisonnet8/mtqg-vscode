@@ -50,9 +50,11 @@ export interface ThreadReply {
 export interface ThreadLabels {
   /** The item column's header, e.g. 'Question' | 'Bug'. */
   columnHeader: string;
-  /** The top-of-screen add field's placeholder, e.g. 'Ask a question…' | 'Report a bug…'. */
+  /** The bottom add field's placeholder, e.g. 'Ask a new question…' | 'Report a new bug…'.
+   * "new" tells it apart from the per-item reply field (q&a `a0e3a242d5`). */
   topPlaceholder: string;
-  /** The always-present reply field's placeholder, e.g. 'Write an answer…' | 'Write a reply…'. */
+  /** The always-present reply field's placeholder, naming what it answers,
+   * e.g. 'Answer this question…' | 'Reply to this bug…' (q&a `a0e3a242d5`). */
   replyPlaceholder: string;
   /** The reply-count label on the expand button, e.g. 'Answers' | 'Replies'. */
   replyNounPlural: string;
@@ -100,7 +102,9 @@ export function replyRow(reply: ThreadReply): string {
  * item, mirroring mtqg's own `replies` array). `qa list`/`bug list` already
  * include `replies` (verified against the real binary), so expanding never
  * needs a separate `show` call -- it only toggles what this render already
- * has.
+ * has. The reply field is a bordered input marked with "↳" under the
+ * thread: as a plain faint line it blended into the replies above it and
+ * was mistaken for the bottom add field (q&a `a0e3a242d5`).
  */
 function itemRows(record: ThreadItem, expanded: boolean, labels: ThreadLabels): string {
   const done = record.status === 'done';
@@ -123,7 +127,7 @@ function itemRows(record: ThreadItem, expanded: boolean, labels: ThreadLabels): 
   const detailRow = `<tr class="thread-detail" data-id="${record.id}"${expanded ? '' : ' hidden'}>
     <td colspan="7">
       <div class="thread-list">${replies.map(replyRow).join('')}</div>
-      <div class="add-row" data-parent-id="${record.id}">${editableElement('div', 'text', '', labels.replyPlaceholder)}</div>
+      <div class="thread-reply-add"><span class="thread-reply-mark" aria-hidden="true">↳</span><div class="add-row" data-parent-id="${record.id}">${editableElement('div', 'text', '', labels.replyPlaceholder)}</div></div>
     </td>
   </tr>`;
 

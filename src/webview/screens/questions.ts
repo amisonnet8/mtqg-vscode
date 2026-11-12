@@ -6,8 +6,8 @@ export type QuestionsView = ThreadView;
 /** naming.md: question/answer, not question/reply (bug `48b5d29d54a3`). */
 const QA_LABELS: ThreadLabels = {
   columnHeader: 'Question',
-  topPlaceholder: 'Ask a question…',
-  replyPlaceholder: 'Write an answer…',
+  topPlaceholder: 'Ask a new question…',
+  replyPlaceholder: 'Answer this question…',
   replyNounPlural: 'Answers',
   doneLabel: 'Mark answered',
   showAllLabel: 'Show answered',

@@ -34,7 +34,7 @@
 
 **Todo**：カードはグリッドで並ぶ。追加はカード群の下の入力欄（Enterで確定）。完了済みを表示したときは、開いているカードの上に「Done (n)」「Open (n)」の見出しでまとめる（取り消し線＋チェック済みで示し、色だけに頼らない。開いているカードが入力欄の隣に残る）。
 
-**QA・Bug**：追加は表の下の入力欄。完了済みを表示したときは、開いている項目の上に「Answered/Closed (n)」「Open (n)」の見出しでまとめる。行内の折りたたみボタンで展開し、下に返信スレッドが伸びる。回答済み・返信済みでも常に返信欄が残る。AI／人間のバッジで記録者を見分ける。実装は`src/webview/screens/thread.ts`の`renderThread`をQA・Bug共通で使い、文言（Answer/Reply等）だけ`ThreadLabels`で注入する。
+**QA・Bug**：追加は表の下の入力欄。完了済みを表示したときは、開いている項目の上に「Answered/Closed (n)」「Open (n)」の見出しでまとめる。行内の折りたたみボタンで展開し、下に返信スレッドが伸びる。回答済み・返信済みでも常に返信欄が残る。返信欄は、スレッドの直下に「↳」を付けた枠のある入力欄にし、文言で対象を名指しする（`Answer this question…`／`Reply to this bug…`）。下端の新規の欄は`Ask a new question…`／`Report a new bug…`。以前の返信欄は枠の無い薄い一行で、既にある回答・返信に紛れて見つけにくく、下端の新規の欄とも取り違えられた（q&a`a0e3a242d5`）。AI／人間のバッジで記録者を見分ける。実装は`src/webview/screens/thread.ts`の`renderThread`をQA・Bug共通で使い、文言（Answer/Reply等）だけ`ThreadLabels`で注入する。
 
 **Rule・Glossary**：編集はインライン編集（Enterで確定）、追加は表の下の入力欄（Glossaryは用語と定義の2欄を横並びにした1つの入力欄）。削除は確認なしの即時削除（mtqgは追記だけで消えないため）。
 

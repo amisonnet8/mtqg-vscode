@@ -233,6 +233,26 @@ export function renderShell(options: ShellOptions): string {
     .thread-reply .editable {
       flex: 1;
     }
+    /* The per-item answer/reply field: a bordered input under the thread,
+       marked with an arrow, so it neither blends into the replies above
+       nor looks like the bottom field that adds a new question/bug. */
+    .thread-reply-add {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-left: 4px;
+    }
+    .thread-reply-mark {
+      color: var(--vscode-descriptionForeground);
+    }
+    .mtqg-table .thread-reply-add .add-row {
+      flex: 1;
+      color: var(--vscode-input-foreground);
+      background-color: var(--vscode-input-background);
+      border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+      border-radius: 4px;
+      padding: 4px 8px;
+    }
     .thread-reply-meta {
       font-size: 0.85em;
       color: var(--vscode-descriptionForeground);

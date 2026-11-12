@@ -13,8 +13,18 @@ import { createTempRepo } from '../../../helpers/tempRepo';
 test('renderBugs uses Bugs wording: "Bug" column, "Replies" noun, "closed" labels', () => {
   const html = renderBugs([]);
   assert.match(html, /<th>Bug<\/th>/);
-  assert.match(html, /aria-label="Report a bug…"/);
+  assert.match(html, /aria-label="Report a new bug…"/);
   assert.match(html, /Show closed \(0\)/);
+});
+
+// q&a a0e3a242d5: the field names what it replies to, so it is not taken for
+// the bottom field that reports a new bug.
+test('renderBugs labels the per-bug field "Reply to this bug…"', () => {
+  const html = renderBugs(
+    [{ id: 'a', kind: 'bug', text: 'crashes', status: 'open', author: { kind: 'human', name: 'test' }, created: '2026-01-01T00:00:00Z', updated: '2026-01-01T00:00:00Z', replies: [] }],
+    { expanded: new Set(['a']) },
+  );
+  assert.match(html, /data-parent-id="a"><div class="editable"[^>]*aria-label="Reply to this bug…"/);
 });
 
 test('renderBugs labels the reply field and toggle with "Replies", not "Answers"', () => {

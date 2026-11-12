@@ -1,0 +1,21 @@
+# Make the answer and reply fields of QA and Bug easy to find and to tell apart
+.mtqg/
+	journal.jsonl	Added q&a a0e3a242d5 and memo for todo 238f146038, and closed the todo
+docs/
+	design/
+		vscode-extension.md	Describes the reply field (arrow, border, wording) and why it is no longer a plain faint line
+src/
+	webview/
+		screens/
+			thread.ts	Wraps the reply field with an arrow mark, so it stands out under the replies
+			bugs.ts	Wording: Report a new bug… and Reply to this bug…, so the two fields are not mixed up
+			questions.ts	Wording: Ask a new question… and Answer this question…, so the two fields are not mixed up
+		shared/
+			html.ts	Gives the reply field a border and input colours instead of faint text
+test/
+	unit/
+		webview/
+			screens/
+				thread.test.ts	Checks that the reply field comes after the replies, with the arrow mark
+				bugs.test.ts	Checks the new wording of both fields
+				questions.test.ts	Checks the new wording of both fields

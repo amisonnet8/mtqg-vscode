@@ -145,6 +145,21 @@ test('replies render oldest-first with an AI/human text badge each, and the repl
   assert.match(detail, /aria-label="Write a reply…"/);
 });
 
+// q&a a0e3a242d5: as a plain faint line under the replies, the field was hard
+// to find and was mistaken for the bottom add field.
+test('the reply field comes after the replies, marked with an arrow, in its own wrapper', () => {
+  const detail = detailRow(
+    renderThread([item('a', 'q', '2026-01-01T00:00:00Z', { replies: [reply('r1', 'first', '2026-01-02T00:00:00Z')] })], LABELS, {
+      expanded: new Set(['a']),
+    }),
+    'a',
+  );
+  assert.match(
+    detail,
+    /class="thread-list">[\s\S]*data-id="r1"[\s\S]*<\/div>\s*<div class="thread-reply-add"><span class="thread-reply-mark" aria-hidden="true">↳<\/span><div class="add-row" data-parent-id="a">/,
+  );
+});
+
 test('the exact reply text is preserved (not a substring match) and escaped', () => {
   const detail = detailRow(
     renderThread([item('a', 'q', '2026-01-01T00:00:00Z', { replies: [reply('r1', '<b>x</b>', '2026-01-02T00:00:00Z')] })], LABELS, {

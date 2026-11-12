@@ -1,0 +1,21 @@
+# QA・Bug の回答・返信欄を、見つけやすく、新規の欄と見分けやすくする
+.mtqg/
+	journal.jsonl	q&a a0e3a242d5 と todo 238f146038 のメモを追加し、todo を完了にした
+docs/
+	design/
+		vscode-extension.md	返信欄（↳、枠、文言）と、枠の無い薄い一行をやめた理由を書いた
+src/
+	webview/
+		screens/
+			thread.ts	返信欄を↳の印で包み、返信の下で目立つようにした
+			bugs.ts	文言を Report a new bug…・Reply to this bug… にし、2つの欄を取り違えないようにした
+			questions.ts	文言を Ask a new question…・Answer this question… にし、2つの欄を取り違えないようにした
+		shared/
+			html.ts	返信欄を、薄い文字ではなく、枠と入力欄の色にした
+test/
+	unit/
+		webview/
+			screens/
+				thread.test.ts	返信欄が返信の後に、↳の印つきで来ることを確かめる
+				bugs.test.ts	2つの欄の新しい文言を確かめる
+				questions.test.ts	2つの欄の新しい文言を確かめる

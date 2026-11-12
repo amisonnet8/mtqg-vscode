@@ -14,8 +14,18 @@ import { createTempRepo } from '../../../helpers/tempRepo';
 test('renderQuestions uses QA wording: "Question" column, "Answers" noun, "answered" labels', () => {
   const html = renderQuestions([]);
   assert.match(html, /<th>Question<\/th>/);
-  assert.match(html, /aria-label="Ask a question…"/);
+  assert.match(html, /aria-label="Ask a new question…"/);
   assert.match(html, /Show answered \(0\)/);
+});
+
+// q&a a0e3a242d5: the field names what it answers, so it is not taken for the
+// bottom field that asks a new question.
+test('renderQuestions labels the per-question field "Answer this question…"', () => {
+  const html = renderQuestions(
+    [{ id: 'a', kind: 'question', text: 'q', status: 'open', author: { kind: 'human', name: 'test' }, created: '2026-01-01T00:00:00Z', updated: '2026-01-01T00:00:00Z', replies: [] }],
+    { expanded: new Set(['a']) },
+  );
+  assert.match(html, /data-parent-id="a"><div class="editable"[^>]*aria-label="Answer this question…"/);
 });
 
 test('renderQuestions labels the reply field and toggle with "Answers", not "Replies"', () => {
