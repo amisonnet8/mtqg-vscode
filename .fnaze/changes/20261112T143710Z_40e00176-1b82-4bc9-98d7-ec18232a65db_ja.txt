@@ -1,0 +1,3 @@
+# fnaze の落とし穴のルールの提案を却下したことを記録する
+.mtqg/
+	journal.jsonl	question 2240bc33cb と answer 004e3261dd を追加：ルールの提案は却下
