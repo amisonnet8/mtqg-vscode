@@ -74,9 +74,11 @@ jobs:
         shell: bash
         run: qsoku check
       # The VS Code that qsoku test downloads, kept between runs. When asking
-      # update.code.visualstudio.com for the version times out (it did on
-      # macOS and Windows), @vscode/test-electron falls back to a version
-      # already in .vscode-test/ -- which a fresh runner never has. Only the
+      # update.code.visualstudio.com for the version fails (it timed out on
+      # macOS and Windows, and once answered with something not JSON), and
+      # test/vscode/runTest.ts's retries do not help, @vscode/test-electron
+      # falls back to a version already in .vscode-test/ -- which a fresh
+      # runner never has. Only the
       # VS Code installs are kept, not user-data/ or extensions/, so a run
       # never starts from another run's state. The key is fixed per OS: a
       # newer VS Code is still downloaded whenever the version request works.

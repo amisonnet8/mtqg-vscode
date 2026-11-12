@@ -1,0 +1,12 @@
+# qsoku test の前の VS Code の取得をやり直し、版の問い合わせの失敗で CI が止まらないようにする
+.mtqg/
+	journal.jsonl	bug d35dc02c50 に、やり直しの対処の返信を追加
+.claude/
+	rules/
+		testing.md	落とし穴に、JSON でない応答と、VS Code の取得のやり直しを書き足した
+.github/
+	workflows/
+		ci.yml	キャッシュのコメントに、JSON でない応答と runTest.ts のやり直しを書き足した
+test/
+	vscode/
+		runTest.ts	先に VS Code を3回まで試して取り、それでテストを1回動かす：版の問い合わせが JSON でない応答も返したため

@@ -1,0 +1,12 @@
+# Retry getting VS Code before qsoku test, so a failed version request does not end the CI run
+.mtqg/
+	journal.jsonl	Added the reply on the retry to bug d35dc02c50
+.claude/
+	rules/
+		testing.md	The pitfall now covers the non-JSON answer and the retries of the VS Code download
+.github/
+	workflows/
+		ci.yml	The cache comment mentions the non-JSON answer and runTest.ts's retries
+test/
+	vscode/
+		runTest.ts	Gets VS Code first, up to three times, then runs the tests once with it: the version request also answered with something not JSON
