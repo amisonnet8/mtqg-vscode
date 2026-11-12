@@ -31,6 +31,11 @@ async function main(): Promise<void> {
       // identity and the removal of MTQG_AUTHOR_* still apply to the mtqg it
       // runs.
       extensionTestsEnv: { ...developerHomeEnv },
+      // The default 15 s ran out while asking update.code.visualstudio.com
+      // for the version on the macOS and Windows CI runners. A slow answer
+      // now still gets through; an unreachable one falls back to the VS Code
+      // cached by ci.yml.
+      timeout: 60_000,
     });
   } catch (err) {
     await repo.cleanup();

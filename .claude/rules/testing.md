@@ -124,6 +124,7 @@ mtqgの`mutation-check`（実装を1か所ずつ壊してテストが落ちる�
 - **`qsokufile`の`test:`エントリは`xvfb-run`の有無で分岐する**（todo`b7fe931ffa`）。`command -v xvfb-run`がある（このdevcontainerとCIの`ubuntu-latest`）ときだけ`env -u ELECTRON_RUN_AS_NODE xvfb-run -a`で包み、無い（`macos-latest`・`windows-latest`。元から実ディスプレイを持つランナーでXvfbが要らない）ときは`node`を直接呼ぶ。`uname`の文字列判定（Windows/MSYSでの表記揺れがある）ではなく、実際に使えるかどうかで判定している
 - `qsoku test`（拡張開発ホストで実物VS Codeを起動）に必要なXvfb一式（`libnss3`等）は`.devcontainer/postCreate.sh`と同じ、動作確認済みのパッケージ一覧をそのまま`apt-get install`する。CIのci.ymlでは、このstepに`if: matrix.os == 'ubuntu-latest'`を付けている（Windows/macOSには`apt-get`が無い上、そもそも不要）
 - `actions/checkout`・`actions/setup-go`の版・`go-version`はmtqg本体のci.ymlとそろえる（版の食い違いで「手元は通るがCIは落ちる」を避ける）
+- **`qsoku test`は、始める前にVS Codeの版を`update.code.visualstudio.com`へ問い合わせ、ランナーによってはここで時間切れになる**（macOS・Windowsで起きた。bug`d35dc02c50`）。`test/vscode/runTest.ts`の`timeout`を60秒にし、`ci.yml`で`.vscode-test/vscode-*`をキャッシュしている（`@vscode/test-electron`は、問い合わせに失敗すると`.vscode-test/`にある版を使う）。キャッシュに`user-data/`・`extensions/`を含めない（前の実行の状態からテストが始まるため）
 - **このLinux devcontainerからは、Windows/macOSのCI matrixそのものはローカルで実行・確認できない。** `qsoku test`のローカル実行で確かめられるのは常に`xvfb-run`分岐（Linux側）だけで、Windows/macOSでの成功は実際にpushしてGitHub Actions上で確認するしかない
 - **`/dev/stderr`等のUnix固有のパスはWindows（Git Bash）で壊れる。** `tee /dev/stderr`などを使わず、標準のリダイレクトだけで書く
 - **Windowsのcheckoutで改行がCRLFになると、整形や文字列の比較が全ファイルで食い違う。** ルートの`.gitattributes`（`* text=auto eol=lf`）で防ぐ

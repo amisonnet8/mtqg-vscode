@@ -1,0 +1,12 @@
+# Keep qsoku test from failing in CI when the VS Code version request times out
+.mtqg/
+	journal.jsonl	Added bug d35dc02c50 with the reply on its fix
+.claude/
+	rules/
+		testing.md	Added the pitfall: the version request times out on some runners, and how the timeout and the cache deal with it
+.github/
+	workflows/
+		ci.yml	Caches the downloaded VS Code, so a timed-out version request falls back to it
+test/
+	vscode/
+		runTest.ts	Waits 60 s instead of 15 s for update.code.visualstudio.com, which timed out on macOS and Windows

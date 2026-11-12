@@ -1,0 +1,12 @@
+# VS Code の版の問い合わせが時間切れになっても、CI の qsoku test が落ちないようにする
+.mtqg/
+	journal.jsonl	bug d35dc02c50 と、対処の返信を追加
+.claude/
+	rules/
+		testing.md	落とし穴を足した：ランナーによって版の問い合わせが時間切れになることと、timeout とキャッシュでの対処
+.github/
+	workflows/
+		ci.yml	ダウンロードした VS Code をキャッシュし、版の問い合わせが時間切れでも、それで続けられるようにした
+test/
+	vscode/
+		runTest.ts	macOS・Windows で時間切れになった update.code.visualstudio.com を、15 秒ではなく 60 秒待つ
