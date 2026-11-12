@@ -112,6 +112,6 @@ mtqg-vscode/
 - **`.githooks/`**: 追跡する git のフック。`.git/hooks/`は git に乗らないので、ここに置いて`core.hooksPath`で指す（`.devcontainer/postCreate.sh`）。`pre-commit`は fnaze の`docs/examples/pre-commit`と、先頭のコメントのほかは同じ中身
 - **`.devcontainer/devcontainer-lock.json`**: コンテナのビルドで自動で作られる。**コミットする**（この版のfeatureでテストなどが通った証明になる）。featureを新しくしたいときは、lockを消してビルドし直し、新しいlockをコミットする
 - **`.gitattributes`**: `* text=auto eol=lf`。Windowsランナーでの改行コード変換による誤検知を防ぐ（`.claude/rules/testing.md`）。`.mtqg/`の中の`.gitattributes`は`mtqg init`が置くもので、別物
-- **`.gitignore`のドットファイル**: ルート直下のドットファイル・ドットディレクトリは**許可リスト方式**（`/.*`を無視し、追跡するものだけ`!`で戻す。`.claude/`の中は`/.claude/*`を無視して`settings.json`・`rules/`・`skills/`・`hooks/`だけ戻す）。サンドボックスが作業ディレクトリ直下に出すダミーファイルを`git add -A`で混ぜないため（`.claude/rules/testing.md`）。**追跡するドットファイルを新しく足すときは、`.gitignore`に`!`の行を足すこと**。足さないと`git add`が無視する
+- **`.gitignore`のドットファイル**: ルート直下のドットファイル・ドットディレクトリは**許可リスト方式**（`/.*`を無視し、追跡するものだけ`!`で戻す。`.claude/`の中は`/.claude/*`を無視して`settings.json`・`rules/`・`hooks/`だけ戻す。スキルを足すときは`!/.claude/skills/`の行も足す）。サンドボックスが作業ディレクトリ直下に出すダミーファイルを`git add -A`で混ぜないため（`.claude/rules/testing.md`）。**追跡するドットファイルを新しく足すときは、`.gitignore`に`!`の行を足すこと**。足さないと`git add`が無視する
 - **配布物（`.vsix`）**: リポジトリにコミットしない（`.gitignore`の`*.vsix`）。公開物に入るものは`.vscodeignore`で決める（`.claude/rules/distribution.md`）
 - **シェルスクリプト**: 最小限にする。追跡中のものは`qsoku shellcheck`の対象になる（`.claude/rules/testing.md`）

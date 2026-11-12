@@ -77,7 +77,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 **`sandbox`設定（mtqg本体の`.claude/settings.json`を参考に2026-09-30導入）**：`filesystem.allowWrite`・`network.allowedDomains`等を許可した範囲内のBashコマンド（`npm ci`・`go install`・`qsoku trivy`等）は、`autoAllowBashIfSandboxed`により確認なしで実行できる。`network.allowedDomains`・`filesystem.allowWrite`を見直すときに踏んだ落とし穴は`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」にまとめてある。
 
-ビルドの自動フック（`PostToolUse`）が設定されている。`Edit`・`Write`・`MultiEdit`で`.ts`・`package.json`・`tsconfig.json`を変えると`.claude/hooks/build.sh`が走る（拡張の雛形ができるまでは何もしない）。失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
+ビルドの自動フック（`PostToolUse`）が設定されている。`Edit`・`Write`・`MultiEdit`で`.ts`・`package.json`・`tsconfig.json`を変えると`.claude/hooks/build.sh`が走る（`qsoku build`）。失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
 
 **crubeの配線**：`.mcp.json`に、crubeのMCPサーバーが1つある（`crube`。`crube mcp --allow-write`）。言語は、道具の引数`lang`（CLIは`--lang`）でいつも明示する。`Write`のあとには`.claude/hooks/crube-untracked.sh`が、説明の無いパスを言語ごとに知らせる（止めはしない）。詳細は`.claude/rules/crube-usage.md`。
 

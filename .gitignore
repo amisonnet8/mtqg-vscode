@@ -32,5 +32,4 @@ out/
 /.claude/*
 !/.claude/settings.json
 !/.claude/rules/
-!/.claude/skills/
 !/.claude/hooks/

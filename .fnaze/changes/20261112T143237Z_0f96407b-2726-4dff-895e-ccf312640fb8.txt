@@ -1,0 +1,11 @@
+# Fix the docs and settings that disagreed with the code: skills/ and build.sh
+.claude/
+	hooks/
+		build.sh	Removed the branch for a missing qsokufile: the scaffold exists, so it never runs
+	rules/
+		directory-structure.md	The .gitignore note no longer lists skills/ and says to add the line when a skill is added
+.crube/	Removed the description of .claude/skills/ and its line in ignore: there are no skills
+.gitignore	Removed !/.claude/skills/: there are no skills to track
+.mtqg/
+	journal.jsonl	Added todo bcf97a3ba4 (done) and memo 911dd6a635
+CLAUDE.md	The build hook runs qsoku build; dropped the stale note about the scaffold not existing yet

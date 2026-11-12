@@ -18,7 +18,6 @@
 		working-with-human.md	How to ask people: small blockers, checks, and approval of what users see
 		fnaze-usage.md	Using fnaze: describing each commit in English and Japanese, the pre-commit hook, pitfalls
 	settings.json	Permissions, sandbox and hooks of Claude Code (managed by people)
-	skills/	Skills of Claude Code
 .devcontainer/	Development container
 	devcontainer-lock.json	Versions of the features the container was built with
 	devcontainer.json	Container definition and VS Code settings

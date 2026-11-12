@@ -1,0 +1,11 @@
+# コードと食い違っていた文書・設定を直す：skills/ と build.sh
+.claude/
+	hooks/
+		build.sh	qsokufile が無いときの分岐を消した：雛形はもうあり、通ることが無いため
+	rules/
+		directory-structure.md	.gitignore の説明から skills/ を外し、スキルを足すときに行を足すと書いた
+.crube/	スキルが無いので、.claude/skills/ の説明と ignore の行を消した
+.gitignore	追跡するスキルが無いので !/.claude/skills/ を消した
+.mtqg/
+	journal.jsonl	todo bcf97a3ba4（完了）と memo 911dd6a635 を追加
+CLAUDE.md	ビルドのフックは qsoku build を動かす。雛形がまだ無いという古い但し書きを消した
