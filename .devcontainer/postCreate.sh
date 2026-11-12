@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # The shells this container is set up for: qsoku's shell integration and the
-# completion of bcuz, crube, mtqg and srwr go into each of them (the end of this file).
+# completion of crube, fnaze and mtqg go into each of them (the end of this file).
 # bash only by default. A project that runs its own shell scripts in the real
 # shells (completion scripts, shell integration) lists all four instead,
 #   shells=(bash zsh fish pwsh)
@@ -24,10 +24,11 @@ fi
 
 # wget, gnupg,
 # lsb-release: Adding the Trivy apt repository below.
-# jq:          Used by .claude/hooks/build.sh, .claude/hooks/require-bcuz.sh (and
-#              its test, qsoku hook) and the allowWrite block below; also for
-#              inspecting mtqg's --json output while debugging the extension.
-# ShellCheck:  Static analysis of tracked *.sh and *.bash files (qsoku shellcheck).
+# jq:          Used by .claude/hooks/build.sh, .claude/hooks/crube-untracked.sh
+#              and the allowWrite block below; also for inspecting mtqg's
+#              --json output while debugging the extension.
+# ShellCheck:  Static analysis of tracked *.sh and *.bash files and the git hooks
+#              in .githooks/ (qsoku shellcheck).
 #              Comment lines must not start with the lowercase directive word,
 #              or ShellCheck parses them as directives (SC1072/SC1073).
 # gh:          GitHub CLI (issues, pull requests, Actions runs) is the "github-cli"
@@ -101,28 +102,32 @@ go install github.com/amisonnet8/qsoku/cmd/qsoku@latest
 # version regardless of what this container happens to install.
 go install github.com/amisonnet8/mtqg/cmd/mtqg@latest
 
-# srwr: the AI's edits go through its look / edit / new tools, each with a
-# reason (why), and are recorded on a tape (.claude/rules/srwr-usage.md).
-# @latest, like qsoku and mtqg above. srwr is 0.x, so after a rebuild that
-# picked up a new version, run `srwr init` once: it makes .claude/settings.json
-# follow any change in the tools' names.
-go install github.com/amisonnet8/srwr/cmd/srwr@latest
-
-# bcuz: every command Claude Code runs through the Bash tool goes through
-# `bcuz "<reason>" <command>`, which records when / why / what / result in
-# .bcuz/history.jsonl (.claude/rules/bcuz-usage.md; enforced by the PreToolUse
-# hook .claude/hooks/require-bcuz.sh). @latest, like the tools above.
-go install github.com/amisonnet8/bcuz/cmd/bcuz@latest
-
-# Create .bcuz/ at the repository root (idempotent: prints "already exists"
-# and succeeds if it is there). Without it, commands still run but are not recorded.
-(cd "$(dirname "$0")/.." && bcuz --init)
-
 # crube: descriptions of this repository's files and directories in .crube/,
-# used by Claude Code through the crube / crube-ja MCP servers of .mcp.json,
+# used by Claude Code through the crube MCP server of .mcp.json,
 # the CLI and the hook .claude/hooks/crube-untracked.sh
 # (.claude/rules/crube-usage.md). @latest, like the tools above.
 go install github.com/amisonnet8/crube/cmd/crube@latest
+
+# fnaze: the description of each commit in .fnaze/changes/, written by Claude
+# Code through the fnaze MCP server of .mcp.json or the CLI, and required by the
+# pre-commit hook below (.claude/rules/fnaze-usage.md). @latest, like the tools
+# above.
+go install github.com/amisonnet8/fnaze/cmd/fnaze@latest
+
+# .fnaze/ is made here, not shipped: git keeps no empty directory, and a
+# placeholder file in .fnaze/changes/ would be reported by fnaze status.
+repo=$(cd "$(dirname "$0")/.." && pwd)
+[ -d "$repo/.fnaze" ] || (cd "$repo" && fnaze init)
+
+# The git hooks of this repository are tracked in .githooks/: its pre-commit
+# stops a commit that adds no description in .fnaze/changes/ or whose newest
+# group is not fully written. Needs the git repository (git init first, as the
+# README says); without it, only warns.
+if git -C "$repo" rev-parse --git-dir >/dev/null 2>&1; then
+  git -C "$repo" config core.hooksPath .githooks
+else
+  echo "warning: $repo is not a git repository; run git -C $repo config core.hooksPath .githooks after git init" >&2
+fi
 
 # pwsh has no $PROFILE of its own until asked: query it rather than hardcode
 # the path. zsh's fpath[1] in this image is a root-owned system directory. The
@@ -158,19 +163,14 @@ for shell in "${shells[@]}"; do
   esac
 done
 
-# The completion of bcuz, crube, mtqg and srwr, for interactive use in this
-# container, in each shell, at the places their documents name. bcuz prints it
-# with --completion <shell> (it has no subcommands); the others with completion
-# <shell>. They are installed @latest above, and a release older than its
+# The completion of crube, fnaze and mtqg, for interactive use in this
+# container, in each shell, at the places their documents name (completion
+# <shell>). They are installed @latest above, and a release older than its
 # completion has none: then it only warns, and the next rebuild after a release
 # picks it up. pwsh has no completions directory: the script is appended to
 # $PROFILE once, found again by its Register-ArgumentCompleter line.
-for tool in bcuz crube mtqg srwr; do
-  if [ "$tool" = bcuz ]; then
-    print_completion=(bcuz --completion)
-  else
-    print_completion=("$tool" completion)
-  fi
+for tool in crube fnaze mtqg; do
+  print_completion=("$tool" completion)
   if ! "${print_completion[@]}" bash >/dev/null 2>&1; then
     echo "warning: no shell completion from this $tool (${print_completion[*]} bash failed); skipped" >&2
     continue

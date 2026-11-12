@@ -4,17 +4,6 @@
     "MTQG_AUTHOR_NAME": "claude-code"
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "hooks": [
-          {
-            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/require-bcuz.sh",
-            "type": "command"
-          }
-        ],
-        "matcher": "Bash"
-      }
-    ],
     "PostToolUse": [
       {
         "hooks": [
@@ -23,7 +12,7 @@
             "type": "command"
           }
         ],
-        "matcher": "mcp__srwr__edit|mcp__srwr__new"
+        "matcher": "Edit|Write|MultiEdit"
       },
       {
         "hooks": [
@@ -32,16 +21,7 @@
             "type": "command"
           }
         ],
-        "matcher": "mcp__srwr__new"
-      },
-      {
-        "matcher": "Read|Bash|Grep|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "srwr hook"
-          }
-        ]
+        "matcher": "Write"
       }
     ],
     "SessionStart": [
@@ -72,9 +52,7 @@
     "allowUnsandboxedCommands": false,
     "excludedCommands": [
       "qsoku test",
-      "xvfb-run *",
-      "bcuz * qsoku test",
-      "bcuz * xvfb-run *"
+      "xvfb-run *"
     ],
     "filesystem": {
       "allowWrite": [
@@ -104,14 +82,8 @@
     "allow": [
       "Bash(qsoku test)",
       "Bash(xvfb-run *)",
-      "Bash(bcuz * qsoku test)",
-      "Bash(bcuz * xvfb-run *)",
-      "mcp__srwr__look",
-      "mcp__srwr__edit",
-      "mcp__srwr__new",
-      "mcp__srwr__session",
       "mcp__crube",
-      "mcp__crube-ja"
+      "mcp__fnaze"
     ],
     "ask": [
       "Bash(git reset --hard*)",
@@ -123,17 +95,12 @@
       "Bash(git push*)",
       "Bash(gh pr merge*)",
       "Bash(gh release create*)",
-      "Bash(*vsce publish*)",
-      "Edit",
-      "Write",
-      "MultiEdit",
-      "NotebookEdit"
+      "Bash(*vsce publish*)"
     ]
   },
   "enabledMcpjsonServers": [
     "mtqg",
-    "srwr",
     "crube",
-    "crube-ja"
+    "fnaze"
   ]
 }

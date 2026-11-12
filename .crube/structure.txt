@@ -1,13 +1,8 @@
-.bcuz/	Record of the commands run through bcuz (committed)
-	history.jsonl	One JSON line per command: when, why, what and the exit code
 .claude/	Claude Code settings shared in the repository
 	hooks/	Hooks that Claude Code runs around its tools
-		build.sh	After srwr edit or new changes a .ts, package.json or tsconfig.json, runs qsoku build and reports a failure
-		crube-untracked.sh	After srwr new creates a file, tells Claude which of its paths have no description, per language
-		require-bcuz.sh	PreToolUse hook that refuses Bash commands not run through bcuz
-		require-bcuz.test.sh	Table of the commands require-bcuz.sh allows and refuses (qsoku hook)
+		build.sh	After Edit or Write changes a .ts, package.json or tsconfig.json, runs qsoku build and reports a failure
+		crube-untracked.sh	After Write creates a file, tells Claude which of its paths have no description, per language
 	rules/	Rules for working in this repository (Japanese); CLAUDE.md says when to read each
-		bcuz-usage.md	How to run Bash commands through bcuz, and keeping secrets out of them
 		crube-usage.md	Using crube: MCP and the CLI, finding places, keeping descriptions in both languages
 		datetime.md	Dates and times: keep UTC, show in the local time zone
 		dependencies.md	npm dependencies: none at run time; only Microsoft's and TypeScript for development
@@ -18,18 +13,16 @@
 		mtqg-usage.md	How to record memos, todos, questions, bugs and rules with mtqg
 		naming.md	Names: mtqg's terms as they are, in the code and the UI
 		qsoku-usage.md	The qsoku names for build, test and lint, and how to call them
-		srwr-usage.md	Editing files only through srwr (strict mode), and closing tapes
 		testing.md	Test policy, and pitfalls of the sandbox and of CI on each OS
 		ui.md	UI policy: English, not relying on text, six screens, no new features
 		working-with-human.md	How to ask people: small blockers, checks, and approval of what users see
+		fnaze-usage.md	Using fnaze: describing each commit in English and Japanese, the pre-commit hook, pitfalls
 	settings.json	Permissions, sandbox and hooks of Claude Code (managed by people)
 	skills/	Skills of Claude Code
-		commit-with-tape/	Skill: close the srwr tape and commit
-			SKILL.md	The steps of the skill
 .devcontainer/	Development container
 	devcontainer-lock.json	Versions of the features the container was built with
 	devcontainer.json	Container definition and VS Code settings
-	postCreate.sh	Runs once the container is made: installs the tools (qsoku, mtqg, srwr, bcuz, crube, Trivy) and their shell completion
+	postCreate.sh	Runs once the container is made: installs the tools (qsoku, mtqg, crube, fnaze, Trivy) and their shell completion, makes .fnaze/ and points git at .githooks/
 .github/	GitHub settings
 	workflows/	GitHub Actions workflows
 		ci.yml	CI: qsoku check and test on three OSes and two mtqg versions, ShellCheck and Trivy; also called by release.yml
@@ -40,10 +33,6 @@
 	SCHEMA.md	Data format of journal.jsonl
 	journal.jsonl	The records, one JSON line each (written only through mtqg)
 	version	Version of the mtqg data format
-.srwr/	srwr: tapes of the file edits made by AI, each with its reason
-	tapes/	Closed tapes (committed); replay them with srwr view
-		| One compressed tape (*.tape.jsonl.gz) for each unit of work.
-		| The tapes are left out by .crube/ignore, so that they need no description.
 .vscode/	VS Code settings for developing the extension
 	launch.json	Runs the extension in an extension development host (F5)
 	tasks.json	Background tsc watch task that launch.json starts
@@ -122,10 +111,9 @@ test/	Tests (node:test)
 		suite/	Tests that run inside the extension development host
 			extension.test.ts	Tests of the extension inside the real VS Code
 			index.ts	Runs node:test's run() inside the host and waits for the tests to end
-.gitattributes	Line endings (LF everywhere) and merge=union for the record files
+.gitattributes	Line endings: LF everywhere
 .gitignore	Files kept out of git; dot entries in the root are an allowlist
-.mcp.json	MCP servers for Claude Code: mtqg, srwr, and crube in English and Japanese
-.srwrignore	Files srwr does not put on its tapes
+.mcp.json	MCP servers for Claude Code: mtqg, crube (one server, the language passed as lang) and fnaze
 .vscodeignore	Files kept out of the packaged .vsix
 CHANGELOG.md	Changes of each version; also the notes of its GitHub Release
 CLAUDE.md	Rules for Claude Code in this repository, and the rule files to read
@@ -137,3 +125,8 @@ package.json	Extension manifest: version, commands, menus and development depend
 qsokufile	Named commands for build, test and lint (qsoku)
 trivy.yaml	Trivy settings: what counts as a vulnerability or license failure
 tsconfig.json	Compiler settings for the extension host and the tests
+.fnaze/	The description of each commit, written with fnaze (.claude/rules/fnaze-usage.md); made by .devcontainer/postCreate.sh (fnaze init)
+	changes/	The description files, one group per commit, in English and Japanese
+		| <datetime>_<UUID>[_<language>].txt, made by fnaze new and written by fnaze title, set and rm. Left out by .crube/ignore: a description of each one would add nothing.
+.githooks/	The git hooks of this repository (core.hooksPath, set by .devcontainer/postCreate.sh)
+	pre-commit	fnaze's docs/examples/pre-commit: stops a commit that adds no description file, or whose newest group fnaze status --require reports

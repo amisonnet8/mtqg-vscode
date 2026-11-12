@@ -1,0 +1,42 @@
+# Replace srwr and bcuz with fnaze, and merge the crube MCP servers into one
+.bcuz/	Removed bcuz's command record: Bash commands no longer go through bcuz
+.srwr/	Removed the srwr tapes: file edits no longer go through srwr
+.srwrignore	Removed: srwr is no longer used
+.claude/
+	hooks/
+		build.sh	Runs on Edit, Write and MultiEdit (file_path) instead of srwr's edit and new
+		crube-untracked.sh	Runs after Write, and passes the language as --lang instead of CRUBE_LANG
+		require-bcuz.sh	Removed the hook that refused Bash commands not run through bcuz
+		require-bcuz.test.sh	Removed the decision table of the removed hook (qsoku hook)
+	rules/
+		bcuz-usage.md	Removed the rules for bcuz
+		srwr-usage.md	Removed the rules for srwr's strict mode and tapes
+		fnaze-usage.md	Added how to describe each commit with fnaze in English and Japanese
+		crube-usage.md	One MCP server, with the language always given as lang / --lang; new pitfalls of set and status
+		directory-structure.md	Listed .fnaze/ and .githooks/ instead of .srwr/, .srwrignore, .bcuz/ and the skill
+		mtqg-usage.md	Dropped bcuz from the examples and the list of tools
+		qsoku-usage.md	Removed qsoku hook and the bcuz form; shellcheck also checks .githooks/
+		testing.md	Dropped the srwr and bcuz pitfalls; ShellCheck also covers .githooks/
+		working-with-human.md	Dropped the srwr init example from the small blockers
+	settings.json	Removed the bcuz and srwr hooks, permissions and MCP server; Edit and Write are allowed again; added fnaze
+	skills/	Removed the commit-with-tape skill: there are no tapes any more
+.crube/	Descriptions follow the removed and added files; fnaze's description files are left out by ignore
+.devcontainer/
+	devcontainer.json	Removed the srwr-view extension
+	postCreate.sh	Installs fnaze instead of srwr and bcuz, makes .fnaze/ and points core.hooksPath at .githooks/
+.gitattributes	Removed merge=union for .bcuz/history.jsonl, which is gone
+.githooks/
+	pre-commit	Added fnaze's pre-commit: stops a commit without a fully written description
+.github/
+	workflows/
+		ci.yml	Removed the qsoku hook step: the hook it tested is gone
+.gitignore	Tracks .fnaze/ and .githooks/ instead of .srwr/tapes/, .srwrignore and .bcuz/
+.mcp.json	Removed srwr and crube-ja; added fnaze (crube takes the language as an argument)
+.mtqg/
+	journal.jsonl	Rule d4b177cbd9 edited, rules 41e3cfde7c and d896cb9f17 deleted, rule c7513ac1c4, todo eca006c13a and memo 5e9f4f1e9f added
+.vscodeignore	Keeps .fnaze/ and .githooks/ out of the .vsix; dropped .srwr/, .bcuz/ and .srwrignore, which are gone
+CLAUDE.md	Follows the new tools (fnaze, one crube server, Edit and Write) and adds what to do when docs and code disagree
+qsokufile	Removed hook; shellcheck also checks the git hooks in .githooks/
+test/
+	unit/
+		vscodeignore.test.ts	Checks .fnaze/ and .githooks/ instead of .srwr/, .srwrignore and .bcuz/

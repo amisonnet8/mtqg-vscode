@@ -24,11 +24,10 @@ mtqg-vscode/
 *├── .gitignore
 *├── trivy.yaml
 *├── .mtqg/
-*├── .mcp.json               （mtqg・srwrとcrube（英語の`crube`・日本語の`crube-ja`）のMCPサーバー。srwrの分は`srwr init`が書く形）
-*├── .srwrignore             （srwrがテープに記録しないファイル。`.mtqg/`・`node_modules/`・`out/`・`.vscode-test/`。`.claude/rules/srwr-usage.md`）
-*├── .srwr/                  （srwrの鍵・ロック・テープ。**`tapes/`だけコミットする**。鍵・ロック・`active`・`init-backup/`は無視）
+*├── .mcp.json               （mtqg・crube・fnazeのMCPサーバー）
 ├── .crube/                 （このリポジトリのファイルの説明。crube。`structure.txt`は英語、`structure_ja.txt`は日本語、`ignore`は`.gitignore`に合わせて手で保つ。**コミットする**。`.claude/rules/crube-usage.md`）
-├── .bcuz/                  （bcuzの記録`history.jsonl`。`postCreate.sh`が`bcuz --init`で作る。**コミットする**（`merge=union`）。`.claude/rules/bcuz-usage.md`）
+├── .fnaze/changes/         （コミットごとの説明。fnaze。**コミットする**。`.claude/rules/fnaze-usage.md`）
+├── .githooks/              （git のフック。`pre-commit`：説明の無いコミットを止める。`core.hooksPath`は`postCreate.sh`が設定する）
 *├── docs/design/vscode-extension.md（**今の設計**を保つ。経緯は、戻すと同じ問題が起きるものだけ。ほかは`.mtqg/`に記録。連番の索引README.mdは、ファイルが1つしか無いため廃止）
 *├── .devcontainer/
 *│   ├── devcontainer.json
@@ -36,10 +35,9 @@ mtqg-vscode/
 *│   └── postCreate.sh
 *├── .claude/
 *│   ├── rules/
-*│   ├── skills/              （commit-with-tape：テープを閉じてコミットする手順）
-*│   ├── hooks/               （build.sh、require-bcuz.sh とそのテスト、crube-untracked.sh：srwr の new のあとに未説明を知らせる）
+*│   ├── hooks/               （build.sh、crube-untracked.sh：Write のあとに未説明を知らせる。Claude Code のフックで、git のフックは`.githooks/`）
 *│   └── settings.json
-*├── qsokufile                （build・unit・check・test・trivy・shellcheck・hook・package）
+*├── qsokufile                （build・unit・check・test・trivy・shellcheck・package）
 *├── package.json / package-lock.json / tsconfig.json / .vscodeignore
 *├── src/
 *│   ├── extension.ts        （拡張のエントリポイント。コマンドmtqg.openの登録と、パネル復元シリアライザの登録のみ）
@@ -108,13 +106,11 @@ mtqg-vscode/
 
 ## 各ファイル・ディレクトリの補足
 
-- **`.bcuz/`**: bcuzが`.bcuz/history.jsonl`に追記する、コマンドの実行の記録（`.claude/rules/bcuz-usage.md`）。**コミットする**（`.gitignore`の`!/.bcuz/`）。行を足すだけなので、`.gitattributes`の`merge=union`で、マージしても両側の行が残る。コミットの前に`git add .bcuz/history.jsonl`する（`git commit`は`bcuz`を通さない）。秘密をコマンドに書かない（記録に残る）。中のファイルは直接編集しない。`.srwrignore`でテープにも載せず、`.vscodeignore`で公開物にも入れない
-- **`.claude/hooks/require-bcuz.sh`**: Bashツールのコマンドを、`bcuz`を通っていなければ実行前に断る`PreToolUse`フック。判定の表は`require-bcuz.test.sh`（`bash .claude/hooks/require-bcuz.test.sh`）。判定を変えたら、テストの表も同じ変更の中で直す
-- **`.mcp.json`**: `mtqg mcp`と`srwr mcp`（MCPサーバー）の配線。`mtqg init --agent claude-code`・`srwr init`が書くものと同じ。その後ろに、crubeのMCPサーバー（`crube mcp --allow-write`。`crube-ja`は`CRUBE_LANG=ja`）を手で足している（`.claude/rules/crube-usage.md`）
-- **`.crube/`**: このリポジトリのファイルとディレクトリの説明（`.claude/rules/crube-usage.md`）。**コミットする**（`.gitignore`の`!/.crube/`）。閉じたテープ（`*.tape.jsonl.gz`）は、説明を付けず`.crube/ignore`で外す（パターンのエントリにすると、最初のテープを閉じるまで何にも当たらず`orphan`になり、無ければ新しいテープが`untracked`になるため）。`ignore`は`.gitignore`を手で写したもの（crube は`.gitignore`を読まない）
+- **`.mcp.json`**: `mtqg mcp`（MCPサーバー）の配線。`mtqg init --agent claude-code`が書くものと同じ。その後ろに、crubeのMCPサーバー（`crube mcp --allow-write`。1つだけで、言語は道具の引数`lang`）を手で足している（`.claude/rules/crube-usage.md`）
+- **`.crube/`**: このリポジトリのファイルとディレクトリの説明（`.claude/rules/crube-usage.md`）。**コミットする**（`.gitignore`の`!/.crube/`）。`ignore`は`.gitignore`を手で写したもの（crube は`.gitignore`を読まない）。ただし、`.fnaze/changes/`の説明のファイルは、説明を付けず`ignore`でだけ外す（パターンのエントリにすると、最初の`fnaze new`まで何にも当たらず`orphan`になるため）
+- **`.fnaze/`**: コミットごとの説明を fnaze で書き、そのコミットに入れる（`.claude/rules/fnaze-usage.md`）。**コミットする**（`.gitignore`の`!/.fnaze/`）。`.devcontainer/postCreate.sh`が無ければ`fnaze init`で作る
+- **`.githooks/`**: 追跡する git のフック。`.git/hooks/`は git に乗らないので、ここに置いて`core.hooksPath`で指す（`.devcontainer/postCreate.sh`）。`pre-commit`は fnaze の`docs/examples/pre-commit`と、先頭のコメントのほかは同じ中身
 - **`.devcontainer/devcontainer-lock.json`**: コンテナのビルドで自動で作られる。**コミットする**（この版のfeatureでテストなどが通った証明になる）。featureを新しくしたいときは、lockを消してビルドし直し、新しいlockをコミットする
-- **`.srwr/`**: 最初のhook・MCPの呼び出しで、srwrが作る（`srwr init`でも作られる。鍵`key`・`lock`・`active`・`tapes/`・`init-backup/`）。**コミットするのは閉じて圧縮したテープ`tapes/*.tape.jsonl.gz`だけ**。書き込み中の生のテープ`*.tape.jsonl`は`.gitignore`で対象外（閉じると`.gz`に置き換わり、生のままコミットすると「削除＋追加」の差分が出るため）。鍵は共有しない。リポジトリには鍵を入れない（鍵をプロジェクトごとに別にするため）
-- **`.srwrignore`**: テープに記録しないファイル（`.gitignore`と同じ書き方）。生成物や巨大なファイルはここに足す。`.env`・`*.pem`・`*.key`などはsrwrが元から外す
 - **`.gitattributes`**: `* text=auto eol=lf`。Windowsランナーでの改行コード変換による誤検知を防ぐ（`.claude/rules/testing.md`）。`.mtqg/`の中の`.gitattributes`は`mtqg init`が置くもので、別物
 - **`.gitignore`のドットファイル**: ルート直下のドットファイル・ドットディレクトリは**許可リスト方式**（`/.*`を無視し、追跡するものだけ`!`で戻す。`.claude/`の中は`/.claude/*`を無視して`settings.json`・`rules/`・`skills/`・`hooks/`だけ戻す）。サンドボックスが作業ディレクトリ直下に出すダミーファイルを`git add -A`で混ぜないため（`.claude/rules/testing.md`）。**追跡するドットファイルを新しく足すときは、`.gitignore`に`!`の行を足すこと**。足さないと`git add`が無視する
 - **配布物（`.vsix`）**: リポジトリにコミットしない（`.gitignore`の`*.vsix`）。公開物に入るものは`.vscodeignore`で決める（`.claude/rules/distribution.md`）

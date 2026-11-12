@@ -1,13 +1,8 @@
-.bcuz/	bcuz を通して動かしたコマンドの記録（コミットする）
-	history.jsonl	1コマンド1行の JSON：いつ・なぜ・何を・終了コード
 .claude/	リポジトリで共有する Claude Code の設定
 	hooks/	Claude Code が道具の前後に動かすフック
-		build.sh	srwr の edit・new で .ts・package.json・tsconfig.json を変えたあと qsoku build を動かし、失敗を知らせる
-		crube-untracked.sh	srwr の new でファイルを作ったあと、説明の無いパスを言語ごとに Claude に知らせる
-		require-bcuz.sh	bcuz を通さない Bash のコマンドを断る PreToolUse フック
-		require-bcuz.test.sh	require-bcuz.sh が通す・断るコマンドの表（qsoku hook）
+		build.sh	Edit・Write で .ts・package.json・tsconfig.json を変えたあと qsoku build を動かし、失敗を知らせる
+		crube-untracked.sh	Write でファイルを作ったあと、説明の無いパスを言語ごとに Claude に知らせる
 	rules/	このリポジトリで作業するときのルール（日本語）。いつ読むかは CLAUDE.md にある
-		bcuz-usage.md	Bash のコマンドを bcuz で動かす方法と、秘密をコマンドに書かないこと
 		crube-usage.md	crube の使い方：MCP と CLI、場所の探し方、両方の言語の説明の保ち方
 		datetime.md	日時の扱い：UTC で持ち、表示だけ利用者のタイムゾーンに直す
 		dependencies.md	npm の依存の線引き：実行時は0、開発時は Microsoft 公式と TypeScript だけ
@@ -18,18 +13,16 @@
 		mtqg-usage.md	mtqg でメモ・todo・質問・不具合・決まり事を記録する方法
 		naming.md	命名：mtqg の用語を、コードと UI でそのまま使う
 		qsoku-usage.md	ビルド・テスト・lint の qsoku の名前と呼び方
-		srwr-usage.md	ファイルは srwr だけで変える（厳格モード）こと、テープの閉じ方
 		testing.md	テスト方針と、サンドボックス・OS ごとの CI の落とし穴
 		ui.md	UI の方針：英語、文字に頼らない、6画面、機能を足さない
 		working-with-human.md	人間への頼み方：小さなつまずき、確認、見え方の了承
+		fnaze-usage.md	fnaze の使い方：コミットごとに英語と日本語で説明を書く手順、pre-commit、落とし穴
 	settings.json	Claude Code の許可・サンドボックス・フック（人間が管理する）
 	skills/	Claude Code のスキル
-		commit-with-tape/	スキル：srwr のテープを閉じてコミットする
-			SKILL.md	スキルの手順
 .devcontainer/	開発用のコンテナ
 	devcontainer-lock.json	コンテナを作ったときの feature の版
 	devcontainer.json	コンテナの定義と VS Code の設定
-	postCreate.sh	コンテナを作ったあとに1回動く：道具（qsoku・mtqg・srwr・bcuz・crube・Trivy）と補完を入れる
+	postCreate.sh	コンテナを作ったあとに1回動く：道具（qsoku・mtqg・crube・fnaze・Trivy）と補完を入れ、.fnaze/ を作り、git のフックを .githooks/ に向ける
 .github/	GitHub の設定
 	workflows/	GitHub Actions のワークフロー
 		ci.yml	CI：3つの OS と2つの mtqg の版で qsoku check・test、ShellCheck、Trivy。release.yml からも呼ばれる
@@ -40,10 +33,6 @@
 	SCHEMA.md	journal.jsonl のデータ形式
 	journal.jsonl	記録そのもの。1件1行の JSON（mtqg からだけ書く）
 	version	mtqg のデータ形式の版
-.srwr/	srwr：AI によるファイル編集のテープ（操作ごとに理由つき）
-	tapes/	閉じたテープ（コミットする）。srwr view で再生できる
-		| 作業のまとまりごとに1本のテープ（圧縮済みの *.tape.jsonl.gz）。
-		| テープは .crube/ignore で crube の対象から外してあり、説明は要らない。
 .vscode/	拡張を開発するための VS Code の設定
 	launch.json	拡張を拡張開発ホストで動かす（F5）
 	tasks.json	launch.json が始める、tsc の watch のバックグラウンドタスク
@@ -122,10 +111,9 @@ test/	テスト（node:test）
 		suite/	拡張開発ホストの中で動くテスト
 			extension.test.ts	本物の VS Code の中での拡張のテスト
 			index.ts	ホストの中で node:test の run() を呼び、テストが終わるのを待つ
-.gitattributes	改行（すべて LF）と、記録のファイルの merge=union
+.gitattributes	改行（すべて LF）
 .gitignore	git に入れないもの。ルート直下のドットで始まる名前は許可リスト方式
-.mcp.json	Claude Code に mtqg・srwr と、crube（英語・日本語）の MCP サーバーをつなぐ設定
-.srwrignore	srwr がテープに記録しないファイル
+.mcp.json	Claude Code に mtqg・crube（サーバーは1つで、言語は引数 lang）・fnaze の MCP サーバーをつなぐ設定
 .vscodeignore	パッケージ（.vsix）に入れないファイル
 CHANGELOG.md	版ごとの変更。GitHub Release の本文にもなる
 CLAUDE.md	このリポジトリでの Claude Code のルールと、読むべきルールファイルの案内
@@ -137,3 +125,8 @@ package.json	拡張のマニフェスト：版、コマンド、メニュー、�
 qsokufile	ビルド・テスト・lint の名前つきコマンド（qsoku）
 trivy.yaml	Trivy の設定：何を脆弱性・ライセンスの失敗とみなすか
 tsconfig.json	拡張のホスト側とテストのコンパイラ設定
+.fnaze/	コミットごとの説明を fnaze で書いたもの（.claude/rules/fnaze-usage.md）。.devcontainer/postCreate.sh が作る（fnaze init）
+	changes/	説明のファイル。コミット1つにつき組1つ（英語と日本語）
+		| <日時>_<UUID>[_<言語>].txt。fnaze new で作り、fnaze title・set・rm で書く。1つずつに説明を付けても意味が無いので、.crube/ignore で外す
+.githooks/	このリポジトリの git のフック（core.hooksPath。.devcontainer/postCreate.sh が設定する）
+	pre-commit	fnaze の docs/examples/pre-commit：説明のファイルを足さないコミットと、いちばん新しい組を fnaze status --require が報告するコミットを止める

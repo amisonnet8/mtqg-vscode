@@ -13,11 +13,10 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 作業を始める前に、以下を確認すること。
 
 - **`docs/design/`** — **今の設計**の記録（日本語）。経緯は、前のやり方に戻すと同じ問題がまた起きるものだけを書き、それ以外は`.mtqg/`に記録する（`.claude/rules/documentation.md`）。`vscode-extension.md`にmtqg設計§11.4の写しと、この拡張固有の未決事項がある
-- **`.claude/rules/bcuz-usage.md`** — bcuzの使い方。**Bashで実行するコマンドは、必ず`bcuz "理由" コマンド…`の形で打つ**（フックが、そうでないものを断る）。理由は「なぜ」を書く。**コマンドを打つ前に読む**
 - **`.claude/rules/mtqg-usage.md`** — mtqgの使い方（記録者、種類の使い分け、こまめに記録する）。**このリポジトリに`PLAN.md`は無い。`mtqg context`が現状・今後を知るための一次情報**
-- **`.claude/rules/srwr-usage.md`** — srwrの使い方（**厳格モード**）。**このリポジトリでは`Edit`・`Write`が禁止されており、ファイルの変更は`look`／`edit`／`new`（理由`why`つき）で行う。作業のまとまりごとに`session`で題つきのテープを始め、コミットの前にテープを閉じる。ファイルを変える前に読む**
 - **`.claude/rules/qsoku-usage.md`** — qsokuの使い方（`qsokufile`の名前の一覧、呼び方、書式、`//`、シェル連携）。**ビルド・テストは`npx tsc`・`node --test`などを直接打たず、ここの名前で実行する**
-- **`.claude/rules/crube-usage.md`** — crubeの使い方（MCPの`crube`・`crube-ja`とCLI、場所の探し方、英語と日本語の説明の保ち方）。**場所を探す前、ファイルを足す・動かす・消す前に読む**
+- **`.claude/rules/crube-usage.md`** — crubeの使い方（MCPの`crube`とCLI、言語の渡し方、場所の探し方、英語と日本語の説明の保ち方）。**場所を探す前、ファイルを足す・動かす・消す前に読む**
+- **`.claude/rules/fnaze-usage.md`** — fnazeの使い方（コミットごとに、変えたファイルの説明を英語と日本語で書き、一緒にコミットする手順、pre-commit、落とし穴）。**コミットする前に読む**
 - **`.claude/rules/mtqg-cli.md`** — mtqg本体とのつながり方（子プロセス起動、`--json`、エラーの扱い）
 - **`.claude/rules/ui.md`** — UIの方針（英語・文字に頼らない、6画面、機能を足さない原則、レイアウト詳細は未定）
 - **`.claude/rules/dependencies.md`** — npm依存の線引き
@@ -31,15 +30,17 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 これらのルールファイルは、実装中に得た細かい気づき・教訓をClaude Code自身が育てていくものである。新しく気づいたルール・踏んだ落とし穴があれば、該当するファイルに追記すること。どのファイルにも当てはまらない新しい種類の気づきであれば、新しいルールファイルを作ってよい（作ったらこの一覧にも足すこと）。
 
+## 文書と今のコードが食い違うとき
+
+- **文書（`CLAUDE.md`・`.claude/rules/`・`docs/`・コメント）の書き方と、すでにあるコードの書き方が食い違うときは、コードの書き方に従う。** 命名・構成・エラーの扱い・テストの形などは、文書の例より、今のコードで実際に使われている形に合わせて書く
+- **見つけた食い違いは、その作業の最後の返答で全部挙げる。** 文書のどこと、コードのどこが、どう違うかを1件ずつ書く。どちらに合わせて直すかは人間が決めるので、文書もコードも、その場では直さない（`.claude/rules/working-with-human.md` 1章「別の作業の流れで見つけた問題は、先に直さず提案する」）
+
 ## 開発の進め方
 
 - **`PLAN.md`は使わない。mtqgで記録する。** `mtqg context`だけでこのリポジトリの現状・次にやることが分かる状態を保つ（`.claude/rules/mtqg-usage.md`）
-- **Bashのコマンドは、すべて`bcuz "理由" コマンド…`で実行する**（`bcuz "lintの確認" qsoku lint`）。理由は「何をするか」でなく「なぜするか」。`bcuz`で始まらない・`&&`や`;`でつなぐコマンドは、`.claude/settings.json`の`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が実行前に断る。**`git commit`だけは`bcuz`を通さない**（通すとコミットの後に記録が増えるため。理由はコミットメッセージに書く）。実行の記録は`.bcuz/history.jsonl`に残り（コミットする）、`bcuz -H`で見られる。**トークンなどの秘密を、コマンドの引数・`env`の指定・理由に書かない**（記録に残り、コミットされる）（`.claude/rules/bcuz-usage.md`）
-- **ファイルの変更は、srwrの道具（`look`で見て`edit`、新規は`new`）で行い、すべてに理由（`why`）を添える。** 組み込みの`Edit`・`Write`は`.claude/settings.json`で禁止されている（厳格モード）。Bashでの書き換え（`sed -i`・リダイレクト）もしない
-- **作業のまとまり（todo・bug・人間の依頼・作業の種類の変わり目）ごとに、最初に`session`で題つきのテープを始める。** 1つの作業＝1本のテープ、コミットも同じ区切り（`.claude/rules/srwr-usage.md`「セッション」）
-- **コミットの前に、テープを閉じる**（`srwr tapes check`のあと`srwr tapes new`）。コミットまでの手順はSkill`commit-with-tape`。書き込み中の生のテープは`.gitignore`で対象外で、閉じて圧縮した`.srwr/tapes/*.tape.jsonl.gz`だけがgitに入る（`.claude/rules/srwr-usage.md`）
+- **ファイルの変更は、組み込みの`Edit`・`Write`で行う。** Bashでの書き換え（`sed -i`・リダイレクト）はしない（ビルドとcrubeのフックが動かない。下の「権限・自動化について」）
 - **このリポジトリの中の場所は、まずcrubeで引く**（MCPの`find`・`tree`・`show`、または`crube find …`）。ファイル・ディレクトリを足す・動かす・消すときは、同じ変更の中で英語と日本語の説明を直し、コミットの前に両方の言語で`crube status --require all`を通す（`.claude/rules/crube-usage.md`）
-- 実装後は`.claude/rules/testing.md`に従い、ビルド確認に加えて実際の動作確認（`bcuz "…" qsoku check`、必要に応じて`qsoku test`・`qsoku trivy`・`qsoku shellcheck`）を行うこと。判断に迷ったら実行する側に倒すこと
+- 実装後は`.claude/rules/testing.md`に従い、ビルド確認に加えて実際の動作確認（`qsoku check`、必要に応じて`qsoku test`・`qsoku trivy`・`qsoku shellcheck`）を行うこと。判断に迷ったら実行する側に倒すこと
 - 依存を足すときは`.claude/rules/dependencies.md`の線引きに従う。足したら、Trivyでライセンス・脆弱性を確認すること（`qsoku trivy`）
 
 ## 守ること（設計の芯）
@@ -59,6 +60,7 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 - **pushは人間が行う。** Claude Codeはコミットまでで止めること。`git push`は`.claude/settings.json`で拒否（deny）されている
 - 作業の区切りでこまめにコミットしてよい（消してしまったときに戻せるように）
+- **コミットには、そのコミットの説明（fnaze）を入れる。** 説明の無いコミットは、pre-commit（`.githooks/pre-commit`）が止める。`--no-verify`で飛ばさない（`.claude/rules/fnaze-usage.md`）
 - `git reset --hard`・`git clean`は、コミットしていない作業を消すので、使う前に必ず理由を説明すること
 - **Marketplaceへの公開（`vsce publish`）は人間が行う。** `.claude/settings.json`で拒否されている
 - **コミット前に`git config user.email`／`user.name`を確認する。** このリポジトリの`.git/config`に、本来の設定（`amisonnet8`／`65074207+amisonnet8@users.noreply.github.com`、GitHubのプライバシー用noreplyアドレス）を上書きする`[user] name=demo email=a@b.c`が紛れ込んでいたことがあった（2026-09-26、原因不明の別セッション・別環境が同じ作業ディレクトリを操作した痕跡と推測。同時期にmtqgへも英語のテストデータが誤って登録されていた）。**修正時、ローカルの上書きを一度unsetしてグローバル設定（`amisonnet8@gmail.com`）にフォールバックさせてしまったが、これも本来このリポジトリで使うべきアドレスとは違っていた**（人間の指摘で発覚）。改めて`.git/config`にローカルで`user.email = 65074207+amisonnet8@users.noreply.github.com`・`user.name = amisonnet8`を設定し直した（グローバル設定は変更していない）。すでにpush済みの過去のコミット（`0557d6d`以降）はそのまま放置と決まっている（履歴の書き換え・force-pushはしない）が、**今後は同じことが再発しないよう、コミットする前に`git config user.email`を一度確認し、`65074207+amisonnet8@users.noreply.github.com`と違う値ならローカルの上書き（`.git/config`の`[user]`セクション）を疑う**
@@ -68,7 +70,6 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 `.claude/settings.json`（人間が管理する）により、次の設定になっている。
 
 - 拒否（deny）：`git push`、`gh pr merge`、`gh release create`、`vsce publish`
-- **`bcuz`を通さないBashコマンドの拒否**：`PreToolUse`フック（`.claude/hooks/require-bcuz.sh`）が、`bcuz`で始まらないコマンド（`git commit`を除く。逆に`bcuz`を通した`git commit`を断る）と、後ろに別のコマンドをつなぐもの（`&&`・`||`・`;`・`&`・改行・単一引用符の外のコマンド置換）を、実行前に断る。直し方は断りのメッセージと`.claude/rules/bcuz-usage.md`に書いてある
 - 実行前に確認（ask）：`git reset --hard`、`git clean`、`sudo`、`gh pr create`
 - **Bashコマンドは既定でOSレベルのサンドボックス（Linux bubblewrap）内で実行される。** ファイルシステムの書き込み先とネットワーク接続先は許可リストで絞られている。この範囲内なら`curl`・`wget`・`npm ci`・`go install`などは確認なしに実行できる。リストに無い宛先・書き込み先は`sandbox_violations`として拒否される。そのときは、`.claude/rules/working-with-human.md` 2章の形（原因と、`.claude/settings.json` のどこに何を足すか）で**短く頼む**（許可を広げるかは人間が判断する）。落とし穴は`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」参照
 
@@ -76,15 +77,15 @@ mtqg本体はGo製・CLIのみ。データの解釈・書き込みはすべてmt
 
 **`sandbox`設定（mtqg本体の`.claude/settings.json`を参考に2026-09-30導入）**：`filesystem.allowWrite`・`network.allowedDomains`等を許可した範囲内のBashコマンド（`npm ci`・`go install`・`qsoku trivy`等）は、`autoAllowBashIfSandboxed`により確認なしで実行できる。`network.allowedDomains`・`filesystem.allowWrite`を見直すときに踏んだ落とし穴は`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」にまとめてある。
 
-**srwrの厳格モード**（2026-10-11導入）：`permissions.deny`に`Edit`・`Write`・`MultiEdit`・`NotebookEdit`があり、`.mcp.json`にsrwrのMCPサーバー、`PostToolUse`に`srwr hook`（読み取りと外部変更の記録）がある。テープ（`.srwr/tapes/`）はgitで共有する（鍵`.srwr/key`は入れない）。許可を広げるのは人間の判断で、`.claude/settings.json`を変えたいときは差分で示す。詳細は`.claude/rules/srwr-usage.md`。
+ビルドの自動フック（`PostToolUse`）が設定されている。`Edit`・`Write`・`MultiEdit`で`.ts`・`package.json`・`tsconfig.json`を変えると`.claude/hooks/build.sh`が走る（拡張の雛形ができるまでは何もしない）。失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
 
-ビルドの自動フック（`PostToolUse`）が設定されている。srwrの`edit`・`new`で`.ts`・`package.json`・`tsconfig.json`を変えると`.claude/hooks/build.sh`が走る（拡張の雛形ができるまでは何もしない）。失敗すると理由がClaude Codeに返る。複数ファイルにまたがる編集の途中は、まだ書いていないファイルを参照して一時的に失敗することがある。
+**crubeの配線**：`.mcp.json`に、crubeのMCPサーバーが1つある（`crube`。`crube mcp --allow-write`）。言語は、道具の引数`lang`（CLIは`--lang`）でいつも明示する。`Write`のあとには`.claude/hooks/crube-untracked.sh`が、説明の無いパスを言語ごとに知らせる（止めはしない）。詳細は`.claude/rules/crube-usage.md`。
 
-**crubeの配線**：`.mcp.json`に、crubeのMCPサーバーが2つある（`crube`は英語、`crube-ja`は日本語。`crube mcp --allow-write`）。srwrの`new`のあとには`.claude/hooks/crube-untracked.sh`が、説明の無いパスを言語ごとに知らせる（止めはしない）。詳細は`.claude/rules/crube-usage.md`。
+**fnazeの配線**：`.mcp.json`に、fnazeのMCPサーバーが1つある（`fnaze mcp --allow-write`）。fnaze の道具も、言語を引数で受ける。git のフックは`.githooks/`にあり、`.devcontainer/postCreate.sh`が`core.hooksPath`をそこへ向ける。詳細は`.claude/rules/fnaze-usage.md`。
 
 ## mtqgでの記録について
 
-作業の中で生まれる「気づき・やること・質問と答え・不具合とそのやり取り・用語の合意・この先も効き続ける決まり事」は、コードにもコミットにも残らず、チャットの履歴やメモアプリに散って失われやすい。`mtqg`（`m`emo & rules・`t`odo・`q`a & bugs・`g`lossary）はそれを`.mtqg/journal.jsonl`に追記し、gitに乗せて共有する。使い方は`.claude/rules/mtqg-usage.md`。`.mtqg/`には決まり事（rule）を10件登録済み——`mtqg context`で確認できる。AIエージェントからは、フック（`.claude/settings.json`の`mtqg hook`）とMCPサーバー（`.mcp.json`の`mtqg mcp`）の両方で使える。
+作業の中で生まれる「気づき・やること・質問と答え・不具合とそのやり取り・用語の合意・この先も効き続ける決まり事」は、コードにもコミットにも残らず、チャットの履歴やメモアプリに散って失われやすい。`mtqg`（`m`emo & rules・`t`odo・`q`a & bugs・`g`lossary）はそれを`.mtqg/journal.jsonl`に追記し、gitに乗せて共有する。使い方は`.claude/rules/mtqg-usage.md`。`.mtqg/`には決まり事（rule）を9件登録済み——`mtqg context`で確認できる。AIエージェントからは、フック（`.claude/settings.json`の`mtqg hook`）とMCPサーバー（`.mcp.json`の`mtqg mcp`）の両方で使える。
 
 ## ルール・スキルの提案
 

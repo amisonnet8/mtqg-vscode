@@ -1,0 +1,42 @@
+# srwr・bcuz をやめて fnaze に替え、crube の MCP サーバーを1つにまとめる
+.bcuz/	bcuz のコマンドの記録を消した：Bash のコマンドを bcuz に通すのをやめたため
+.srwr/	srwr のテープを消した：ファイルの変更を srwr に通すのをやめたため
+.srwrignore	消した：srwr を使わなくなったため
+.claude/
+	hooks/
+		build.sh	srwr の edit・new ではなく、Edit・Write・MultiEdit（file_path）のあとに動くようにした
+		crube-untracked.sh	Write のあとに動き、言語を CRUBE_LANG ではなく --lang で渡すようにした
+		require-bcuz.sh	bcuz を通さない Bash のコマンドを断るフックを消した
+		require-bcuz.test.sh	消したフックの判定の表（qsoku hook）を消した
+	rules/
+		bcuz-usage.md	bcuz のルールを消した
+		srwr-usage.md	srwr の厳格モードとテープのルールを消した
+		fnaze-usage.md	fnaze で、コミットごとに英語と日本語の説明を書く手順を足した
+		crube-usage.md	MCP サーバーを1つにし、言語はいつも lang・--lang で明示する。set・status の落とし穴を足した
+		directory-structure.md	.srwr/・.srwrignore・.bcuz/・スキルに代えて .fnaze/・.githooks/ を載せた
+		mtqg-usage.md	例と道具の一覧から bcuz を外した
+		qsoku-usage.md	qsoku hook と bcuz を通す形を外し、shellcheck が .githooks/ も見ることを書いた
+		testing.md	srwr・bcuz の落とし穴を外し、ShellCheck の対象に .githooks/ を足した
+		working-with-human.md	小さなつまずきの例から srwr init を外した
+	settings.json	bcuz・srwr のフック・許可・MCP サーバーを外し、Edit・Write の禁止を解き、fnaze を足した
+	skills/	テープが無くなったので、commit-with-tape のスキルを消した
+.crube/	消した・足したファイルに合わせて説明を直し、fnaze の説明のファイルを ignore で外した
+.devcontainer/
+	devcontainer.json	srwr-view の拡張を外した
+	postCreate.sh	srwr・bcuz に代えて fnaze を入れ、.fnaze/ を作り、core.hooksPath を .githooks/ に向ける
+.gitattributes	無くなった .bcuz/history.jsonl の merge=union を外した
+.githooks/
+	pre-commit	fnaze の pre-commit を足した：説明を書き終えていないコミットを止める
+.github/
+	workflows/
+		ci.yml	qsoku hook の手順を外した：確かめていたフックが無くなったため
+.gitignore	.srwr/tapes/・.srwrignore・.bcuz/ に代えて .fnaze/・.githooks/ を追跡する
+.mcp.json	srwr と crube-ja を外し、fnaze を足した（crube は言語を引数で受ける）
+.mtqg/
+	journal.jsonl	rule d4b177cbd9 を編集、rule 41e3cfde7c・d896cb9f17 を削除、rule c7513ac1c4・todo eca006c13a・memo 5e9f4f1e9f を追加
+.vscodeignore	.fnaze/・.githooks/ を .vsix から外し、無くなった .srwr/・.bcuz/・.srwrignore の行を消した
+CLAUDE.md	新しい道具（fnaze、crube のサーバー1つ、Edit・Write）に合わせ、文書とコードが食い違うときの扱いを足した
+qsokufile	hook を消し、shellcheck が .githooks/ の git のフックも見るようにした
+test/
+	unit/
+		vscodeignore.test.ts	.srwr/・.srwrignore・.bcuz/ に代えて .fnaze/・.githooks/ を確かめる

@@ -11,9 +11,8 @@
 | `qsoku check` | `build`・`unit`をまとめて実行 | **作業の区切りで必ず通す**（`.claude/rules/testing.md`） |
 | `qsoku test` | 拡張開発ホスト（本物のVS Code）でのテスト（`test/vscode/`）。Linuxでは`xvfb-run`で包む | 拡張開発ホストに関わる変更。**サンドボックスの外で動かす**（`.claude/rules/testing.md`「Bashサンドボックスの落とし穴」） |
 | `qsoku trivy` | 既知の脆弱性・ライセンスの検査（`--include-dev-deps`） | 依存を足したとき、`package-lock.json`が変わったとき |
-| `qsoku shellcheck` | 追跡中の`*.sh`・`*.bash`をShellCheckにかける | シェルスクリプトを足したとき |
+| `qsoku shellcheck` | 追跡中の`*.sh`・`*.bash`と`.githooks/`のフックをShellCheckにかける | シェルスクリプトを足したとき |
 | `qsoku package` | `out/`を消してビルドし、`npx vsce package`で`.vsix`を作る | 公開の前。サンドボックスの中では失敗する（`.claude/rules/testing.md`） |
-| `qsoku hook` | `.claude/hooks/require-bcuz.test.sh`（bcuz を強制するフックの判定の表。`jq`が要る） | `require-bcuz.sh`を変えたとき（CIの`shellcheck`ジョブでも回る） |
 
 一覧は、今ある`qsokufile`の内容そのもの。`qsoku .list`（名前とコマンド）か`qsoku .names`（名前だけ）で確かめる。**引数なしで`qsoku`とだけ打っても、使い方と定義済みの名前が出る。**
 
@@ -23,7 +22,6 @@
 qsoku <名前> [引数...]
 ```
 
-- **Claude Codeは、Bashツールでは`bcuz`を通して呼ぶ**：`bcuz "理由" qsoku <名前>`（`.claude/rules/bcuz-usage.md`）。以下の例・表の`qsoku <名前>`は、素の形で書いてある
 - 引数は、項目のコマンドの中で`"$@"`・`$1`として受けられる。**このプロジェクトの`qsokufile`の項目は、どれも引数を受けていない**（書いていない引数は捨てられる）。受けたいときは、項目のコマンドに`"$@"`を足して書き換える
 - **qsoku自身のオプションは無い。** `--help`・`--version`は**名前として調べられる**ので、「定義されていない」というエラーになる。使い方は`qsoku .help`、バージョンは`qsoku .version`
 - コマンドは、どのOSでも、また呼び出し元がどのシェルでも、常に`sh`で実行される
