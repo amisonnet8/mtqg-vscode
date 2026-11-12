@@ -1,0 +1,4 @@
+# Update @azure/msal-node past CVE-2026-109461 so that Trivy passes
+.mtqg/
+	journal.jsonl	Added bug 66bfacaf9b (closed) with its reply
+package-lock.json	npm update @azure/identity: 4.14.1 brings @azure/msal-node 7.2.1, past the HIGH CVE that failed CI's trivy job

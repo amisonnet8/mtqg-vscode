@@ -1,0 +1,4 @@
+# @azure/msal-node を CVE-2026-109461 の直った版にし、Trivy を通す
+.mtqg/
+	journal.jsonl	bug 66bfacaf9b（クローズ）と返信を追加
+package-lock.json	npm update @azure/identity：4.14.1 で @azure/msal-node が 7.2.1 になり、CI の trivy を落とした HIGH の CVE が直る
